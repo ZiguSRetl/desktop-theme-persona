@@ -1,4 +1,5 @@
 import { GripVertical } from "lucide-react";
+import { tt, useT } from "../../i18n";
 import type { LauncherItemType } from "../../types/desktop";
 import { SpeedLines } from "../../components/comic/SpeedLines";
 import { LauncherItemIcon } from "./LauncherItemIcon";
@@ -11,7 +12,7 @@ export function tileDisplayName(name: string, target?: string): string {
     const segment = target.replace(/[/\\]+$/, "").split(/[/\\]/).pop();
     if (segment) return segment;
   }
-  return "Sin nombre";
+  return tt("launcher.unnamed");
 }
 
 interface LauncherTileProps {
@@ -43,6 +44,7 @@ export function LauncherTile({
   onLaunch,
   onRemove,
 }: LauncherTileProps) {
+  const t = useT();
   const displayName = tileDisplayName(name, target);
 
   return (
@@ -77,7 +79,7 @@ export function LauncherTile({
       {sortable && dragHandleProps ? (
         <span
           className={styles.dragHandle}
-          aria-label={`Reordenar ${displayName}`}
+          aria-label={t("launcher.tile.reorderAria", { name: displayName })}
           {...dragHandleProps}
           onClick={(event) => event.stopPropagation()}
         >

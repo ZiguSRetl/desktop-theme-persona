@@ -1,26 +1,27 @@
+import { tt } from "../../i18n";
 import type { LauncherItem, LauncherItemType } from "../../types/desktop";
 
 function typeLabel(type: LauncherItemType): string {
   switch (type) {
     case "application":
-      return "aplicación";
+      return tt("launcher.types.application");
     case "game":
-      return "juego";
+      return tt("launcher.types.game");
     case "folder":
-      return "carpeta";
+      return tt("launcher.types.folder");
     case "url":
-      return "enlace web";
+      return tt("launcher.types.url");
   }
 }
 
 function categoryLabel(category: LauncherItem["category"]): string {
   switch (category) {
     case "apps":
-      return "productividad";
+      return tt("launcher.categoryFlavor.apps");
     case "games":
-      return "entretenimiento";
+      return tt("launcher.categoryFlavor.games");
     case "system":
-      return "utilidades del sistema";
+      return tt("launcher.categoryFlavor.system");
   }
 }
 
@@ -29,18 +30,18 @@ export function itemDescription(item: LauncherItem): string {
   const category = categoryLabel(item.category);
 
   if (item.type === "url") {
-    return `Enlace directo a ${item.target}. Categoría: ${category}.`;
+    return tt("launcher.description.url", { target: item.target, category });
   }
 
   if (item.type === "folder") {
-    return `Abre la carpeta en: ${item.target}`;
+    return tt("launcher.description.folder", { target: item.target });
   }
 
   if (item.type === "game") {
-    return `${item.name} — ${type} en la categoría ${category}. Pulsa ABRIR para iniciar.`;
+    return tt("launcher.description.game", { name: item.name, type, category });
   }
 
-  return `${item.name} — ${type} de ${category}. Pulsa ABRIR para ejecutar.`;
+  return tt("launcher.description.app", { name: item.name, type, category });
 }
 
 export function canRevealLocation(item: LauncherItem): boolean {

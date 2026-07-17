@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { useT } from "../../i18n";
 import { CutoutButton } from "../../components/comic/CutoutButton";
 import { ComicPanel } from "../../components/comic/ComicPanel";
 import { useEffectiveReducedMotion } from "../settings/useAnimationProfile";
@@ -18,6 +19,7 @@ export function ScriptConfirmDialog({
   onConfirm,
   onCancel,
 }: ScriptConfirmDialogProps) {
+  const t = useT();
   const reduceMotion = useEffectiveReducedMotion();
 
   if (!open || !script) return null;
@@ -36,14 +38,12 @@ export function ScriptConfirmDialog({
         <ComicPanel variant="white" rotation={1} shadowColor="red">
           <div className={styles.content}>
             <h2 id="script-confirm-title" className={styles.title}>
-              Ejecutar {script.name}
+              {t("scripts.confirm.title", { name: script.name })}
             </h2>
-            <p className={styles.lead}>
-              Este script preparará el sistema para jugar. Cierra tus juegos antes de continuar.
-            </p>
+            <p className={styles.lead}>{t("scripts.confirm.lead")}</p>
 
             <section className={styles.block}>
-              <h3 className={styles.blockTitle}>Apps que se cerrarán</h3>
+              <h3 className={styles.blockTitle}>{t("scripts.confirm.appsTitle")}</h3>
               <ul className={styles.list}>
                 {script.appsToClose.map((app) => (
                   <li key={app}>{app}</li>
@@ -51,17 +51,14 @@ export function ScriptConfirmDialog({
               </ul>
             </section>
 
-            <p className={styles.note}>
-              Windows pedirá permisos de administrador (UAC) para purgar la RAM en caché y resetear
-              la GPU.
-            </p>
+            <p className={styles.note}>{t("scripts.confirm.uacNote")}</p>
 
             <div className={styles.actions}>
               <CutoutButton variant="active" htmlType="button" onClick={onConfirm}>
-                Ejecutar
+                {t("scripts.confirm.run")}
               </CutoutButton>
               <CutoutButton variant="ghost" htmlType="button" onClick={onCancel}>
-                Cancelar
+                {t("scripts.confirm.cancel")}
               </CutoutButton>
             </div>
           </div>

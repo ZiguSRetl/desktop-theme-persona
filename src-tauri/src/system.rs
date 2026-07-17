@@ -39,6 +39,132 @@ pub struct DesktopSettingsPayload {
     pub launch_on_startup: bool,
     pub close_behavior: String,
     pub desktop_mode: bool,
+    #[serde(default = "default_language_field")]
+    pub language: String,
+}
+
+fn default_language_field() -> String {
+    detect_system_language().to_string()
+}
+
+struct TrayLabels {
+    show: &'static str,
+    hide: &'static str,
+    settings: &'static str,
+    restore: &'static str,
+    quit: &'static str,
+}
+
+pub fn resolve_app_language(tag: &str) -> &'static str {
+    let primary = tag
+        .trim()
+        .split(['-', '_'])
+        .next()
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    match primary.as_str() {
+        "es" => "es",
+        "en" => "en",
+        "de" => "de",
+        "fr" => "fr",
+        "ja" => "ja",
+        _ => "en",
+    }
+}
+
+pub fn detect_system_language() -> &'static str {
+    #[cfg(windows)]
+    {
+        use windows::Win32::Globalization::GetUserDefaultLocaleName;
+
+        let mut buffer = [0u16; 85];
+        let len = unsafe { GetUserDefaultLocaleName(&mut buffer) };
+        if len > 1 {
+            let tag = String::from_utf16_lossy(&buffer[..(len as usize - 1)]);
+            return resolve_app_language(&tag);
+        }
+        "en"
+    }
+
+    #[cfg(not(windows))]
+    {
+        "en"
+    }
+}
+
+fn tray_labels(language: &str) -> TrayLabels {
+    match resolve_app_language(language) {
+        "es" => TrayLabels {
+            show: "Mostrar P5 Explorer",
+            hide: "Ocultar",
+            settings: "Configuración",
+            restore: "Restaurar escritorio de Windows",
+            quit: "Salir",
+        },
+        "de" => TrayLabels {
+            show: "P5 Explorer anzeigen",
+            hide: "Ausblenden",
+            settings: "Einstellungen",
+            restore: "Windows-Desktop wiederherstellen",
+            quit: "Beenden",
+        },
+        "fr" => TrayLabels {
+            show: "Afficher P5 Explorer",
+            hide: "Masquer",
+            settings: "Paramètres",
+            restore: "Restaurer le bureau Windows",
+            quit: "Quitter",
+        },
+        "ja" => TrayLabels {
+            show: "P5 Explorer を表示",
+            hide: "隠す",
+            settings: "設定",
+            restore: "Windows のデスクトップを復元",
+            quit: "終了",
+        },
+        _ => TrayLabels {
+            show: "Show P5 Explorer",
+            hide: "Hide",
+            settings: "Settings",
+            restore: "Restore Windows desktop",
+            quit: "Quit",
+        },
+    }
+}
+
+fn build_tray_menu(app: &AppHandle, language: &str) -> Result<Menu<tauri::Wry>, tauri::Error> {
+    let labels = tray_labels(language);
+    let restore_desktop_item = MenuItem::with_id(
+        app,
+        "tray_restore_desktop",
+        labels.restore,
+        true,
+        None::<&str>,
+    )?;
+    let show_item = MenuItem::with_id(app, "tray_show", labels.show, true, None::<&str>)?;
+    let hide_item = MenuItem::with_id(app, "tray_hide", labels.hide, true, None::<&str>)?;
+    let settings_item =
+        MenuItem::with_id(app, "tray_settings", labels.settings, true, None::<&str>)?;
+    let quit_item = MenuItem::with_id(app, "tray_quit", labels.quit, true, None::<&str>)?;
+    Menu::with_items(
+        app,
+        &[
+            &show_item,
+            &hide_item,
+            &settings_item,
+            &restore_desktop_item,
+            &quit_item,
+        ],
+    )
+}
+
+fn apply_tray_language(app: &AppHandle, language: &str) -> Result<(), String> {
+    let menu = build_tray_menu(app, language).map_err(|e| e.to_string())?;
+    if let Some(tray) = app.tray_by_id("main-tray") {
+        tray.set_menu(Some(menu))
+            .map_err(|e| format!("Failed to update tray menu: {e}"))?;
+    }
+    Ok(())
 }
 
 pub fn main_window(app: &AppHandle) -> Result<tauri::WebviewWindow, String> {
@@ -164,6 +290,7 @@ pub async fn sync_native_settings_impl(
     let should_autostart = settings.launch_on_startup || settings.desktop_mode;
     apply_autostart(app, should_autostart)?;
     apply_desktop_mode_setting(app, desktop_state, settings.desktop_mode).await?;
+    apply_tray_language(app, &settings.language)?;
     Ok(())
 }
 
@@ -197,32 +324,13 @@ pub async fn apply_persisted_desktop_mode(app: &AppHandle) -> Result<(), String>
 }
 
 pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
-    let restore_desktop_item = MenuItem::with_id(
-        app,
-        "tray_restore_desktop",
-        "Restaurar escritorio de Windows",
-        true,
-        None::<&str>,
-    )?;
-    let show_item = MenuItem::with_id(app, "tray_show", "Mostrar P5 Explorer", true, None::<&str>)?;
-    let hide_item = MenuItem::with_id(app, "tray_hide", "Ocultar", true, None::<&str>)?;
-    let settings_item = MenuItem::with_id(app, "tray_settings", "Configuración", true, None::<&str>)?;
-    let quit_item = MenuItem::with_id(app, "tray_quit", "Salir", true, None::<&str>)?;
-    let menu = Menu::with_items(
-        app,
-        &[
-            &show_item,
-            &hide_item,
-            &settings_item,
-            &restore_desktop_item,
-            &quit_item,
-        ],
-    )?;
+    let language = detect_system_language();
+    let menu = build_tray_menu(app, language)?;
 
     let icon = app
         .default_window_icon()
         .cloned()
-        .ok_or("No se encontró icono para la bandeja del sistema.")?;
+        .ok_or("No system tray icon found.")?;
 
     let _tray = TrayIconBuilder::with_id("main-tray")
         .icon(icon)

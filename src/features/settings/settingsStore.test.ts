@@ -88,6 +88,15 @@ describe("useSettingsStore", () => {
     expect(mergeAndSaveState).toHaveBeenCalledTimes(1);
   });
 
+  it("syncs native settings when language changes", async () => {
+    await useSettingsStore.getState().updateSetting("language", "de");
+
+    expect(useSettingsStore.getState().settings.language).toBe("de");
+    expect(applyNativeSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ language: "de" }),
+    );
+  });
+
   it("skips native sync when not the primary window", async () => {
     isPrimaryWindow.mockReturnValue(false);
 

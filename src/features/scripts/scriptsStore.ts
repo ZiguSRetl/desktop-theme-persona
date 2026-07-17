@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { tt } from "../../i18n";
 import { showLaunchError, showSuccess } from "../launcher/toastStore";
 import {
   hasPartialSuccess,
@@ -26,7 +27,7 @@ export const useScriptsStore = create<ScriptsState>((set, get) => ({
   runScript: async (scriptId) => {
     const script = getScriptById(scriptId as ScriptId);
     if (!script) {
-      set({ status: "error", error: "Script no encontrado." });
+      set({ status: "error", error: tt("scripts.errors.notFound") });
       return;
     }
 
@@ -34,7 +35,7 @@ export const useScriptsStore = create<ScriptsState>((set, get) => ({
 
     try {
       if (script.id !== "clean") {
-        throw new Error("Script no soportado.");
+        throw new Error(tt("scripts.errors.unsupported"));
       }
 
       const result = await runCleanScript();
@@ -42,7 +43,7 @@ export const useScriptsStore = create<ScriptsState>((set, get) => ({
       showSuccess(summarizeCleanResult(result));
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "No se pudo ejecutar el script.";
+        error instanceof Error ? error.message : tt("scripts.errors.runFailed");
       const lastResult = get().lastResult;
       if (lastResult && hasPartialSuccess(lastResult)) {
         showSuccess(summarizeCleanResult(lastResult));

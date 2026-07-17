@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { motion } from "motion/react";
+import { useT } from "../../../i18n";
 import type { LauncherItem, LauncherItemType } from "../../../types/desktop";
 import type {
   NewLauncherItemInput,
@@ -35,18 +36,26 @@ interface EditShortcutDialogProps extends ShortcutDialogBaseProps {
 
 export type AddShortcutDialogProps = CreateShortcutDialogProps | EditShortcutDialogProps;
 
-const typeOptions: { value: LauncherItemType; label: string }[] = [
-  { value: "application", label: "Aplicación" },
-  { value: "game", label: "Juego" },
-  { value: "folder", label: "Carpeta" },
-  { value: "url", label: "Enlace" },
-];
+function getTypeOptions(
+  t: ReturnType<typeof useT>,
+): { value: LauncherItemType; label: string }[] {
+  return [
+    { value: "application", label: t("shortcutDialog.types.application") },
+    { value: "game", label: t("shortcutDialog.types.game") },
+    { value: "folder", label: t("shortcutDialog.types.folder") },
+    { value: "url", label: t("shortcutDialog.types.url") },
+  ];
+}
 
-const categoryOptions: { value: LauncherItem["category"]; label: string }[] = [
-  { value: "apps", label: "Aplicaciones" },
-  { value: "games", label: "Juegos" },
-  { value: "system", label: "Sistema" },
-];
+function getCategoryOptions(
+  t: ReturnType<typeof useT>,
+): { value: LauncherItem["category"]; label: string }[] {
+  return [
+    { value: "apps", label: t("shortcutDialog.categories.apps") },
+    { value: "games", label: t("shortcutDialog.categories.games") },
+    { value: "system", label: t("shortcutDialog.categories.system") },
+  ];
+}
 
 function isTauri(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
@@ -81,6 +90,9 @@ function ShortcutDialogForm({
   onClose,
   ...props
 }: AddShortcutDialogProps & { isEdit: boolean; reduceMotion: boolean }) {
+  const t = useT();
+  const typeOptions = getTypeOptions(t);
+  const categoryOptions = getCategoryOptions(t);
   const [name, setName] = useState(() =>
     isEdit && props.mode === "edit" ? props.initialItem.name : "",
   );
@@ -111,18 +123,22 @@ function ShortcutDialogForm({
 
   const handleBrowse = async () => {
     if (!isTauri()) {
-      setError("El selector de archivos solo está disponible en la app de escritorio.");
+      setError(t("shortcutDialog.errors.desktopOnly"));
       return;
     }
 
     try {
       const selected =
         type === "folder"
-          ? await open({ directory: true, multiple: false, title: "Seleccionar carpeta" })
+          ? await open({
+              directory: true,
+              multiple: false,
+              title: t("shortcutDialog.dialogTitles.folder"),
+            })
           : await open({
               multiple: false,
-              title: "Seleccionar aplicación",
-              filters: [{ name: "Ejecutable", extensions: ["exe", "lnk"] }],
+              title: t("shortcutDialog.dialogTitles.application"),
+              filters: [{ name: t("shortcutDialog.filters.executable"), extensions: ["exe", "lnk"] }],
             });
 
       if (typeof selected === "string") {
@@ -151,7 +167,7 @@ function ShortcutDialogForm({
       setError(
         browseError instanceof Error
           ? browseError.message
-          : "No se pudo abrir el selector de archivos.",
+          : t("shortcutDialog.errors.browseFailed"),
       );
     }
   };
@@ -172,21 +188,21 @@ function ShortcutDialogForm({
     const resolvedName = name.trim() || appSelection?.name.trim() || "";
 
     if (!resolvedName) {
-      setError("El nombre es obligatorio.");
+      setError(t("shortcutDialog.errors.nameRequired"));
       return;
     }
 
     if (!resolvedTarget) {
       setError(
         showAppSearch
-          ? "Busca y selecciona una aplicación de la lista."
-          : "El destino es obligatorio.",
+          ? t("shortcutDialog.errors.selectApp")
+          : t("shortcutDialog.errors.targetRequired"),
       );
       return;
     }
 
     if (type === "url" && !/^https?:\/\//i.test(resolvedTarget)) {
-      setError("La URL debe empezar por http:// o https://");
+      setError(t("shortcutDialog.errors.urlScheme"));
       return;
     }
 
@@ -224,7 +240,7 @@ function ShortcutDialogForm({
       setError(
         submitError instanceof Error
           ? submitError.message
-          : "No se pudo guardar el acceso.",
+          : t("shortcutDialog.errors.saveFailed"),
       );
     } finally {
       setIsSaving(false);
@@ -247,11 +263,11 @@ function ShortcutDialogForm({
         <ComicPanel variant="white" shadowColor="black" rotation={-1}>
           <form className={styles.form} onSubmit={handleSubmit}>
             <h2 id="add-shortcut-title" className={styles.title}>
-              {isEdit ? "Editar acceso" : "Nuevo acceso"}
+              {isEdit ? t("shortcutDialog.title.edit") : t("shortcutDialog.title.create")}
             </h2>
 
             <label className={styles.field}>
-              <span className={styles.label}>Tipo</span>
+              <span className={styles.label}>{t("shortcutDialog.fields.type")}</span>
               <select
                 className={styles.select}
                 value={type}
@@ -273,24 +289,24 @@ function ShortcutDialogForm({
 
             {showAppSearch ? (
               <div className={styles.field}>
-                <span className={styles.label}>Buscar aplicación</span>
+                <span className={styles.label}>{t("shortcutDialog.fields.searchApp")}</span>
                 <AppSearchPicker
                   value={appSelection}
                   onChange={handleAppSelection}
                   autoFocus
-                  placeholder="Escribe para buscar, como en el menú Inicio…"
+                  placeholder={t("search.appPicker.placeholderDialog")}
                 />
                 <button
                   type="button"
                   className={styles.manualLink}
                   onClick={() => void handleBrowse()}
                 >
-                  O seleccionar archivo manualmente
+                  {t("shortcutDialog.manualBrowse")}
                 </button>
               </div>
             ) : (
               <label className={styles.field}>
-                <span className={styles.label}>Destino</span>
+                <span className={styles.label}>{t("shortcutDialog.fields.target")}</span>
                 <div className={styles.targetRow}>
                   <input
                     className={styles.input}
@@ -298,8 +314,8 @@ function ShortcutDialogForm({
                     onChange={(event) => setTarget(event.target.value)}
                     placeholder={
                       type === "url"
-                        ? "https://ejemplo.com"
-                        : "C:\\ruta\\al\\programa.exe"
+                        ? t("shortcutDialog.placeholders.url")
+                        : t("shortcutDialog.placeholders.path")
                     }
                     autoFocus={!isEdit}
                   />
@@ -309,7 +325,7 @@ function ShortcutDialogForm({
                       className={styles.browseBtn}
                       onClick={() => void handleBrowse()}
                     >
-                      Examinar
+                      {t("shortcutDialog.browse")}
                     </button>
                   ) : null}
                 </div>
@@ -317,17 +333,17 @@ function ShortcutDialogForm({
             )}
 
             <label className={styles.field}>
-              <span className={styles.label}>Nombre</span>
+              <span className={styles.label}>{t("shortcutDialog.fields.name")}</span>
               <input
                 className={styles.input}
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                placeholder="Mi aplicación"
+                placeholder={t("shortcutDialog.placeholders.name")}
               />
             </label>
 
             <label className={styles.field}>
-              <span className={styles.label}>Categoría</span>
+              <span className={styles.label}>{t("shortcutDialog.fields.category")}</span>
               <select
                 className={styles.select}
                 value={category}
@@ -349,14 +365,14 @@ function ShortcutDialogForm({
                 checked={favorite}
                 onChange={(event) => setFavorite(event.target.checked)}
               />
-              <span>Añadir a favoritos (Inicio)</span>
+              <span>{t("shortcutDialog.favorite")}</span>
             </label>
 
             {error ? <p className={styles.error}>{error}</p> : null}
 
             <div className={styles.actions}>
               <CutoutButton variant="default" rotation={-1} onClick={onClose} disabled={isSaving}>
-                Cancelar
+                {t("shortcutDialog.cancel")}
               </CutoutButton>
               <CutoutButton
                 variant="active"
@@ -364,7 +380,7 @@ function ShortcutDialogForm({
                 htmlType="submit"
                 disabled={isSaving}
               >
-                {isSaving ? "Guardando…" : "Guardar"}
+                {isSaving ? t("shortcutDialog.saving") : t("shortcutDialog.save")}
               </CutoutButton>
             </div>
           </form>

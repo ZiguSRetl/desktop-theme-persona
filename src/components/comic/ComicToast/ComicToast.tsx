@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffectiveReducedMotion } from "../../../features/settings/useAnimationProfile";
 import { useToastStore } from "../../../features/launcher/toastStore";
+import { useT } from "../../../i18n";
 import styles from "./ComicToast.module.css";
 
 export function ComicToast() {
@@ -8,6 +9,7 @@ export function ComicToast() {
   const variant = useToastStore((state) => state.variant);
   const clear = useToastStore((state) => state.clear);
   const reduceMotion = useEffectiveReducedMotion();
+  const t = useT();
 
   return (
     <AnimatePresence>
@@ -21,7 +23,7 @@ export function ComicToast() {
           transition={{ duration: 0.2 }}
         >
           <p className={styles.message}>{message}</p>
-          <button type="button" className={styles.close} onClick={clear} aria-label="Cerrar">
+          <button type="button" className={styles.close} onClick={clear} aria-label={t("toast.closeAria")}>
             ×
           </button>
         </motion.div>

@@ -1,4 +1,5 @@
 import { CheckCircle2, Circle, Loader2, XCircle } from "lucide-react";
+import { useT } from "../../i18n";
 import { ComicPanel } from "../../components/comic/ComicPanel";
 import { formatBytes } from "../system/systemService";
 import type { ScriptDefinition } from "./scriptRegistry";
@@ -58,10 +59,12 @@ export function ScriptDetailPanel({
   error,
   onRun,
 }: ScriptDetailPanelProps) {
+  const t = useT();
+
   if (!script) {
     return (
       <ComicPanel variant="white" rotation={-1} shadowColor="red" className={styles.panel}>
-        <p className={styles.empty}>Selecciona un script para ver detalles y ejecutarlo.</p>
+        <p className={styles.empty}>{t("scripts.detail.empty")}</p>
       </ComicPanel>
     );
   }
@@ -81,12 +84,12 @@ export function ScriptDetailPanel({
 
       <div className={styles.primaryActions}>
         <button type="button" className={styles.runBtn} onClick={onRun} disabled={running}>
-          {running ? "Ejecutando…" : "Ejecutar Clean"}
+          {running ? t("scripts.detail.running") : t("scripts.detail.run")}
         </button>
       </div>
 
-      <section className={styles.section} aria-label="Pasos del script">
-        <h3 className={styles.sectionTitle}>Pasos</h3>
+      <section className={styles.section} aria-label={t("scripts.detail.stepsAria")}>
+        <h3 className={styles.sectionTitle}>{t("scripts.detail.stepsTitle")}</h3>
         <ul className={styles.stepList}>
           {script.plannedSteps.map((planned) => {
             const step = stepsById.get(planned.id);
@@ -94,7 +97,7 @@ export function ScriptDetailPanel({
               <li key={planned.id} className={styles.stepItem}>
                 <StepIcon step={step} running={running && !lastResult} />
                 <div className={styles.stepBody}>
-                  <span className={styles.stepLabel}>{planned.label}</span>
+                  <span className={styles.stepLabel}>{t(planned.labelKey)}</span>
                   {step?.detail ? <span className={styles.stepDetail}>{step.detail}</span> : null}
                 </div>
               </li>
@@ -104,21 +107,21 @@ export function ScriptDetailPanel({
       </section>
 
       {lastResult ? (
-        <section className={styles.section} aria-label="Resultado">
-          <h3 className={styles.sectionTitle}>Antes / Después</h3>
+        <section className={styles.section} aria-label={t("scripts.detail.resultAria")}>
+          <h3 className={styles.sectionTitle}>{t("scripts.detail.beforeAfter")}</h3>
           <MetricsBlock
-            label="RAM usada"
+            label={t("scripts.detail.ramUsed")}
             before={lastResult.before.memoryUsedBytes}
             after={lastResult.after.memoryUsedBytes}
           />
           <MetricsBlock
-            label="VRAM usada"
+            label={t("scripts.detail.vramUsed")}
             before={lastResult.before.vramUsedBytes}
             after={lastResult.after.vramUsedBytes}
           />
           {lastResult.closedApps.length > 0 ? (
             <p className={styles.closedApps}>
-              Apps cerradas: {lastResult.closedApps.join(", ")}
+              {t("scripts.detail.closedApps", { list: lastResult.closedApps.join(", ") })}
             </p>
           ) : null}
         </section>

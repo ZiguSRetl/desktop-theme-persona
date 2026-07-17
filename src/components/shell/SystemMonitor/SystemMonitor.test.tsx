@@ -1,7 +1,14 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { MOCK_SYSTEM_METRICS } from "../../../features/system/types";
+import { useSettingsStore } from "../../../features/settings/settingsStore";
 import { SystemMonitor } from "./SystemMonitor";
+
+beforeEach(() => {
+  useSettingsStore.setState((state) => ({
+    settings: { ...state.settings, language: "es" },
+  }));
+});
 
 afterEach(() => {
   cleanup();

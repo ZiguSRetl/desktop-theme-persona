@@ -1,11 +1,28 @@
-const percentFormatter = new Intl.NumberFormat("es-ES", {
-  maximumFractionDigits: 0,
-});
+const DEFAULT_LOCALE = "en-US";
 
-const valueFormatter = new Intl.NumberFormat("es-ES", {
-  maximumFractionDigits: 1,
-  minimumFractionDigits: 0,
-});
+const percentFormatters = new Map<string, Intl.NumberFormat>();
+const valueFormatters = new Map<string, Intl.NumberFormat>();
+
+function getPercentFormatter(locale: string): Intl.NumberFormat {
+  let formatter = percentFormatters.get(locale);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
+    percentFormatters.set(locale, formatter);
+  }
+  return formatter;
+}
+
+function getValueFormatter(locale: string): Intl.NumberFormat {
+  let formatter = valueFormatters.get(locale);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat(locale, {
+      maximumFractionDigits: 1,
+      minimumFractionDigits: 0,
+    });
+    valueFormatters.set(locale, formatter);
+  }
+  return formatter;
+}
 
 const RATE_UNITS = ["B/s", "KB/s", "MB/s", "GB/s"] as const;
 const BYTE_UNITS = ["B", "KB", "MB", "GB", "TB"] as const;
@@ -23,11 +40,11 @@ export function usagePercent(usedBytes: number, totalBytes: number): number {
   return normalizePercent((usedBytes / totalBytes) * 100);
 }
 
-export function formatPercent(value: number): string {
-  return `${percentFormatter.format(Math.round(normalizePercent(value)))}%`;
+export function formatPercent(value: number, locale: string = DEFAULT_LOCALE): string {
+  return `${getPercentFormatter(locale).format(Math.round(normalizePercent(value)))}%`;
 }
 
-export function formatBytes(bytes: number): string {
+export function formatBytes(bytes: number, locale: string = DEFAULT_LOCALE): string {
   if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
 
   const exponent = Math.min(
@@ -37,10 +54,10 @@ export function formatBytes(bytes: number): string {
   const value = bytes / 1024 ** exponent;
   const rounded = exponent === 0 ? Math.round(value) : value;
 
-  return `${valueFormatter.format(rounded)} ${BYTE_UNITS[exponent]}`;
+  return `${getValueFormatter(locale).format(rounded)} ${BYTE_UNITS[exponent]}`;
 }
 
-export function formatByteRate(bytesPerSecond: number): string {
+export function formatByteRate(bytesPerSecond: number, locale: string = DEFAULT_LOCALE): string {
   if (!Number.isFinite(bytesPerSecond) || bytesPerSecond <= 0) {
     return `0 ${RATE_UNITS[0]}`;
   }
@@ -52,37 +69,46 @@ export function formatByteRate(bytesPerSecond: number): string {
   const value = bytesPerSecond / 1024 ** exponent;
   const rounded = exponent === 0 ? Math.round(value) : value;
 
-  return `${valueFormatter.format(rounded)} ${RATE_UNITS[exponent]}`;
+  return `${getValueFormatter(locale).format(rounded)} ${RATE_UNITS[exponent]}`;
 }
 
-export function formatMemorySecondary(usedBytes: number, totalBytes: number): string {
-  return `${formatBytes(usedBytes)} / ${formatBytes(totalBytes)}`;
+export function formatMemorySecondary(
+  usedBytes: number,
+  totalBytes: number,
+  locale: string = DEFAULT_LOCALE,
+): string {
+  return `${formatBytes(usedBytes, locale)} / ${formatBytes(totalBytes, locale)}`;
 }
 
-export function formatDiskSecondary(usedBytes: number, totalBytes: number): string {
-  return formatMemorySecondary(usedBytes, totalBytes);
+export function formatDiskSecondary(
+  usedBytes: number,
+  totalBytes: number,
+  locale: string = DEFAULT_LOCALE,
+): string {
+  return formatMemorySecondary(usedBytes, totalBytes, locale);
 }
 
-export function formatNetworkPair(downloadBps: number, uploadBps: number): {
-  download: string;
-  upload: string;
-  ariaLabel: string;
-} {
-  const download = formatByteRate(downloadBps);
-  const upload = formatByteRate(uploadBps);
+export function formatNetworkPair(
+  downloadBps: number,
+  uploadBps: number,
+  locale: string = DEFAULT_LOCALE,
+): { download: string; upload: string } {
   return {
-    download,
-    upload,
-    ariaLabel: `Descarga ${download}, subida ${upload}`,
+    download: formatByteRate(downloadBps, locale),
+    upload: formatByteRate(uploadBps, locale),
   };
 }
 
-export function formatTemperature(celsius: number): string {
+export function formatTemperature(celsius: number, locale: string = DEFAULT_LOCALE): string {
   if (!Number.isFinite(celsius)) return "--";
-  return `${percentFormatter.format(Math.round(celsius))} °C`;
+  return `${getPercentFormatter(locale).format(Math.round(celsius))} °C`;
 }
 
-export function formatGpuVram(usedBytes: number | null, totalBytes: number | null): string | null {
+export function formatGpuVram(
+  usedBytes: number | null,
+  totalBytes: number | null,
+  locale: string = DEFAULT_LOCALE,
+): string | null {
   if (usedBytes === null || totalBytes === null) return null;
-  return formatMemorySecondary(usedBytes, totalBytes);
+  return formatMemorySecondary(usedBytes, totalBytes, locale);
 }

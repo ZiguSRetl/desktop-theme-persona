@@ -10,5 +10,5 @@ alwaysApply: true
 - Shared domain types live in `src/types/desktop.ts` — do not duplicate launcher/settings shapes.
 - UI primitives go in `src/components/` (`comic/` for design-system pieces, `shell/` for chrome).
 - Prefer Zustand stores over React Context for domain state.
-- User-facing strings and error messages stay in Spanish; code identifiers stay in English.
+- User-facing copy goes through `src/i18n` catalogs (`useT` / `tt` / `t`); supported languages are `es`, `en`, `de`, `fr`, `ja`. Code identifiers stay in English.
 - Do not grow `pages/` into business logic hubs.

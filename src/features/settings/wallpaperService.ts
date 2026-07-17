@@ -1,24 +1,28 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import type { WallpaperSettings } from "../../types/desktop";
+import { tt } from "../../i18n";
 
 function isTauri(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 
-const IMAGE_FILTERS = [{ name: "Imágenes", extensions: ["png", "jpg", "jpeg", "webp", "bmp", "gif"] }];
-
 const dataUrlCache = new Map<string, string>();
 
 export async function pickWallpaperImagePath(): Promise<string | null> {
   if (!isTauri()) {
-    throw new Error("El fondo personalizado solo está disponible en la app de escritorio.");
+    throw new Error(tt("services.wallpaper.desktopOnly"));
   }
 
   const selected = await open({
     multiple: false,
-    filters: IMAGE_FILTERS,
-    title: "Elegir imagen de fondo",
+    filters: [
+      {
+        name: tt("services.wallpaper.filterImages"),
+        extensions: ["png", "jpg", "jpeg", "webp", "bmp", "gif"],
+      },
+    ],
+    title: tt("services.wallpaper.pickTitle"),
   });
 
   if (!selected || typeof selected !== "string") return null;
@@ -49,7 +53,7 @@ export async function loadWallpaperDataUrl(path: string): Promise<string> {
   if (cached) return cached;
 
   if (!isTauri()) {
-    throw new Error("El fondo personalizado solo está disponible en la app de escritorio.");
+    throw new Error(tt("services.wallpaper.desktopOnly"));
   }
 
   const dataUrl = await invoke<string>("load_image_data_url", { path });

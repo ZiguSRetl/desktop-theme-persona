@@ -1,6 +1,8 @@
 import { AlertTriangle } from "lucide-react";
 import type { SystemMonitorStatus } from "../../../features/system/types";
 import { formatNetworkPair } from "../../../features/system/formatMetrics";
+import { useSettingsStore } from "../../../features/settings/settingsStore";
+import { getLocaleTag, useT } from "../../../i18n";
 import styles from "./SystemMonitor.module.css";
 
 interface NetworkMetricProps {
@@ -16,6 +18,9 @@ export function NetworkMetric({
   uploadBytesPerSecond,
   error,
 }: NetworkMetricProps) {
+  const t = useT();
+  const language = useSettingsStore((state) => state.settings.language);
+  const locale = getLocaleTag(language);
   const loading = status === "loading";
   const unavailable =
     status === "unavailable" ||
@@ -25,23 +30,25 @@ export function NetworkMetric({
 
   const pair =
     !unavailable && downloadBytesPerSecond !== null && uploadBytesPerSecond !== null
-      ? formatNetworkPair(downloadBytesPerSecond, uploadBytesPerSecond)
+      ? formatNetworkPair(downloadBytesPerSecond, uploadBytesPerSecond, locale)
       : null;
 
   const ariaLabel = loading
-    ? "Red: cargando"
+    ? t("system.aria.networkLoading")
     : pair
-      ? `Red: ${pair.ariaLabel}`
-      : "Red: no disponible";
+      ? `${t("system.aria.networkLabel")}: ${t("system.aria.networkPair", { download: pair.download, upload: pair.upload })}`
+      : t("system.aria.networkUnavailable");
+
+  const metricError = error ?? t("system.aria.metricError");
 
   return (
     <div className={styles.metric} aria-label={ariaLabel}>
       <div className={styles.metricHead}>
-        <span className={styles.metricLabel}>RED</span>
+        <span className={styles.metricLabel}>{t("system.metrics.network")}</span>
         {status === "error" ? (
-          <span className={styles.errorIcon} title={error ?? "Error al leer métrica"}>
+          <span className={styles.errorIcon} title={metricError}>
             <AlertTriangle size={12} aria-hidden="true" />
-            <span className={styles.visuallyHidden}>{error ?? "Error al leer métrica"}</span>
+            <span className={styles.visuallyHidden}>{metricError}</span>
           </span>
         ) : null}
       </div>

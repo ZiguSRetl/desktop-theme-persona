@@ -16,6 +16,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useT } from "../../i18n";
 import type { LauncherItem } from "../../types/desktop";
 import { AddShortcutDialog } from "../../components/comic/AddShortcutDialog";
 import { launchItem } from "./launchItem";
@@ -106,6 +107,7 @@ type LauncherViewProps =
     };
 
 export function LauncherView(props: LauncherViewProps) {
+  const t = useT();
   const isFavorites = "source" in props && props.source === "favorites";
   const category = "category" in props ? props.category : undefined;
   const showAdd = "category" in props ? (props.showAdd ?? true) : false;
@@ -155,19 +157,21 @@ export function LauncherView(props: LauncherViewProps) {
 
   const handleAdd = async (input: Parameters<typeof addItem>[0]) => {
     await addItem(input);
-    showSuccess("Acceso añadido correctamente.");
+    showSuccess(t("launcher.toasts.added"));
   };
 
   const handleEdit = async (input: Parameters<typeof updateItem>[1]) => {
     if (!editItem) return;
     await updateItem(editItem.id, input);
-    showSuccess("Acceso actualizado.");
+    showSuccess(t("launcher.toasts.updated"));
   };
 
   const handleRemove = async (item: LauncherItem) => {
     try {
       await removeItem(item.id);
-      showSuccess(`"${tileDisplayName(item.name, item.target)}" eliminado.`);
+      showSuccess(
+        t("launcher.toasts.removed", { name: tileDisplayName(item.name, item.target) }),
+      );
     } catch (error) {
       showLaunchError(error);
     }
@@ -175,7 +179,7 @@ export function LauncherView(props: LauncherViewProps) {
 
   const confirmRemove = (item: LauncherItem) => {
     const label = tileDisplayName(item.name, item.target);
-    if (window.confirm(`¿Eliminar el acceso "${label}"?\n\nRuta: ${item.target}`)) {
+    if (window.confirm(t("launcher.confirm.remove", { name: label, path: item.target }))) {
       void handleRemove(item);
     }
   };
@@ -238,13 +242,13 @@ export function LauncherView(props: LauncherViewProps) {
           </div>
 
           {totalPages > 1 ? (
-            <nav className={styles.pagination} aria-label="Paginación del grid">
+            <nav className={styles.pagination} aria-label={t("launcher.pagination.aria")}>
               {Array.from({ length: totalPages }, (_, index) => (
                 <button
                   key={index}
                   type="button"
                   className={`${styles.dot} ${index === safePage ? styles.dotActive : ""}`}
-                  aria-label={`Página ${index + 1}`}
+                  aria-label={t("launcher.pagination.page", { n: index + 1 })}
                   aria-current={index === safePage ? "page" : undefined}
                   onClick={() => setPage(index)}
                 />
@@ -253,9 +257,9 @@ export function LauncherView(props: LauncherViewProps) {
           ) : null}
         </div>
 
-        <aside className={styles.detailAside} aria-label="Panel de detalle">
+        <aside className={styles.detailAside} aria-label={t("launcher.detail.asideAria")}>
           <details className="context-panel__details launcher-panel__details" open>
-            <summary className="context-panel__toggle">Detalle del acceso</summary>
+            <summary className="context-panel__toggle">{t("launcher.detail.summary")}</summary>
             <div className="context-panel__content">
               <LauncherDetailPanel
                 item={selectedItem}

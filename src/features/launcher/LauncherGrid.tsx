@@ -16,6 +16,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useT } from "../../i18n";
 import type { LauncherItem } from "../../types/desktop";
 import { launchItem } from "./launchItem";
 import { useItemsByCategory, useFavoriteItems } from "./launcherSelectors";
@@ -96,6 +97,7 @@ export function LauncherGrid({
   showAdd = true,
   gridClassName = "",
 }: LauncherGridProps) {
+  const t = useT();
   const items = useItemsByCategory(category);
   const addItem = useLauncherStore((state) => state.addItem);
   const updateItem = useLauncherStore((state) => state.updateItem);
@@ -123,13 +125,13 @@ export function LauncherGrid({
 
   const handleAdd = async (input: Parameters<typeof addItem>[0]) => {
     await addItem(input);
-    showSuccess("Acceso añadido correctamente.");
+    showSuccess(t("launcher.toasts.added"));
   };
 
   const handleEdit = async (input: Parameters<typeof updateItem>[1]) => {
     if (!editItem) return;
     await updateItem(editItem.id, input);
-    showSuccess("Acceso actualizado.");
+    showSuccess(t("launcher.toasts.updated"));
   };
 
   const handleRemove = async (item: LauncherItem) => {
@@ -140,7 +142,7 @@ export function LauncherGrid({
 
     try {
       await removeItem(item.id);
-      showSuccess(`"${item.name}" eliminado.`);
+      showSuccess(t("launcher.toasts.removed", { name: item.name }));
       setPendingDelete(null);
     } catch (error) {
       showLaunchError(error);
@@ -187,7 +189,9 @@ export function LauncherGrid({
                 onMoveDown={() => void moveItem(item.id, 1)}
               />
             ))}
-            {showAdd ? <AddCutout label="+ Añadir" onClick={() => setDialogOpen(true)} /> : null}
+            {showAdd ? (
+              <AddCutout label={t("launcher.addWithPlus")} onClick={() => setDialogOpen(true)} />
+            ) : null}
           </div>
         </SortableContext>
       </DndContext>
@@ -217,6 +221,7 @@ interface FavoritesGridProps {
 }
 
 export function FavoritesGrid({ gridClassName = "cutout-grid--home" }: FavoritesGridProps) {
+  const t = useT();
   const items = useFavoriteItems();
   const updateItem = useLauncherStore((state) => state.updateItem);
   const removeItem = useLauncherStore((state) => state.removeItem);
@@ -235,7 +240,7 @@ export function FavoritesGrid({ gridClassName = "cutout-grid--home" }: Favorites
   const handleEdit = async (input: Parameters<typeof updateItem>[1]) => {
     if (!editItem) return;
     await updateItem(editItem.id, input);
-    showSuccess("Acceso actualizado.");
+    showSuccess(t("launcher.toasts.updated"));
   };
 
   const handleRemove = async (item: LauncherItem) => {
@@ -246,7 +251,7 @@ export function FavoritesGrid({ gridClassName = "cutout-grid--home" }: Favorites
 
     try {
       await removeItem(item.id);
-      showSuccess(`"${item.name}" eliminado.`);
+      showSuccess(t("launcher.toasts.removed", { name: item.name }));
       setPendingDelete(null);
     } catch (error) {
       showLaunchError(error);

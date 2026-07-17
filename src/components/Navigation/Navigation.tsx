@@ -12,27 +12,29 @@ import {
 import { staggerChildren } from "../../lib/motionPresets";
 import { playUiSound, primeAudioContext } from "../../features/audio/soundService";
 import { useEffectiveReducedMotion } from "../../features/settings/useAnimationProfile";
+import { useT } from "../../i18n";
 import styles from "./Navigation.module.css";
 
 const navItems = [
-  { to: "/", label: "Inicio", icon: Home, end: true },
-  { to: "/apps", label: "Aplicaciones", icon: LayoutGrid, end: false },
-  { to: "/games", label: "Juegos", icon: Gamepad2, end: false },
-  { to: "/system", label: "Sistema", icon: MonitorCog, end: false },
-  { to: "/scripts", label: "Scripts", icon: Terminal, end: false },
-  { to: "/settings", label: "Ajustes", icon: Settings, end: false },
+  { to: "/", labelKey: "nav.items.home", icon: Home, end: true },
+  { to: "/apps", labelKey: "nav.items.apps", icon: LayoutGrid, end: false },
+  { to: "/games", labelKey: "nav.items.games", icon: Gamepad2, end: false },
+  { to: "/system", labelKey: "nav.items.system", icon: MonitorCog, end: false },
+  { to: "/scripts", labelKey: "nav.items.scripts", icon: Terminal, end: false },
+  { to: "/settings", labelKey: "nav.items.settings", icon: Settings, end: false },
 ] as const;
 
 export function Navigation() {
   const reduceMotion = useEffectiveReducedMotion();
+  const t = useT();
 
   return (
-    <nav className={styles.nav} aria-label="Navegación principal">
+    <nav className={styles.nav} aria-label={t("nav.ariaLabel")}>
       <div className={styles.brand}>
         <Crown className={styles.brandMark} size={28} aria-hidden="true" />
         <div className={styles.brandText}>
-          <span className={styles.brandEyebrow}>Launcher</span>
-          <span className={styles.brandTitle}>P5 Explorer</span>
+          <span className={styles.brandEyebrow}>{t("nav.brand.eyebrow")}</span>
+          <span className={styles.brandTitle}>{t("nav.brand.title")}</span>
         </div>
       </div>
 
@@ -47,7 +49,7 @@ export function Navigation() {
           },
         }}
       >
-        {navItems.map(({ to, label, icon: Icon, end }, index) => (
+        {navItems.map(({ to, labelKey, icon: Icon, end }, index) => (
           <motion.li
             key={to}
             layout={!reduceMotion}
@@ -74,7 +76,7 @@ export function Navigation() {
               }
             >
               <Icon className={styles.icon} aria-hidden="true" />
-              <span className={styles.label}>{label}</span>
+              <span className={styles.label}>{t(labelKey)}</span>
               <span className={styles.arrow} aria-hidden="true" />
             </NavLink>
           </motion.li>

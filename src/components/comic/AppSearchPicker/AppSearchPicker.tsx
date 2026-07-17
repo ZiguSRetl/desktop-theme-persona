@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Search } from "lucide-react";
+import { useT } from "../../../i18n";
 import { searchInstalledApps, type InstalledAppResult } from "../../../features/launcher/appSearchService";
 import { fetchFileIcon } from "../../../features/launcher/iconService";
 import styles from "./AppSearchPicker.module.css";
@@ -34,9 +35,11 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
 export function AppSearchPicker({
   value,
   onChange,
-  placeholder = "Buscar aplicaciones instaladas…",
+  placeholder,
   autoFocus = false,
 }: AppSearchPickerProps) {
+  const t = useT();
+  const resolvedPlaceholder = placeholder ?? t("search.appPicker.placeholder");
   const [query, setQuery] = useState(() => value?.name ?? "");
   const [results, setResults] = useState<InstalledAppResult[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -97,9 +100,9 @@ export function AppSearchPicker({
   const visibleLoading = canSearch && loading;
   const showDropdown = open;
 
-  let emptyMessage = "Escribe al menos 2 caracteres para buscar.";
+  let emptyMessage = t("search.appPicker.minChars");
   if (canSearch) {
-    emptyMessage = "Sin resultados.";
+    emptyMessage = t("search.appPicker.empty");
   }
 
   return (
@@ -111,8 +114,8 @@ export function AppSearchPicker({
           className={styles.input}
           value={query}
           autoFocus={autoFocus}
-          placeholder={placeholder}
-          aria-label="Buscar aplicación"
+          placeholder={resolvedPlaceholder}
+          aria-label={t("search.appPicker.ariaLabel")}
           aria-expanded={showDropdown}
           aria-autocomplete="list"
           autoComplete="off"
@@ -160,8 +163,8 @@ export function AppSearchPicker({
       ) : null}
 
       {showDropdown ? (
-        <div className={styles.dropdown} role="listbox" aria-label="Aplicaciones encontradas">
-          {visibleLoading ? <p className={styles.empty}>Buscando…</p> : null}
+        <div className={styles.dropdown} role="listbox" aria-label={t("search.appPicker.resultsAria")}>
+          {visibleLoading ? <p className={styles.empty}>{t("search.appPicker.loading")}</p> : null}
           {!visibleLoading && visibleResults.length === 0 ? (
             <p className={styles.empty}>{emptyMessage}</p>
           ) : null}

@@ -2,6 +2,8 @@ import { Cpu, Gpu, HardDrive, Monitor, Server } from "lucide-react";
 import type { SystemStatsStatus } from "../../../features/system/useSystemStats";
 import { formatBytes, formatPercent } from "../../../features/system/systemService";
 import type { SystemStats as SystemStatsData } from "../../../types/desktop";
+import { useSettingsStore } from "../../../features/settings/settingsStore";
+import { getLocaleTag, useT } from "../../../i18n";
 import { ComicPanel } from "../ComicPanel";
 import styles from "./SystemStats.module.css";
 
@@ -41,33 +43,34 @@ function StatBar({
 }
 
 function StatusMessage({ status, error }: { status: SystemStatsStatus; error: string | null }) {
+  const t = useT();
+
   if (status === "loading" || status === "idle") {
-    return <p className={styles.message}>Leyendo estadísticas del sistema…</p>;
+    return <p className={styles.message}>{t("system.stats.loading")}</p>;
   }
 
   if (status === "unavailable") {
-    return (
-      <p className={styles.message}>
-        Estadísticas disponibles solo en la app de escritorio (Tauri).
-      </p>
-    );
+    return <p className={styles.message}>{t("system.stats.unavailable")}</p>;
   }
 
   if (status === "error") {
-    return <p className={styles.messageError}>{error ?? "Error al leer estadísticas."}</p>;
+    return <p className={styles.messageError}>{error ?? t("system.stats.error")}</p>;
   }
 
   return null;
 }
 
 export function SystemStats({ stats, status, error }: SystemStatsProps) {
+  const t = useT();
+  const language = useSettingsStore((state) => state.settings.language);
+  const locale = getLocaleTag(language);
   const memoryPercent =
     stats && stats.memoryTotalBytes > 0
       ? (stats.memoryUsedBytes / stats.memoryTotalBytes) * 100
       : 0;
 
   return (
-    <section className={styles.section} aria-label="Estadísticas del sistema">
+    <section className={styles.section} aria-label={t("system.stats.aria")}>
       <ComicPanel variant="white" rotation={-1} shadowColor="red" className={styles.panel}>
         {stats ? (
           <div className={styles.content}>
@@ -75,14 +78,14 @@ export function SystemStats({ stats, status, error }: SystemStatsProps) {
               <div className={styles.metaItem}>
                 <Server size={18} aria-hidden="true" />
                 <div>
-                  <p className={styles.metaLabel}>Equipo</p>
+                  <p className={styles.metaLabel}>{t("system.stats.host")}</p>
                   <p className={styles.metaValue}>{stats.hostName}</p>
                 </div>
               </div>
               <div className={styles.metaItem}>
                 <Monitor size={18} aria-hidden="true" />
                 <div>
-                  <p className={styles.metaLabel}>Sistema</p>
+                  <p className={styles.metaLabel}>{t("system.stats.os")}</p>
                   <p className={styles.metaValue}>{stats.osName}</p>
                 </div>
               </div>
@@ -90,7 +93,7 @@ export function SystemStats({ stats, status, error }: SystemStatsProps) {
                 <div className={styles.metaItem}>
                   <Gpu size={18} aria-hidden="true" />
                   <div>
-                    <p className={styles.metaLabel}>GPU</p>
+                    <p className={styles.metaLabel}>{t("system.stats.gpu")}</p>
                     <p className={styles.metaValue}>{stats.gpuName}</p>
                   </div>
                 </div>
@@ -99,20 +102,20 @@ export function SystemStats({ stats, status, error }: SystemStatsProps) {
 
             <div className={styles.bars}>
               <StatBar
-                label="CPU"
-                value={formatPercent(stats.cpuUsagePercent)}
+                label={t("system.metrics.cpu")}
+                value={formatPercent(stats.cpuUsagePercent, locale)}
                 percent={stats.cpuUsagePercent}
                 icon={Cpu}
               />
               <StatBar
-                label="RAM"
-                value={`${formatBytes(stats.memoryUsedBytes)} / ${formatBytes(stats.memoryTotalBytes)}`}
+                label={t("system.metrics.ram")}
+                value={`${formatBytes(stats.memoryUsedBytes, locale)} / ${formatBytes(stats.memoryTotalBytes, locale)}`}
                 percent={memoryPercent}
                 icon={HardDrive}
               />
             </div>
 
-            <p className={styles.hint}>Actualización cada 2 s · se pausa al ocultar la ventana</p>
+            <p className={styles.hint}>{t("system.stats.hint")}</p>
           </div>
         ) : (
           <StatusMessage status={status} error={error} />

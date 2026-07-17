@@ -1,6 +1,7 @@
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import type { PersistedDesktopState } from "../../types/desktop";
+import { tt } from "../../i18n";
 import { useLauncherStore } from "./launcherStore";
 import {
   createInitialState,
@@ -28,14 +29,14 @@ export async function buildCurrentState(): Promise<PersistedDesktopState> {
 
 export async function exportConfig(): Promise<string | null> {
   if (!isTauri()) {
-    throw new Error("La exportación solo está disponible en la app de escritorio.");
+    throw new Error(tt("services.configTransfer.exportDesktopOnly"));
   }
 
   const state = await buildCurrentState();
   const path = await save({
     defaultPath: "persona5-explorer-config.json",
-    filters: [{ name: "JSON", extensions: ["json"] }],
-    title: "Exportar configuración",
+    filters: [{ name: tt("services.configTransfer.filterJson"), extensions: ["json"] }],
+    title: tt("services.configTransfer.exportTitle"),
   });
 
   if (!path) return null;
@@ -46,7 +47,7 @@ export async function exportConfig(): Promise<string | null> {
 
 export async function importConfig(): Promise<PersistedDesktopState | null> {
   if (!isTauri()) {
-    throw new Error("La importación solo está disponible en la app de escritorio.");
+    throw new Error(tt("services.configTransfer.importDesktopOnly"));
   }
 
   const current = await buildCurrentState();
@@ -54,8 +55,8 @@ export async function importConfig(): Promise<PersistedDesktopState | null> {
 
   const path = await open({
     multiple: false,
-    filters: [{ name: "JSON", extensions: ["json"] }],
-    title: "Importar configuración",
+    filters: [{ name: tt("services.configTransfer.filterJson"), extensions: ["json"] }],
+    title: tt("services.configTransfer.importTitle"),
   });
 
   if (!path || typeof path !== "string") return null;

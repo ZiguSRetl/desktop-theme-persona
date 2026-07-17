@@ -17,7 +17,7 @@ description: >-
 5. Selectors: pure functions or small hooks (`*Selectors.ts`).
 6. UI: feature-local views/tiles, or shared `components/comic/*` primitives.
 7. Page: thin wrapper in `src/pages/` + route in `src/app/router.tsx` if needed.
-8. Persist user-visible copy in Spanish.
+8. Persist user-visible copy via `src/i18n` catalogs (`useT` / `tt`).
 9. Add/adjust colocated Vitest coverage for store/selector/validation logic.
 10. Run `npm test`.
 

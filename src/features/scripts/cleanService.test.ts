@@ -5,6 +5,7 @@ vi.mock("@tauri-apps/api/core", () => ({
 }));
 
 import { invoke } from "@tauri-apps/api/core";
+import { useSettingsStore } from "../settings/settingsStore";
 import {
   formatFreedMemory,
   hasPartialSuccess,
@@ -16,6 +17,9 @@ describe("cleanService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal("__TAURI_INTERNALS__", {});
+    useSettingsStore.setState((state) => ({
+      settings: { ...state.settings, language: "es" },
+    }));
   });
 
   it("throws outside Tauri", async () => {

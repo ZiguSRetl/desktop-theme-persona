@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useT } from "../../i18n";
 import { SectionBadge } from "../launcher/SectionBadge";
 import { SCRIPTS } from "./scriptRegistry";
 import { ScriptConfirmDialog } from "./ScriptConfirmDialog";
@@ -8,6 +9,7 @@ import { useScriptsStore } from "./scriptsStore";
 import styles from "./ScriptView.module.css";
 
 export function ScriptView() {
+  const t = useT();
   const [selectedId, setSelectedId] = useState<string | null>(SCRIPTS[0]?.id ?? null);
   const status = useScriptsStore((state) => state.status);
   const activeScriptId = useScriptsStore((state) => state.activeScriptId);
@@ -41,7 +43,7 @@ export function ScriptView() {
 
   return (
     <div className="page-layout launcher-page">
-      <SectionBadge label="Scripts internos" />
+      <SectionBadge label={t("sections.badges.scripts")} />
 
       <div className="launcher-layout">
         <div className={styles.main}>
@@ -60,9 +62,9 @@ export function ScriptView() {
           </div>
         </div>
 
-        <aside className={styles.detailAside} aria-label="Panel de detalle del script">
+        <aside className={styles.detailAside} aria-label={t("scripts.view.detailAsideAria")}>
           <details className="context-panel__details launcher-panel__details" open>
-            <summary className="context-panel__toggle">Detalle del script</summary>
+            <summary className="context-panel__toggle">{t("scripts.view.detailSummary")}</summary>
             <div className="context-panel__content">
               <ScriptDetailPanel
                 script={selectedScript}

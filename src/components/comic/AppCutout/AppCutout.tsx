@@ -11,6 +11,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import { useT } from "../../../i18n";
 import type { LauncherItemType } from "../../../types/desktop";
 import {
   useEffectiveReducedMotion,
@@ -60,16 +61,16 @@ const clipPaths = [
   "polygon(0 0, 100% 6px, 100% 100%, 12px 100%, 0 calc(100% - 12px))",
 ];
 
-function typeLabel(type: LauncherItemType): string {
+function typeLabel(t: ReturnType<typeof useT>, type: LauncherItemType): string {
   switch (type) {
     case "application":
-      return "Aplicación";
+      return t("launcher.types.application.cap");
     case "game":
-      return "Juego";
+      return t("launcher.types.game.cap");
     case "folder":
-      return "Carpeta";
+      return t("launcher.types.folder.cap");
     case "url":
-      return "Enlace";
+      return t("launcher.types.url.cap");
   }
 }
 
@@ -91,6 +92,7 @@ export function AppCutout({
   onMoveUp,
   onMoveDown,
 }: AppCutoutProps) {
+  const t = useT();
   const [isHovered, setIsHovered] = useState(false);
   const [isLaunching, setIsLaunching] = useState(false);
   const reduceMotion = useEffectiveReducedMotion();
@@ -184,7 +186,7 @@ export function AppCutout({
         <button
           type="button"
           className={styles.dragHandle}
-          aria-label={`Reordenar ${name}`}
+          aria-label={t("launcher.tile.reorderAria", { name })}
           {...dragHandleProps}
           onClick={(event) => event.stopPropagation()}
         >
@@ -196,7 +198,11 @@ export function AppCutout({
         <button
           type="button"
           className={`${styles.favoriteBtn} ${isFavorite ? styles.favoriteBtnActive : ""}`}
-          aria-label={isFavorite ? `Quitar ${name} de favoritos` : `Añadir ${name} a favoritos`}
+          aria-label={
+            isFavorite
+              ? t("launcher.cutout.removeFavoriteAria", { name })
+              : t("launcher.cutout.addFavoriteAria", { name })
+          }
           aria-pressed={isFavorite}
           onClick={(event) => {
             event.stopPropagation();
@@ -211,7 +217,7 @@ export function AppCutout({
         <button
           type="button"
           className={styles.editBtn}
-          aria-label={`Editar ${name}`}
+          aria-label={t("launcher.cutout.editAria", { name })}
           onClick={(event) => {
             event.stopPropagation();
             onEdit();
@@ -225,7 +231,7 @@ export function AppCutout({
         <Icon size={32} strokeWidth={2.5} />
       </span>
       <span className={styles.name}>{name}</span>
-      <span className={styles.category}>{category ?? typeLabel(type)}</span>
+      <span className={styles.category}>{category ?? typeLabel(t, type)}</span>
 
       {(onMoveUp || onMoveDown) && (
         <div className={styles.reorderBtns}>
@@ -233,7 +239,7 @@ export function AppCutout({
             <button
               type="button"
               className={styles.reorderBtn}
-              aria-label={`Subir ${name}`}
+              aria-label={t("launcher.cutout.moveUpAria", { name })}
               onClick={(event) => {
                 event.stopPropagation();
                 onMoveUp();
@@ -246,7 +252,7 @@ export function AppCutout({
             <button
               type="button"
               className={styles.reorderBtn}
-              aria-label={`Bajar ${name}`}
+              aria-label={t("launcher.cutout.moveDownAria", { name })}
               onClick={(event) => {
                 event.stopPropagation();
                 onMoveDown();
@@ -262,13 +268,17 @@ export function AppCutout({
         <button
           type="button"
           className={`${styles.removeBtn} ${confirmDelete ? styles.removeBtnConfirm : ""}`}
-          aria-label={confirmDelete ? `Confirmar eliminar ${name}` : `Eliminar ${name}`}
+          aria-label={
+            confirmDelete
+              ? t("launcher.cutout.confirmRemoveAria", { name })
+              : t("launcher.cutout.removeAria", { name })
+          }
           onClick={(event) => {
             event.stopPropagation();
             onRemove();
           }}
         >
-          {confirmDelete ? "¿Eliminar?" : "×"}
+          {confirmDelete ? t("launcher.cutout.confirmRemove") : "×"}
         </button>
       ) : null}
     </motion.div>

@@ -4,6 +4,7 @@ import { launchItem } from "../../../features/launcher/launchItem";
 import { useLauncherStore } from "../../../features/launcher/launcherStore";
 import { searchLauncherItems } from "../../../features/launcher/searchSelectors";
 import { showLaunchError } from "../../../features/launcher/toastStore";
+import { useT } from "../../../i18n";
 import styles from "./HeaderSearch.module.css";
 
 export interface HeaderSearchHandle {
@@ -11,6 +12,7 @@ export interface HeaderSearchHandle {
 }
 
 export const HeaderSearch = forwardRef<HeaderSearchHandle>(function HeaderSearch(_props, ref) {
+  const t = useT();
   const items = useLauncherStore((state) => state.items);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -133,8 +135,8 @@ export const HeaderSearch = forwardRef<HeaderSearchHandle>(function HeaderSearch
             setDropdownOpen(true);
           }}
           onFocus={() => setDropdownOpen(true)}
-          placeholder="Buscar aplicaciones, juegos y archivos..."
-          aria-label="Buscar accesos"
+          placeholder={t("search.header.placeholder")}
+          aria-label={t("search.header.ariaLabel")}
           aria-expanded={showDropdown}
           aria-autocomplete="list"
           autoComplete="off"
@@ -142,9 +144,9 @@ export const HeaderSearch = forwardRef<HeaderSearchHandle>(function HeaderSearch
       </form>
 
       {showDropdown ? (
-        <div className={styles.dropdown} role="listbox" aria-label="Resultados de búsqueda">
+        <div className={styles.dropdown} role="listbox" aria-label={t("search.header.resultsAria")}>
           {results.length === 0 ? (
-            <p className={styles.empty}>Sin resultados.</p>
+            <p className={styles.empty}>{t("search.header.empty")}</p>
           ) : (
             <ul className={styles.results}>
               {results.map((item, index) => (

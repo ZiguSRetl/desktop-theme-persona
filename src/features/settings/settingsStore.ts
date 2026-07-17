@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { DesktopSettings } from "../../types/desktop";
-import { DEFAULT_SETTINGS, mergeAndSaveState } from "../launcher/persistence";
+import { createDefaultSettings, mergeAndSaveState } from "../launcher/persistence";
 import { isPrimaryWindow } from "./monitorWindowsService";
 import { applyNativeSettings } from "./nativeSettings";
 import { applyWindowMode, applyWindowSettings } from "./windowService";
@@ -11,6 +11,7 @@ const NATIVE_SETTING_KEYS = new Set<keyof DesktopSettings>([
   "launchOnStartup",
   "closeBehavior",
   "desktopMode",
+  "language",
 ]);
 
 const WINDOW_SETTING_KEYS = new Set<keyof DesktopSettings>(["windowMode"]);
@@ -27,7 +28,7 @@ interface SettingsStore {
 }
 
 export const useSettingsStore = create<SettingsStore>((set, get) => ({
-  settings: { ...DEFAULT_SETTINGS },
+  settings: createDefaultSettings(),
   status: "idle",
 
   hydrate: (settings) => set({ settings: { ...settings }, status: "ready" }),
@@ -52,7 +53,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   },
 
   resetToDefaults: async () => {
-    const defaults = { ...DEFAULT_SETTINGS };
+    const defaults = createDefaultSettings();
     await deleteStoredWallpaper();
     await mergeAndSaveState({ settings: defaults });
     set({ settings: defaults });
