@@ -400,18 +400,17 @@ pub fn attach_launcher_window_events(app: &AppHandle, window: &tauri::WebviewWin
             }
             WindowEvent::Focused(focused) => {
                 if *focused && label == MAIN_WINDOW_LABEL {
-                    // Taskbar activation: focus the launcher under the cursor, not always main.
-                    let _ = focus_launcher_under_cursor(&app_handle);
-                } else if !*focused {
                     let desktop_state = app_handle.state::<DesktopModeState>();
                     let desktop_active = desktop_state
                         .active
                         .lock()
                         .map(|value| *value)
                         .unwrap_or(false);
-                    if desktop_active {
-                        // Pin z-order only — full refresh on blur caused a multi-window focus loop.
-                        let _ = crate::desktop_mode::pin_all_desktop_overlays(&app_handle);
+                    // In desktop mode the z-order loop keeps us behind other apps — do not
+                    // re-pin on focus (that fought Windows and flickered other windows).
+                    if !desktop_active {
+                        // Taskbar activation: focus the launcher under the cursor, not always main.
+                        let _ = focus_launcher_under_cursor(&app_handle);
                     }
                 }
             }
@@ -423,7 +422,15 @@ pub fn attach_launcher_window_events(app: &AppHandle, window: &tauri::WebviewWin
                 if let Some(window) = app_handle.get_webview_window(&label) {
                     if window.is_minimized().unwrap_or(false) {
                         let _ = window.unminimize();
-                        let _ = focus_launcher_under_cursor(&app_handle);
+                        let desktop_state = app_handle.state::<DesktopModeState>();
+                        let desktop_active = desktop_state
+                            .active
+                            .lock()
+                            .map(|value| *value)
+                            .unwrap_or(false);
+                        if !desktop_active {
+                            let _ = focus_launcher_under_cursor(&app_handle);
+                        }
                     }
                 }
             }

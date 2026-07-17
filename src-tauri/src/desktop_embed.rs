@@ -1,24 +1,32 @@
+use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 use tauri::{AppHandle, WebviewWindow};
-use windows::Win32::Foundation::HWND;
+use windows::core::w;
+use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
 use windows::Win32::UI::Input::KeyboardAndMouse::EnableWindow;
 use windows::Win32::UI::Shell::{SHChangeNotify, SHCNE_ASSOCCHANGED, SHCNF_IDLIST};
 use windows::Win32::UI::WindowsAndMessaging::{
-    GetWindowLongPtrW, SetWindowLongPtrW, SetWindowPos, GWL_EXSTYLE, HWND_BOTTOM, SWP_NOACTIVATE,
-    SWP_NOMOVE, SWP_NOSIZE, WS_EX_APPWINDOW, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW,
+    CallWindowProcW, DefWindowProcW, EnumWindows, FindWindowExW, FindWindowW, GetWindowLongPtrW,
+    SendMessageTimeoutW, SetWindowLongPtrW, SetWindowPos, GWLP_WNDPROC, GWL_EXSTYLE, HWND_BOTTOM,
+    SMTO_NORMAL, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER, WINDOWPOS,
+    WM_WINDOWPOSCHANGING, WNDPROC, WS_EX_APPWINDOW, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW,
 };
+use windows_core::BOOL;
 use winreg::enums::*;
 use winreg::RegKey;
 
 use crate::monitor_windows::ordered_monitors;
 
 const HIDE_ICONS_KEY: &str = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced";
+/// Progman message that spawns the wallpaper WorkerW (behind desktop icons).
+const PROGMAN_SPAWN_WORKERW: u32 = 0x052C;
 
 static PIN_DEBOUNCE: Mutex<Option<Instant>> = Mutex::new(None);
 static PIN_IN_FLIGHT: AtomicBool = AtomicBool::new(false);
+static SUBCLASSED_PROCS: Mutex<Option<HashMap<isize, isize>>> = Mutex::new(None);
 
 pub struct DesktopModeState {
     pub active: Mutex<bool>,
@@ -38,6 +46,67 @@ fn window_hwnd(window: &WebviewWindow) -> Result<HWND, String> {
         .map_err(|e| format!("No se pudo obtener el handle de ventana: {e}"))
 }
 
+fn hwnd_key(hwnd: HWND) -> isize {
+    hwnd.0 as isize
+}
+
+fn is_null_hwnd(hwnd: HWND) -> bool {
+    hwnd.0.is_null()
+}
+
+/// Find the WorkerW that sits behind desktop icons (Wallpaper Engine layer).
+fn find_wallpaper_workerw() -> Option<HWND> {
+    unsafe {
+        let progman = FindWindowW(w!("Progman"), None).ok()?;
+        if is_null_hwnd(progman) {
+            return None;
+        }
+
+        let mut result = 0usize;
+        let _ = SendMessageTimeoutW(
+            progman,
+            PROGMAN_SPAWN_WORKERW,
+            WPARAM(0),
+            LPARAM(0),
+            SMTO_NORMAL,
+            1000,
+            Some(&mut result),
+        );
+
+        let mut worker = HWND::default();
+        let _ = EnumWindows(
+            Some(enum_find_workerw),
+            LPARAM(std::ptr::addr_of_mut!(worker) as isize),
+        );
+        if is_null_hwnd(worker) {
+            None
+        } else {
+            Some(worker)
+        }
+    }
+}
+
+unsafe extern "system" fn enum_find_workerw(hwnd: HWND, lparam: LPARAM) -> BOOL {
+    let shell = FindWindowExW(Some(hwnd), None, w!("SHELLDLL_DefView"), None).unwrap_or_default();
+    if !is_null_hwnd(shell) {
+        // WorkerW after the desktop icons host — wallpaper / Wallpaper Engine layer.
+        let worker = FindWindowExW(None, Some(hwnd), w!("WorkerW"), None).unwrap_or_default();
+        if !is_null_hwnd(worker) {
+            let out = lparam.0 as *mut HWND;
+            if !out.is_null() {
+                *out = worker;
+            }
+            return BOOL(0);
+        }
+    }
+    BOOL(1)
+}
+
+/// Place shell just above the wallpaper WorkerW (or HWND_BOTTOM as fallback).
+fn desktop_zorder_anchor() -> HWND {
+    find_wallpaper_workerw().unwrap_or(HWND_BOTTOM)
+}
+
 fn configure_overlay_window(hwnd: HWND) {
     unsafe {
         let ex_style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE) as u32;
@@ -48,18 +117,89 @@ fn configure_overlay_window(hwnd: HWND) {
 
         let _ = EnableWindow(hwnd, true);
     }
+    install_zorder_subclass(hwnd);
+}
+
+unsafe extern "system" fn overlay_wnd_proc(
+    hwnd: HWND,
+    msg: u32,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
+    if msg == WM_WINDOWPOSCHANGING {
+        let wp = lparam.0 as *mut WINDOWPOS;
+        if !wp.is_null() {
+            let flags = (*wp).flags;
+            // Only rewrite when Windows is trying to change z-order (e.g. raise on click).
+            if (flags & SWP_NOZORDER).0 == 0 {
+                (*wp).hwndInsertAfter = desktop_zorder_anchor();
+            }
+        }
+    }
+
+    let prev_ptr = SUBCLASSED_PROCS
+        .lock()
+        .ok()
+        .and_then(|guard| guard.as_ref().and_then(|map| map.get(&hwnd_key(hwnd)).copied()));
+
+    if let Some(prev) = prev_ptr {
+        if prev != 0 {
+            let prev_proc: WNDPROC = std::mem::transmute(prev);
+            return CallWindowProcW(prev_proc, hwnd, msg, wparam, lparam);
+        }
+    }
+
+    DefWindowProcW(hwnd, msg, wparam, lparam)
+}
+
+fn install_zorder_subclass(hwnd: HWND) {
+    let key = hwnd_key(hwnd);
+    let Ok(mut guard) = SUBCLASSED_PROCS.lock() else {
+        return;
+    };
+    let map = guard.get_or_insert_with(HashMap::new);
+    if map.contains_key(&key) {
+        return;
+    }
+
+    unsafe {
+        let prev = SetWindowLongPtrW(
+            hwnd,
+            GWLP_WNDPROC,
+            overlay_wnd_proc as *const () as usize as isize,
+        );
+        if prev == 0 {
+            return;
+        }
+        map.insert(key, prev);
+    }
+}
+
+fn remove_zorder_subclass(hwnd: HWND) {
+    let key = hwnd_key(hwnd);
+    let Ok(mut guard) = SUBCLASSED_PROCS.lock() else {
+        return;
+    };
+    let Some(map) = guard.as_mut() else {
+        return;
+    };
+    let Some(prev) = map.remove(&key) else {
+        return;
+    };
+    unsafe {
+        let _ = SetWindowLongPtrW(hwnd, GWLP_WNDPROC, prev);
+    }
 }
 
 fn position_hwnd_as_desktop_overlay(hwnd: HWND, x: i32, y: i32, width: i32, height: i32) {
     unsafe {
         let _ = SetWindowPos(
             hwnd,
-            Some(HWND_BOTTOM),
+            Some(desktop_zorder_anchor()),
             x,
             y,
             width,
             height,
-            // No SHOWWINDOW: avoids focus/activation churn that flickered multi-monitor overlays.
             SWP_NOACTIVATE,
         );
     }
@@ -69,7 +209,7 @@ fn pin_hwnd_zorder(hwnd: HWND) {
     unsafe {
         let _ = SetWindowPos(
             hwnd,
-            Some(HWND_BOTTOM),
+            Some(desktop_zorder_anchor()),
             0,
             0,
             0,
@@ -136,6 +276,7 @@ pub fn detach_from_desktop(
     _state: &DesktopModeState,
 ) -> Result<(), String> {
     let hwnd = window_hwnd(window)?;
+    remove_zorder_subclass(hwnd);
 
     unsafe {
         use windows::Win32::UI::WindowsAndMessaging::{SetParent, HWND_NOTOPMOST};
@@ -187,13 +328,12 @@ pub fn refresh_desktop_overlays_for_app(app: &AppHandle) -> Result<(), String> {
     Ok(())
 }
 
-/// Lightweight z-order pin used on blur — must NOT show/move/resize or focus fights start.
-pub fn pin_desktop_overlays_zorder(app: &AppHandle) -> Result<(), String> {
+fn pin_desktop_overlays_zorder_inner(app: &AppHandle, debounce: bool) -> Result<(), String> {
     if PIN_IN_FLIGHT.swap(true, Ordering::SeqCst) {
         return Ok(());
     }
 
-    {
+    if debounce {
         let mut last = PIN_DEBOUNCE
             .lock()
             .map_err(|_| "Debounce de overlay bloqueado.".to_string())?;
@@ -214,6 +354,11 @@ pub fn pin_desktop_overlays_zorder(app: &AppHandle) -> Result<(), String> {
 
     PIN_IN_FLIGHT.store(false, Ordering::SeqCst);
     Ok(())
+}
+
+/// Lightweight z-order pin — must NOT show/move/resize or focus fights start.
+pub fn pin_desktop_overlays_zorder(app: &AppHandle) -> Result<(), String> {
+    pin_desktop_overlays_zorder_inner(app, true)
 }
 
 pub fn start_desktop_overlay_watcher(app: AppHandle) {
