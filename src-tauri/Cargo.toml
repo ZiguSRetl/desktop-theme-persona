@@ -1,6 +1,6 @@
 [package]
 name = "tauri-app"
-version = "0.1.3"
+version = "0.1.4"
 description = "Persona5 Explorer desktop launcher"
 authors = ["zigus"]
 edition = "2021"
