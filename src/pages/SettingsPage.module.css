@@ -12,9 +12,48 @@
   background-color: var(--color-black);
 }
 
+.menuStage {
+  position: relative;
+  width: 100%;
+}
+
+.menuView {
+  display: grid;
+  gap: clamp(0.75rem, 1.2vw, 1rem);
+  width: 100%;
+}
+
+.detailHeader {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: clamp(0.75rem, 1.2vw, 1rem);
+  min-width: 0;
+}
+
+.backButton {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.detailTitle {
+  margin: 0;
+  flex: 0 1 auto;
+  font-family: var(--font-bebas);
+  font-size: clamp(1.15rem, 1.5vw + 0.6rem, 1.5rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-white);
+  text-shadow: 2px 2px 0 var(--color-black);
+}
+
 @media (max-width: 600px), (max-height: 640px) {
   .wallpaperControls {
     width: 100%;
     justify-items: stretch;
+  }
+
+  .detailHeader {
+    flex-wrap: wrap;
   }
 }

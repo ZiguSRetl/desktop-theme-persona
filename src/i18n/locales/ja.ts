@@ -53,7 +53,16 @@ export const ja = {
   "settings.language.options.ja": "日本語",
   "settings.language.updated": "言語を更新しました。",
 
+  "settings.menu.back": "戻る",
+  "settings.categories.general": "一般",
+  "settings.categories.display": "画面",
+  "settings.categories.shortcuts": "ショートカット",
+  "settings.categories.desktop": "デスクトップ",
+  "settings.categories.system": "システム",
+  "settings.categories.data": "データ",
+
   "settings.windowMode.label": "ウィンドウモード",
+
   "settings.windowMode.description": "表示時にランチャーがどのように開くかを設定します。",
   "settings.windowMode.options.window": "ウィンドウ",
   "settings.windowMode.options.maximized": "最大化",

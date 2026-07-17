@@ -54,7 +54,16 @@ export const fr = {
   "settings.language.options.ja": "日本語",
   "settings.language.updated": "Langue mise à jour.",
 
+  "settings.menu.back": "Retour",
+  "settings.categories.general": "Général",
+  "settings.categories.display": "Affichage",
+  "settings.categories.shortcuts": "Raccourcis",
+  "settings.categories.desktop": "Bureau",
+  "settings.categories.system": "Système",
+  "settings.categories.data": "Données",
+
   "settings.windowMode.label": "Mode de fenêtre",
+
   "settings.windowMode.description": "Comment le launcher s'ouvre lorsqu'il s'affiche.",
   "settings.windowMode.options.window": "Fenêtre",
   "settings.windowMode.options.maximized": "Maximisée",
