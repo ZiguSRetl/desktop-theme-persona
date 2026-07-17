@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  centeredLogicalWindowOnMonitor,
   centeredWindowOnMonitor,
   isPrimaryWindowLabel,
   resolveRestorePosition,
@@ -29,6 +30,25 @@ describe("windowPlacement", () => {
       y: Math.floor((1080 - 720) / 2),
       width: 1280,
       height: 720,
+    });
+  });
+
+  it("centers a logical window using HiDPI scale as physical pixels", () => {
+    const bounds = centeredLogicalWindowOnMonitor(
+      {
+        position: { x: 0, y: 0 },
+        size: { width: 3840, height: 2160 },
+        scaleFactor: 2,
+      },
+      1280,
+      720,
+    );
+
+    expect(bounds).toEqual({
+      x: Math.floor((3840 - 2560) / 2),
+      y: Math.floor((2160 - 1440) / 2),
+      width: 2560,
+      height: 1440,
     });
   });
 

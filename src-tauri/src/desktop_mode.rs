@@ -108,10 +108,10 @@ pub async fn disable_desktop_mode_impl(app: &AppHandle, state: &DesktopModeState
             .map_err(|e| format!("No se pudo restaurar la barra de tareas: {e}"))?;
 
         let monitor = monitors.get(index).unwrap_or(&monitors[0]);
-        crate::monitor_windows::place_window_on_monitor(&window, monitor)?;
-        window
-            .maximize()
-            .map_err(|e| format!("No se pudo maximizar la ventana: {e}"))?;
+        // Satellites stay full-monitor; main geometry is restored by frontend windowMode.
+        if window.label() != crate::monitor_windows::MAIN_WINDOW_LABEL {
+            crate::monitor_windows::place_window_on_monitor(&window, monitor)?;
+        }
         window
             .show()
             .map_err(|e| format!("No se pudo mostrar la ventana: {e}"))?;

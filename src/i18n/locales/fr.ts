@@ -65,6 +65,8 @@ export const fr = {
   "settings.windowMode.label": "Mode de fenêtre",
 
   "settings.windowMode.description": "Comment le launcher s'ouvre lorsqu'il s'affiche.",
+  "settings.windowMode.descriptionDesktopMode":
+    "Indisponible tant que le mode bureau est actif. S'appliquera à la désactivation.",
   "settings.windowMode.options.window": "Fenêtre",
   "settings.windowMode.options.maximized": "Maximisée",
   "settings.windowMode.options.fullscreen": "Plein écran",

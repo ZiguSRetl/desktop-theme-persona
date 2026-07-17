@@ -65,6 +65,8 @@ export const en = {
   "settings.windowMode.label": "Window mode",
 
   "settings.windowMode.description": "How the launcher opens when shown.",
+  "settings.windowMode.descriptionDesktopMode":
+    "Unavailable while desktop mode is active. It will apply when you turn desktop mode off.",
   "settings.windowMode.options.window": "Window",
   "settings.windowMode.options.maximized": "Maximized",
   "settings.windowMode.options.fullscreen": "Fullscreen",
