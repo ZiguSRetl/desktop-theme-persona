@@ -29,6 +29,7 @@ export function createDefaultSettings(): DesktopSettings {
     closeBehavior: "hide",
     windowMode: "maximized",
     desktopMode: false,
+    wallpaperPassthrough: false,
     language: detectSystemLanguage(),
   };
 }
@@ -154,6 +155,7 @@ export function validateSettings(raw: unknown): DesktopSettings {
       ? (windowMode as WindowMode)
       : defaults.windowMode,
     desktopMode: asBoolean(raw.desktopMode, defaults.desktopMode),
+    wallpaperPassthrough: asBoolean(raw.wallpaperPassthrough, defaults.wallpaperPassthrough),
     language: resolveLanguage(raw.language),
     selectedGpuId:
       typeof raw.selectedGpuId === "string" && raw.selectedGpuId.trim()

@@ -69,6 +69,26 @@ describe("validatePersistedState", () => {
     expect(state.settings.wallpaper?.crop.width).toBe(0.8);
   });
 
+  it("keeps wallpaperPassthrough when set", () => {
+    const state = validatePersistedState({
+      schemaVersion: 1,
+      items: [],
+      settings: { wallpaperPassthrough: true },
+    });
+
+    expect(state.settings.wallpaperPassthrough).toBe(true);
+  });
+
+  it("defaults wallpaperPassthrough to false when missing", () => {
+    const state = validatePersistedState({
+      schemaVersion: 1,
+      items: [],
+      settings: {},
+    });
+
+    expect(state.settings.wallpaperPassthrough).toBe(false);
+  });
+
   it("keeps selectedGpuId when valid", () => {
     const state = validatePersistedState({
       schemaVersion: 1,

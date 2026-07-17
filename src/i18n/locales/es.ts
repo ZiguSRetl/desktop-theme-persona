@@ -79,6 +79,9 @@ export const es = {
   "settings.wallpaper.pick": "Elegir imagen",
   "settings.wallpaper.recrop": "Recortar",
   "settings.wallpaper.remove": "Quitar",
+  "settings.wallpaperPassthrough.label": "Fondo del escritorio (Wallpaper Engine)",
+  "settings.wallpaperPassthrough.description":
+    "Ventana transparente para ver Wallpaper Engine u otro fondo del sistema detrás de la interfaz. Ideal con el modo escritorio.",
   "settings.sound.label": "Sonidos de interfaz",
   "settings.sound.description": "Efectos cortos al lanzar, navegar y confirmar acciones.",
   "settings.gpu.label": "GPU del monitor",
@@ -130,6 +133,9 @@ export const es = {
   "settings.toasts.animationUpdated": "Intensidad de animaciones actualizada.",
   "settings.toasts.wallpaperApplied": "Fondo personalizado aplicado.",
   "settings.toasts.wallpaperRemoved": "Fondo personalizado eliminado.",
+  "settings.toasts.wallpaperPassthroughOn":
+    "Fondo del escritorio visible. Activa Wallpaper Engine y, si puedes, el modo escritorio.",
+  "settings.toasts.wallpaperPassthroughOff": "Fondo interno del launcher restaurado.",
   "settings.toasts.soundOn": "Sonidos activados.",
   "settings.toasts.soundOff": "Sonidos desactivados.",
   "settings.toasts.gpuUpdated": "GPU del monitor actualizada.",

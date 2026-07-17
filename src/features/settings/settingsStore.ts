@@ -3,7 +3,11 @@ import type { DesktopSettings } from "../../types/desktop";
 import { createDefaultSettings, mergeAndSaveState } from "../launcher/persistence";
 import { isPrimaryWindow } from "./monitorWindowsService";
 import { applyNativeSettings } from "./nativeSettings";
-import { applyWindowMode, applyWindowSettings } from "./windowService";
+import {
+  applyWallpaperPassthrough,
+  applyWindowMode,
+  applyWindowSettings,
+} from "./windowService";
 import { deleteStoredWallpaper } from "./wallpaperService";
 
 const NATIVE_SETTING_KEYS = new Set<keyof DesktopSettings>([
@@ -49,6 +53,10 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
 
     if (WINDOW_SETTING_KEYS.has(key) && !next.desktopMode) {
       await applyWindowMode(next.windowMode);
+    }
+
+    if (key === "wallpaperPassthrough") {
+      await applyWallpaperPassthrough(Boolean(value));
     }
 
     // After leaving desktop mode, Rust detaches overlays but does not restore windowMode.

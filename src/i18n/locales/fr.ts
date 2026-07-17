@@ -82,6 +82,9 @@ export const fr = {
   "settings.wallpaper.pick": "Choisir une image",
   "settings.wallpaper.recrop": "Recadrer",
   "settings.wallpaper.remove": "Supprimer",
+  "settings.wallpaperPassthrough.label": "Fond d'écran du bureau (Wallpaper Engine)",
+  "settings.wallpaperPassthrough.description":
+    "Fenêtre transparente pour voir Wallpaper Engine ou un autre fond système derrière l'interface. Idéal avec le mode bureau.",
   "settings.sound.label": "Sons de l'interface",
   "settings.sound.description":
     "Effets courts au lancement, à la navigation et à la confirmation d'actions.",
@@ -135,6 +138,9 @@ export const fr = {
   "settings.toasts.animationUpdated": "Intensité des animations mise à jour.",
   "settings.toasts.wallpaperApplied": "Fond d'écran personnalisé appliqué.",
   "settings.toasts.wallpaperRemoved": "Fond d'écran personnalisé supprimé.",
+  "settings.toasts.wallpaperPassthroughOn":
+    "Fond du bureau visible. Gardez Wallpaper Engine actif et préférez le mode bureau.",
+  "settings.toasts.wallpaperPassthroughOff": "Fond interne du launcher restauré.",
   "settings.toasts.soundOn": "Sons activés.",
   "settings.toasts.soundOff": "Sons désactivés.",
   "settings.toasts.gpuUpdated": "GPU surveillé mis à jour.",

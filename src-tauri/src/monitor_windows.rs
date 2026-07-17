@@ -223,6 +223,7 @@ fn create_satellite(
     let window = WebviewWindowBuilder::new(app, label, WebviewUrl::App("index.html".into()))
         .title("Persona5 Explorer")
         .decorations(false)
+        .transparent(true)
         .skip_taskbar(true)
         .minimizable(false)
         .visible(true)

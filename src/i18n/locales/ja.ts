@@ -80,6 +80,9 @@ export const ja = {
   "settings.wallpaper.pick": "画像を選択",
   "settings.wallpaper.recrop": "切り取り直す",
   "settings.wallpaper.remove": "削除",
+  "settings.wallpaperPassthrough.label": "デスクトップ壁紙 (Wallpaper Engine)",
+  "settings.wallpaperPassthrough.description":
+    "ウィンドウを透明にして、Wallpaper Engineや他のシステム壁紙をUIの後ろに表示します。デスクトップモードとの併用がおすすめです。",
   "settings.sound.label": "インターフェース音",
   "settings.sound.description": "起動、移動、操作の確定時に短い効果音を再生します。",
   "settings.gpu.label": "監視するGPU",
@@ -129,6 +132,9 @@ export const ja = {
   "settings.toasts.animationUpdated": "アニメーションの強さを更新しました。",
   "settings.toasts.wallpaperApplied": "カスタム壁紙を適用しました。",
   "settings.toasts.wallpaperRemoved": "カスタム壁紙を削除しました。",
+  "settings.toasts.wallpaperPassthroughOn":
+    "デスクトップ壁紙を表示します。Wallpaper Engineを起動し、できればデスクトップモードを使ってください。",
+  "settings.toasts.wallpaperPassthroughOff": "ランチャー内の背景に戻しました。",
   "settings.toasts.soundOn": "サウンドを有効にしました。",
   "settings.toasts.soundOff": "サウンドを無効にしました。",
   "settings.toasts.gpuUpdated": "監視するGPUを更新しました。",

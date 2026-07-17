@@ -6,6 +6,7 @@ const {
   applyNativeSettings,
   applyWindowMode,
   applyWindowSettings,
+  applyWallpaperPassthrough,
   deleteStoredWallpaper,
   isPrimaryWindow,
 } = vi.hoisted(() => ({
@@ -13,6 +14,7 @@ const {
   applyNativeSettings: vi.fn(async () => undefined),
   applyWindowMode: vi.fn(async () => undefined),
   applyWindowSettings: vi.fn(async () => undefined),
+  applyWallpaperPassthrough: vi.fn(async () => undefined),
   deleteStoredWallpaper: vi.fn(async () => undefined),
   isPrimaryWindow: vi.fn(() => true),
 }));
@@ -34,6 +36,7 @@ vi.mock("./nativeSettings", () => ({
 vi.mock("./windowService", () => ({
   applyWindowMode,
   applyWindowSettings,
+  applyWallpaperPassthrough,
 }));
 
 vi.mock("./wallpaperService", () => ({
@@ -119,6 +122,14 @@ describe("useSettingsStore", () => {
     expect(applyNativeSettings).not.toHaveBeenCalled();
     expect(applyWindowMode).not.toHaveBeenCalled();
     expect(mergeAndSaveState).toHaveBeenCalledTimes(1);
+  });
+
+  it("applies wallpaper passthrough when toggled", async () => {
+    await useSettingsStore.getState().updateSetting("wallpaperPassthrough", true);
+
+    expect(useSettingsStore.getState().settings.wallpaperPassthrough).toBe(true);
+    expect(applyWallpaperPassthrough).toHaveBeenCalledWith(true);
+    expect(applyNativeSettings).not.toHaveBeenCalled();
   });
 
   it("syncs native settings when language changes", async () => {

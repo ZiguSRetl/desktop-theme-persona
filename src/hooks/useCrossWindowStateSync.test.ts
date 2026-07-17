@@ -3,11 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const {
   loadFullState,
   applyWindowMode,
+  applyWallpaperPassthrough,
   hydrateLauncher,
   hydrateSettings,
 } = vi.hoisted(() => ({
   loadFullState: vi.fn(),
   applyWindowMode: vi.fn(async () => undefined),
+  applyWallpaperPassthrough: vi.fn(async () => undefined),
   hydrateLauncher: vi.fn(),
   hydrateSettings: vi.fn(),
 }));
@@ -33,6 +35,7 @@ vi.mock("../features/settings/settingsStore", () => ({
 
 vi.mock("../features/settings/windowService", () => ({
   applyWindowMode,
+  applyWallpaperPassthrough,
 }));
 
 vi.mock("../features/settings/monitorWindowsService", () => ({
@@ -73,6 +76,7 @@ describe("hydrateFromRemotePersist", () => {
         closeBehavior: "hide",
         windowMode: "maximized",
         desktopMode: false,
+        wallpaperPassthrough: true,
       },
     });
 
@@ -80,6 +84,7 @@ describe("hydrateFromRemotePersist", () => {
 
     expect(hydrateLauncher).toHaveBeenCalled();
     expect(hydrateSettings).toHaveBeenCalled();
+    expect(applyWallpaperPassthrough).toHaveBeenCalledWith(true);
     expect(applyWindowMode).not.toHaveBeenCalled();
   });
 
@@ -95,11 +100,13 @@ describe("hydrateFromRemotePersist", () => {
         closeBehavior: "hide",
         windowMode: "fullscreen",
         desktopMode: false,
+        wallpaperPassthrough: false,
       },
     });
 
     await hydrateFromRemotePersist();
 
+    expect(applyWallpaperPassthrough).toHaveBeenCalledWith(false);
     expect(applyWindowMode).toHaveBeenCalledWith("fullscreen");
   });
 });

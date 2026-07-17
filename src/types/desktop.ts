@@ -48,6 +48,11 @@ export interface DesktopSettings {
   closeBehavior: "hide" | "exit";
   windowMode: WindowMode;
   desktopMode: boolean;
+  /**
+   * Transparent window so the OS / Wallpaper Engine desktop shows through.
+   * Best used with desktopMode; disables in-app comic/custom wallpaper.
+   */
+  wallpaperPassthrough: boolean;
   /** UI language; initial value from OS, unsupported locales → `en`. */
   language: AppLanguage;
   /** Stable GPU id from `list_gpus`; omit/`undefined` = auto (prefer dedicated with metrics). */

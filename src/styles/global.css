@@ -11,6 +11,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+html[data-wallpaper-passthrough="true"],
+html[data-wallpaper-passthrough="true"] body,
+html[data-wallpaper-passthrough="true"] #root {
+  background: transparent;
+}
+
 .desktop-shell {
   position: relative;
   display: grid;
@@ -21,6 +27,10 @@ body {
   overflow: hidden;
   background: var(--color-black);
   isolation: isolate;
+}
+
+html[data-wallpaper-passthrough="true"] .desktop-shell {
+  background: transparent;
 }
 
 .desktop-shell__main {

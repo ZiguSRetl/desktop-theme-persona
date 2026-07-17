@@ -82,6 +82,9 @@ export const en = {
   "settings.wallpaper.pick": "Choose image",
   "settings.wallpaper.recrop": "Crop",
   "settings.wallpaper.remove": "Remove",
+  "settings.wallpaperPassthrough.label": "Desktop wallpaper (Wallpaper Engine)",
+  "settings.wallpaperPassthrough.description":
+    "Transparent window so Wallpaper Engine or another system wallpaper shows behind the UI. Best with desktop mode.",
   "settings.sound.label": "Interface sounds",
   "settings.sound.description": "Short effects when launching, navigating, and confirming actions.",
   "settings.gpu.label": "Monitored GPU",
@@ -133,6 +136,9 @@ export const en = {
   "settings.toasts.animationUpdated": "Animation intensity updated.",
   "settings.toasts.wallpaperApplied": "Custom wallpaper applied.",
   "settings.toasts.wallpaperRemoved": "Custom wallpaper removed.",
+  "settings.toasts.wallpaperPassthroughOn":
+    "Desktop wallpaper visible. Keep Wallpaper Engine running and prefer desktop mode.",
+  "settings.toasts.wallpaperPassthroughOff": "In-app launcher background restored.",
   "settings.toasts.soundOn": "Sounds enabled.",
   "settings.toasts.soundOff": "Sounds disabled.",
   "settings.toasts.gpuUpdated": "Monitored GPU updated.",
