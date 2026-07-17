@@ -313,18 +313,5 @@ export const ja = {
   "services.reveal.desktopOnly": "場所を開く機能はデスクトップアプリでのみ利用できます。",
   "services.desktopInit.loadFailed": "デスクトップを読み込めませんでした。",
 
-  "seed.app-notepad": "メモ帳",
-  "seed.app-calc": "計算機",
-  "seed.app-explorer": "エクスプローラー",
-  "seed.app-vscode": "Visual Studio Code",
-  "seed.app-docs": "ドキュメント",
-  "seed.game-steam": "Steam",
-  "seed.game-epic": "Epic Games",
-  "seed.game-folder": "ゲームフォルダー",
-  "seed.sys-settings": "設定",
-  "seed.sys-taskmgr": "タスクマネージャー",
-  "seed.sys-github": "GitHub",
-  "seed.sys-downloads": "ダウンロード",
-
   "toast.closeAria": "閉じる",
 } satisfies Record<TranslationKey, string>;

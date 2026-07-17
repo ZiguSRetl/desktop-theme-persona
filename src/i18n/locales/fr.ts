@@ -329,18 +329,5 @@ export const fr = {
     "L'ouverture de l'emplacement n'est disponible que dans l'application de bureau.",
   "services.desktopInit.loadFailed": "Impossible de charger le bureau.",
 
-  "seed.app-notepad": "Bloc-notes",
-  "seed.app-calc": "Calculatrice",
-  "seed.app-explorer": "Explorateur",
-  "seed.app-vscode": "Visual Studio Code",
-  "seed.app-docs": "Documents",
-  "seed.game-steam": "Steam",
-  "seed.game-epic": "Epic Games",
-  "seed.game-folder": "Dossier de jeux",
-  "seed.sys-settings": "Configuration",
-  "seed.sys-taskmgr": "Gestionnaire des tâches",
-  "seed.sys-github": "GitHub",
-  "seed.sys-downloads": "Téléchargements",
-
   "toast.closeAria": "Fermer",
 } satisfies Record<TranslationKey, string>;

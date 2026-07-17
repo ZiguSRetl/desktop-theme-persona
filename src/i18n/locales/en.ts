@@ -326,18 +326,5 @@ export const en = {
     "Opening location is only available in the desktop app.",
   "services.desktopInit.loadFailed": "Could not load the desktop.",
 
-  "seed.app-notepad": "Notepad",
-  "seed.app-calc": "Calculator",
-  "seed.app-explorer": "Explorer",
-  "seed.app-vscode": "Visual Studio Code",
-  "seed.app-docs": "Documents",
-  "seed.game-steam": "Steam",
-  "seed.game-epic": "Epic Games",
-  "seed.game-folder": "Games folder",
-  "seed.sys-settings": "Settings",
-  "seed.sys-taskmgr": "Task Manager",
-  "seed.sys-github": "GitHub",
-  "seed.sys-downloads": "Downloads",
-
   "toast.closeAria": "Close",
 } satisfies Record<TranslationKey, string>;

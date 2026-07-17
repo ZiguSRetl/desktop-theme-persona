@@ -327,18 +327,5 @@ export const de = {
     "Speicherort öffnen ist nur in der Desktop-App verfügbar.",
   "services.desktopInit.loadFailed": "Der Desktop konnte nicht geladen werden.",
 
-  "seed.app-notepad": "Editor",
-  "seed.app-calc": "Rechner",
-  "seed.app-explorer": "Explorer",
-  "seed.app-vscode": "Visual Studio Code",
-  "seed.app-docs": "Dokumente",
-  "seed.game-steam": "Steam",
-  "seed.game-epic": "Epic Games",
-  "seed.game-folder": "Spieleordner",
-  "seed.sys-settings": "Einstellungen",
-  "seed.sys-taskmgr": "Task-Manager",
-  "seed.sys-github": "GitHub",
-  "seed.sys-downloads": "Downloads",
-
   "toast.closeAria": "Schließen",
 } satisfies Record<TranslationKey, string>;

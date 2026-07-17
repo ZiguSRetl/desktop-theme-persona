@@ -323,19 +323,6 @@ export const es = {
     "Abrir ubicación solo está disponible en la app de escritorio.",
   "services.desktopInit.loadFailed": "No se pudo cargar el escritorio.",
 
-  "seed.app-notepad": "Bloc de notas",
-  "seed.app-calc": "Calculadora",
-  "seed.app-explorer": "Explorador",
-  "seed.app-vscode": "Visual Studio Code",
-  "seed.app-docs": "Documentos",
-  "seed.game-steam": "Steam",
-  "seed.game-epic": "Epic Games",
-  "seed.game-folder": "Carpeta de juegos",
-  "seed.sys-settings": "Configuración",
-  "seed.sys-taskmgr": "Administrador de tareas",
-  "seed.sys-github": "GitHub",
-  "seed.sys-downloads": "Descargas",
-
   "toast.closeAria": "Cerrar",
 } as const;
 
