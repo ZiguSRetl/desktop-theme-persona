@@ -27,7 +27,10 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis"],
+    "targets": [
+      "nsis"
+    ],
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -38,5 +41,13 @@
     "shortDescription": "Launcher de escritorio con estÃ©tica cÃ³mic roja y negra.",
     "longDescription": "Persona5 Explorer es un launcher personal para Windows con accesos rÃ¡pidos, favoritos, bÃºsqueda y comportamiento de bandeja del sistema.",
     "publisher": "zigus"
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENBMDI5QkI4NUM1RjIwM0EKUldRNklGOWN1SnNDeWgzcjVWTE5mdlM5WldSTEJxVXU5QjRyZFI1dENuNkF1bFlqVlFNeVZTRlIK",
+      "endpoints": [
+        "https://github.com/ZiguSRetl/desktop-theme-persona/releases/latest/download/latest.json"
+      ]
+    }
   }
 }

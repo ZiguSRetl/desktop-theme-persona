@@ -1,0 +1,74 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(5, 5, 5, 0.72);
+}
+
+.dialogWrap {
+  width: min(100%, 520px);
+}
+
+.content {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.title {
+  font-family: var(--font-anton);
+  font-size: clamp(1.5rem, 2vw + 0.75rem, 2rem);
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--color-black);
+}
+
+.lead {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--color-muted);
+  margin: 0;
+}
+
+.block {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.blockTitle {
+  font-family: var(--font-bebas);
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-black);
+  margin: 0;
+}
+
+.notes {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--color-black);
+  white-space: pre-wrap;
+  max-height: 10rem;
+  overflow: auto;
+}
+
+.note {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--color-red-dark);
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}

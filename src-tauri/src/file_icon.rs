@@ -109,7 +109,9 @@ fn push_unique(candidates: &mut Vec<PathBuf>, path: PathBuf) {
     if !path.exists() {
         return;
     }
-    let already = candidates.iter().any(|existing| paths_equal(existing, &path));
+    let already = candidates
+        .iter()
+        .any(|existing| paths_equal(existing, &path));
     if !already {
         candidates.push(path);
     }
@@ -117,7 +119,8 @@ fn push_unique(candidates: &mut Vec<PathBuf>, path: PathBuf) {
 
 #[cfg(windows)]
 fn paths_equal(a: &Path, b: &Path) -> bool {
-    a.to_string_lossy().eq_ignore_ascii_case(&b.to_string_lossy())
+    a.to_string_lossy()
+        .eq_ignore_ascii_case(&b.to_string_lossy())
 }
 
 #[cfg(windows)]
@@ -199,9 +202,7 @@ fn extract_shell_icon(path: &Path, size: u32) -> Result<RgbaImage, String> {
     use windows::core::{Interface, PCWSTR};
     use windows::Win32::Foundation::SIZE;
     use windows::Win32::Graphics::Gdi::{DeleteObject, HGDIOBJ};
-    use windows::Win32::System::Com::{
-        CoInitializeEx, CoUninitialize, COINIT_APARTMENTTHREADED,
-    };
+    use windows::Win32::System::Com::{CoInitializeEx, CoUninitialize, COINIT_APARTMENTTHREADED};
     use windows::Win32::UI::Shell::{
         IShellItem, IShellItemImageFactory, SHCreateItemFromParsingName, SIIGBF_ICONONLY,
         SIIGBF_RESIZETOFIT,
@@ -223,9 +224,8 @@ fn extract_shell_icon(path: &Path, size: u32) -> Result<RgbaImage, String> {
 
         let result = (|| {
             let item: IShellItem =
-                SHCreateItemFromParsingName(PCWSTR::from_raw(wide.as_ptr()), None).map_err(
-                    |error| format!("No se pudo abrir el elemento del Shell: {error}"),
-                )?;
+                SHCreateItemFromParsingName(PCWSTR::from_raw(wide.as_ptr()), None)
+                    .map_err(|error| format!("No se pudo abrir el elemento del Shell: {error}"))?;
 
             let factory: IShellItemImageFactory = item
                 .cast()
@@ -459,7 +459,11 @@ fn icon_quality_score(image: &RgbaImage) -> u64 {
     let largest = bbox_w.max(bbox_h);
 
     // Heavy weight on opaque density so a soft upscaled 100px ICO loses to a real exe icon.
-    let density_bonus = if opaque >= MIN_USEFUL_OPAQUE { 50_000 } else { 0 };
+    let density_bonus = if opaque >= MIN_USEFUL_OPAQUE {
+        50_000
+    } else {
+        0
+    };
     opaque.saturating_mul(10) + largest.saturating_mul(largest) + density_bonus
 }
 

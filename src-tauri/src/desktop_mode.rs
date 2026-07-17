@@ -18,11 +18,7 @@ use crate::monitor_windows::{launcher_windows, ordered_monitors, sync_monitor_wi
 use crate::system::apply_autostart;
 
 pub fn is_desktop_mode_active(state: &DesktopModeState) -> bool {
-    state
-        .active
-        .lock()
-        .map(|value| *value)
-        .unwrap_or(false)
+    state.active.lock().map(|value| *value).unwrap_or(false)
 }
 
 pub fn refresh_all_desktop_overlays(app: &AppHandle) -> Result<(), String> {
@@ -37,7 +33,10 @@ async fn prepare_monitor_windows(app: &AppHandle) -> Result<(), String> {
     sync_monitor_windows_impl(app.clone()).await
 }
 
-pub async fn enable_desktop_mode_impl(app: &AppHandle, state: &DesktopModeState) -> Result<(), String> {
+pub async fn enable_desktop_mode_impl(
+    app: &AppHandle,
+    state: &DesktopModeState,
+) -> Result<(), String> {
     if is_desktop_mode_active(state) {
         let _ = refresh_all_desktop_overlays(app);
         return Ok(());
@@ -79,7 +78,10 @@ pub async fn enable_desktop_mode_impl(app: &AppHandle, state: &DesktopModeState)
     Ok(())
 }
 
-pub async fn disable_desktop_mode_impl(app: &AppHandle, state: &DesktopModeState) -> Result<(), String> {
+pub async fn disable_desktop_mode_impl(
+    app: &AppHandle,
+    state: &DesktopModeState,
+) -> Result<(), String> {
     if !is_desktop_mode_active(state) {
         return Ok(());
     }
@@ -153,7 +155,10 @@ pub async fn apply_desktop_mode_setting(
     }
 }
 
-pub async fn restore_windows_desktop(app: &AppHandle, state: &DesktopModeState) -> Result<(), String> {
+pub async fn restore_windows_desktop(
+    app: &AppHandle,
+    state: &DesktopModeState,
+) -> Result<(), String> {
     disable_desktop_mode_impl(app, state).await
 }
 

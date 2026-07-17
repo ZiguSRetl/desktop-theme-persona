@@ -6,7 +6,9 @@ use tauri::{
     AppHandle, Emitter, Manager, RunEvent, WindowEvent,
 };
 
-use crate::desktop_mode::{apply_desktop_mode_setting, restore_windows_desktop, detach_before_exit};
+use crate::desktop_mode::{
+    apply_desktop_mode_setting, detach_before_exit, restore_windows_desktop,
+};
 use crate::monitor_windows::{
     any_launcher_window_visible, focus_launcher_under_cursor, hide_all_launcher_windows,
     is_launcher_window_label, show_all_launcher_windows, MAIN_WINDOW_LABEL,

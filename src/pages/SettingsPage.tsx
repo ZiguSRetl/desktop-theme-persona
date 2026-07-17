@@ -31,6 +31,7 @@ import {
 } from "../features/settings/wallpaperService";
 import { wallpaperCropToBackgroundStyle } from "../features/settings/wallpaperUtils";
 import { useGpuDevices } from "../features/system/useGpuDevices";
+import { useUpdateStore } from "../features/updater/updateStore";
 import { APP_LANGUAGES, useT, type TranslationKey } from "../i18n";
 import { comicEnter, reducedMotionTransition } from "../lib/motionPresets";
 import settingStyles from "../components/comic/ComicSettingRow/ComicSettingRow.module.css";
@@ -77,6 +78,9 @@ export function SettingsPage() {
   const updateSetting = useSettingsStore((state) => state.updateSetting);
   const resetToDefaults = useSettingsStore((state) => state.resetToDefaults);
   const { devices: gpuDevices, status: gpuListStatus } = useGpuDevices();
+  const checkingUpdate = useUpdateStore((state) => state.checking);
+  const installingUpdate = useUpdateStore((state) => state.installing);
+  const checkForUpdates = useUpdateStore((state) => state.checkForUpdates);
   const reduceMotion = useEffectiveReducedMotion();
   const durationMultiplier = useMotionDurationMultiplier();
   const activeCategory = useSettingsMenuStore((state) => state.activeCategory);
@@ -522,6 +526,25 @@ export function SettingsPage() {
               rotation={0.5}
             >
               <span className={settingStyles.hint}>{t("settings.tray.hint")}</span>
+            </ComicSettingRow>
+
+            <ComicSettingRow
+              label={t("settings.updates.label")}
+              description={t("settings.updates.description")}
+              rotation={-0.8}
+            >
+              <div className="settings-actions settings-actions--inline">
+                <CutoutButton
+                  variant="default"
+                  rotation={-1}
+                  disabled={checkingUpdate || installingUpdate}
+                  onClick={() => void checkForUpdates({ manual: true })}
+                >
+                  {checkingUpdate
+                    ? t("settings.updates.checking")
+                    : t("settings.updates.check")}
+                </CutoutButton>
+              </div>
             </ComicSettingRow>
           </>
         );

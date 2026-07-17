@@ -115,6 +115,10 @@ export const es = {
   "settings.tray.label": "Bandeja del sistema",
   "settings.tray.description": "Icono con menú Mostrar, Configuración, Ocultar y Salir.",
   "settings.tray.hint": "Siempre activa",
+  "settings.updates.label": "Actualizaciones",
+  "settings.updates.description": "Comprueba si hay una versión nueva en GitHub Releases.",
+  "settings.updates.check": "Buscar actualizaciones",
+  "settings.updates.checking": "Buscando…",
   "settings.backup.label": "Copia de seguridad",
   "settings.backup.description": "Exporta o importa accesos y ajustes como archivo JSON.",
   "settings.backup.export": "Exportar",
@@ -144,6 +148,15 @@ export const es = {
   "settings.toasts.defaultsRestored": "Valores predeterminados restaurados.",
   "settings.confirm.import":
     "¿Importar configuración? Se reemplazarán accesos y ajustes actuales.",
+
+  "updater.dialog.title": "Actualización disponible",
+  "updater.dialog.lead": "Hay una versión nueva: {{version}}.",
+  "updater.dialog.notesTitle": "Novedades",
+  "updater.dialog.restartNote": "La app se reiniciará al terminar la instalación.",
+  "updater.dialog.update": "Actualizar",
+  "updater.dialog.later": "Más tarde",
+  "updater.dialog.installing": "Instalando…",
+  "updater.toasts.upToDate": "Ya tienes la última versión.",
 
   "wallpaperEditor.title": "Recortar fondo",
   "wallpaperEditor.description":

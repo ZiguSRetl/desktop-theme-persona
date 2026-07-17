@@ -26,7 +26,10 @@ pub fn embed_as_desktop(_window: &WebviewWindow, _state: &DesktopModeState) -> R
     Err("El modo escritorio solo está disponible en Windows.".into())
 }
 
-pub fn detach_from_desktop(_window: &WebviewWindow, _state: &DesktopModeState) -> Result<(), String> {
+pub fn detach_from_desktop(
+    _window: &WebviewWindow,
+    _state: &DesktopModeState,
+) -> Result<(), String> {
     Ok(())
 }
 

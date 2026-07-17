@@ -3,15 +3,15 @@ use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 use tauri::{AppHandle, WebviewWindow};
-use winreg::enums::*;
-use winreg::RegKey;
 use windows::Win32::Foundation::HWND;
 use windows::Win32::UI::Input::KeyboardAndMouse::EnableWindow;
 use windows::Win32::UI::Shell::{SHChangeNotify, SHCNE_ASSOCCHANGED, SHCNF_IDLIST};
 use windows::Win32::UI::WindowsAndMessaging::{
-    GetWindowLongPtrW, SetWindowLongPtrW, SetWindowPos, GWL_EXSTYLE, SWP_NOACTIVATE, SWP_NOMOVE,
-    SWP_NOSIZE, WS_EX_APPWINDOW, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW, HWND_BOTTOM,
+    GetWindowLongPtrW, SetWindowLongPtrW, SetWindowPos, GWL_EXSTYLE, HWND_BOTTOM, SWP_NOACTIVATE,
+    SWP_NOMOVE, SWP_NOSIZE, WS_EX_APPWINDOW, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW,
 };
+use winreg::enums::*;
+use winreg::RegKey;
 
 use crate::monitor_windows::ordered_monitors;
 
@@ -131,7 +131,10 @@ pub fn embed_as_desktop(window: &WebviewWindow, _state: &DesktopModeState) -> Re
     Ok(())
 }
 
-pub fn detach_from_desktop(window: &WebviewWindow, _state: &DesktopModeState) -> Result<(), String> {
+pub fn detach_from_desktop(
+    window: &WebviewWindow,
+    _state: &DesktopModeState,
+) -> Result<(), String> {
     let hwnd = window_hwnd(window)?;
 
     unsafe {
@@ -178,13 +181,7 @@ pub fn refresh_desktop_overlays_for_app(app: &AppHandle) -> Result<(), String> {
         let pos = monitor.position();
         let size = monitor.size();
         embed_as_desktop(window, &DesktopModeState::default())?;
-        refresh_desktop_overlay(
-            window,
-            pos.x,
-            pos.y,
-            size.width as i32,
-            size.height as i32,
-        )?;
+        refresh_desktop_overlay(window, pos.x, pos.y, size.width as i32, size.height as i32)?;
     }
 
     Ok(())

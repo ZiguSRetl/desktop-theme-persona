@@ -24,12 +24,8 @@ pub use desktop_embed::DesktopModeState;
 #[cfg(not(windows))]
 pub use desktop_embed_stub::DesktopModeState;
 
-use desktop_mode::{
-    disable_desktop_mode, enable_desktop_mode, is_desktop_mode_active_cmd,
-};
-use monitor_windows::{
-    hide_all_launcher_windows, sync_monitor_windows, MonitorWindowsState,
-};
+use desktop_mode::{disable_desktop_mode, enable_desktop_mode, is_desktop_mode_active_cmd};
+use monitor_windows::{hide_all_launcher_windows, sync_monitor_windows, MonitorWindowsState};
 use system::{exit_app, sync_native_settings, NativeSettingsState};
 use system_clean::run_clean_script;
 use system_stats::{get_system_stats, list_gpus, SystemStatsState};
@@ -59,7 +55,8 @@ pub fn state_path(app: &AppHandle) -> Result<PathBuf, String> {
         .app_data_dir()
         .map_err(|e| format!("No se pudo obtener el directorio de datos: {e}"))?;
 
-    fs::create_dir_all(&dir).map_err(|e| format!("No se pudo crear el directorio de datos: {e}"))?;
+    fs::create_dir_all(&dir)
+        .map_err(|e| format!("No se pudo crear el directorio de datos: {e}"))?;
     Ok(dir.join(STATE_FILE))
 }
 
@@ -130,7 +127,10 @@ fn launch_item(app: AppHandle, payload: LaunchPayload) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn search_installed_apps(query: String, limit: Option<u32>) -> Result<Vec<app_search::InstalledAppResult>, String> {
+fn search_installed_apps(
+    query: String,
+    limit: Option<u32>,
+) -> Result<Vec<app_search::InstalledAppResult>, String> {
     let max = limit.unwrap_or(12).clamp(1, 50) as usize;
     app_search::search_installed_apps(&query, max)
 }
@@ -189,6 +189,8 @@ fn hide_launcher_windows(app: AppHandle) -> Result<(), String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init());

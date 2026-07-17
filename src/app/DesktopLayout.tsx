@@ -3,6 +3,8 @@ import { Navigation } from "../components/Navigation";
 import { ComicToast, HalftoneBackground, pathnameToSection, SectionTransition } from "../components/comic";
 import { ShellFooter, ShellHeader } from "../components/shell";
 import { useDesktopInit } from "../features/launcher/useDesktopInit";
+import { UpdateAvailableDialog } from "../features/updater/UpdateAvailableDialog";
+import { useUpdateCheckOnStartup } from "../features/updater/useUpdateCheckOnStartup";
 import { useAnimationProfile } from "../features/settings/useAnimationProfile";
 import { useCrossWindowStateSync } from "../hooks/useCrossWindowStateSync";
 import { useEscapeToHide } from "../hooks/useEscapeToHide";
@@ -14,6 +16,7 @@ export function DesktopLayout() {
   const section = pathnameToSection(location.pathname);
   const animationProfile = useAnimationProfile();
   useDesktopInit();
+  useUpdateCheckOnStartup();
   useCrossWindowStateSync();
   useEscapeToHide();
   useWindowPlacement();
@@ -24,6 +27,7 @@ export function DesktopLayout() {
       <HalftoneBackground section={section} />
       <Navigation />
       <ComicToast />
+      <UpdateAvailableDialog />
 
       <main className="desktop-shell__main">
         <ShellHeader />
