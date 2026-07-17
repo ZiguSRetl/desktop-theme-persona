@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSetting } from "../settings/settingsStore";
+import { useT } from "../../i18n";
 import { fetchSystemMetrics } from "./systemService";
 import type { SystemMetrics, SystemMonitorStatus } from "./types";
 
@@ -14,6 +15,7 @@ interface UseSystemStatsResult {
 export type SystemStatsStatus = SystemMonitorStatus | "idle";
 
 export function useSystemStats(): UseSystemStatsResult {
+  const t = useT();
   const selectedGpuId = useSetting("selectedGpuId");
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
   const [status, setStatus] = useState<SystemMonitorStatus>("loading");
@@ -56,11 +58,11 @@ export function useSystemStats(): UseSystemStatsResult {
       setError(null);
     } catch (err) {
       setStatus("error");
-      setError(err instanceof Error ? err.message : "No se pudieron leer las estadísticas.");
+      setError(err instanceof Error ? err.message : t("system.errors.readStats"));
     } finally {
       requestInProgress.current = false;
     }
-  }, [selectedGpuId]);
+  }, [selectedGpuId, t]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {

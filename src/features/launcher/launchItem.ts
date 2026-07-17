@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { LauncherItem } from "../../types/desktop";
+import { tt } from "../../i18n";
 
 function isTauri(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
@@ -11,7 +12,7 @@ export async function launchItem(item: LauncherItem): Promise<void> {
       window.open(item.target, "_blank", "noopener,noreferrer");
       return;
     }
-    throw new Error("El lanzamiento solo está disponible en la app de escritorio.");
+    throw new Error(tt("services.launch.desktopOnly"));
   }
 
   await invoke("launch_item", {

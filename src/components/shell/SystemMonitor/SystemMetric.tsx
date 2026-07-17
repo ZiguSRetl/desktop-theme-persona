@@ -1,6 +1,7 @@
 import { AlertTriangle } from "lucide-react";
 import type { SystemMonitorStatus } from "../../../features/system/types";
 import type { MetricTone } from "../../../features/system/metricAlerts";
+import { useT } from "../../../i18n";
 import { MetricBar } from "./MetricBar";
 import styles from "./SystemMonitor.module.css";
 
@@ -23,23 +24,25 @@ export function SystemMetric({
   tone = "normal",
   error,
 }: SystemMetricProps) {
+  const t = useT();
   const loading = status === "loading";
   const unavailable = status === "unavailable" || status === "error";
   const displayPrimary = loading ? "…" : unavailable ? "--" : primary;
   const showSecondary = Boolean(secondary) && status === "ready";
+  const metricError = error ?? t("system.aria.metricError");
 
   return (
     <div
       className={styles.metric}
       data-tone={tone}
-      aria-label={`${label}: ${unavailable ? "no disponible" : displayPrimary}${showSecondary ? ` · ${secondary}` : ""}`}
+      aria-label={`${label}: ${unavailable ? t("system.aria.unavailable") : displayPrimary}${showSecondary ? ` · ${secondary}` : ""}`}
     >
       <div className={styles.metricHead}>
         <span className={styles.metricLabel}>{label}</span>
         {status === "error" ? (
-          <span className={styles.errorIcon} title={error ?? "Error al leer métrica"}>
+          <span className={styles.errorIcon} title={metricError}>
             <AlertTriangle size={12} aria-hidden="true" />
-            <span className={styles.visuallyHidden}>{error ?? "Error al leer métrica"}</span>
+            <span className={styles.visuallyHidden}>{metricError}</span>
           </span>
         ) : null}
       </div>

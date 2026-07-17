@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { GpuDevice } from "../../types/desktop";
+import { useT } from "../../i18n";
 import { listGpus } from "./systemService";
 
 interface UseGpuDevicesResult {
@@ -9,6 +10,7 @@ interface UseGpuDevicesResult {
 }
 
 export function useGpuDevices(): UseGpuDevicesResult {
+  const t = useT();
   const [devices, setDevices] = useState<GpuDevice[]>([]);
   const [status, setStatus] = useState<UseGpuDevicesResult["status"]>("loading");
   const [error, setError] = useState<string | null>(null);
@@ -27,14 +29,14 @@ export function useGpuDevices(): UseGpuDevicesResult {
         if (cancelled) return;
         setDevices([]);
         setStatus("error");
-        setError(err instanceof Error ? err.message : "No se pudieron listar las GPU.");
+        setError(err instanceof Error ? err.message : t("system.errors.listGpus"));
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
   return { devices, status, error };
 }

@@ -1,5 +1,5 @@
 import type { DesktopSettings, LauncherItem } from "../types/desktop";
-import { DEFAULT_SETTINGS } from "../features/launcher/persistence";
+import { createDefaultSettings } from "../features/launcher/persistence";
 
 let itemSeq = 0;
 
@@ -25,7 +25,7 @@ export function makeLauncherItem(
 export function makeSettings(
   overrides: Partial<DesktopSettings> = {},
 ): DesktopSettings {
-  return { ...DEFAULT_SETTINGS, ...overrides };
+  return { ...createDefaultSettings(), ...overrides };
 }
 
 export function resetFactories(): void {

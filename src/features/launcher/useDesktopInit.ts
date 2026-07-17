@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
-import { seedLauncherItems } from "../launcher/defaultItems";
+import { tSystem } from "../../i18n";
+import { createSeedLauncherItems } from "../launcher/defaultItems";
 import { useLauncherStore } from "../launcher/launcherStore";
 import {
   createInitialState,
@@ -46,7 +47,7 @@ export function useDesktopInit() {
           return;
         }
 
-        const initial = createInitialState([...seedLauncherItems]);
+        const initial = createInitialState(createSeedLauncherItems());
         if (primary) {
           await saveFullState(initial);
         }
@@ -59,7 +60,7 @@ export function useDesktopInit() {
       } catch (error) {
         launcher.setStatus(
           "error",
-          error instanceof Error ? error.message : "No se pudo cargar el escritorio.",
+          error instanceof Error ? error.message : tSystem("services.desktopInit.loadFailed"),
         );
         settings.hydrate(useSettingsStore.getState().settings);
       }

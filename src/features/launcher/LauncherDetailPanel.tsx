@@ -6,6 +6,7 @@ import {
   Star,
   Trash2,
 } from "lucide-react";
+import { useT } from "../../i18n";
 import type { LauncherItem } from "../../types/desktop";
 import { ComicPanel } from "../../components/comic/ComicPanel";
 import { canRevealLocation, itemDescription } from "./itemDescription";
@@ -30,13 +31,14 @@ export function LauncherDetailPanel({
   onReveal,
   onRemove,
 }: LauncherDetailPanelProps) {
+  const t = useT();
   const [confirmForId, setConfirmForId] = useState<string | null>(null);
   const confirmDelete = item ? confirmForId === item.id : false;
 
   if (!item) {
     return (
       <ComicPanel variant="white" rotation={-1} shadowColor="red" className={styles.panel}>
-        <p className={styles.empty}>Selecciona un acceso para ver detalles y acciones.</p>
+        <p className={styles.empty}>{t("launcher.detail.empty")}</p>
       </ComicPanel>
     );
   }
@@ -56,12 +58,12 @@ export function LauncherDetailPanel({
 
       <div className={styles.primaryActions}>
         <button type="button" className={styles.openBtn} onClick={() => onLaunch(item)}>
-          Abrir
+          {t("launcher.detail.open")}
         </button>
         <button
           type="button"
           className={styles.settingsBtn}
-          aria-label={`Editar ${item.name}`}
+          aria-label={t("launcher.detail.editAria", { name: item.name })}
           onClick={() => onEdit(item)}
         >
           <Settings size={20} aria-hidden="true" />
@@ -75,18 +77,18 @@ export function LauncherDetailPanel({
           onClick={() => onToggleFavorite(item)}
         >
           <Star size={16} fill={item.favorite ? "currentColor" : "none"} aria-hidden="true" />
-          {item.favorite ? "Quitar de favoritos" : "Añadir a favoritos"}
+          {item.favorite ? t("launcher.detail.removeFavorite") : t("launcher.detail.addFavorite")}
         </button>
 
         <button type="button" className={styles.actionBtn} onClick={() => onEdit(item)}>
           <Info size={16} aria-hidden="true" />
-          Más información
+          {t("launcher.detail.moreInfo")}
         </button>
 
         {showReveal ? (
           <button type="button" className={styles.actionBtn} onClick={() => onReveal(item)}>
             <FolderOpen size={16} aria-hidden="true" />
-            Abrir ubicación del archivo
+            {t("launcher.detail.reveal")}
           </button>
         ) : null}
 
@@ -100,14 +102,14 @@ export function LauncherDetailPanel({
                 setConfirmForId(null);
               }}
             >
-              Confirmar
+              {t("launcher.detail.confirm")}
             </button>
             <button
               type="button"
               className={`${styles.confirmBtn} ${styles.confirmNo}`}
               onClick={() => setConfirmForId(null)}
             >
-              Cancelar
+              {t("launcher.detail.cancel")}
             </button>
           </div>
         ) : (
@@ -117,7 +119,7 @@ export function LauncherDetailPanel({
             onClick={() => setConfirmForId(item.id)}
           >
             <Trash2 size={16} aria-hidden="true" />
-            Eliminar acceso
+            {t("launcher.detail.remove")}
           </button>
         )}
       </div>

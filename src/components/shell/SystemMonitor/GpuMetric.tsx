@@ -13,6 +13,8 @@ import {
   usagePercent,
 } from "../../../features/system/formatMetrics";
 import type { SystemMonitorStatus } from "../../../features/system/types";
+import { useSettingsStore } from "../../../features/settings/settingsStore";
+import { getLocaleTag, useT } from "../../../i18n";
 import styles from "./SystemMonitor.module.css";
 
 interface GpuMetricProps {
@@ -49,6 +51,9 @@ export function GpuMetric({
   temperatureCelsius,
   error,
 }: GpuMetricProps) {
+  const t = useT();
+  const language = useSettingsStore((state) => state.settings.language);
+  const locale = getLocaleTag(language);
   const loading = status === "loading";
   const hasAnyMetric =
     usagePercentValue !== null ||
@@ -59,36 +64,39 @@ export function GpuMetric({
 
   const usage =
     usagePercentValue !== null ? normalizePercent(usagePercentValue) : null;
-  const vramLabel = formatGpuVram(vramUsedBytes, vramTotalBytes);
+  const vramLabel = formatGpuVram(vramUsedBytes, vramTotalBytes, locale);
   const tempLabel =
-    temperatureCelsius !== null ? formatTemperature(temperatureCelsius) : null;
+    temperatureCelsius !== null ? formatTemperature(temperatureCelsius, locale) : null;
   const tone =
     status === "ready"
       ? gpuTone(usage, vramUsedBytes, vramTotalBytes, temperatureCelsius)
       : "normal";
 
+  const gpuLabel = t("system.metrics.gpu");
   const ariaParts: string[] = [];
   if (name) ariaParts.push(name);
-  if (usage !== null) ariaParts.push(`uso ${formatPercent(usage)}`);
-  if (vramLabel) ariaParts.push(`VRAM ${vramLabel}`);
-  if (tempLabel) ariaParts.push(`temperatura ${tempLabel}`);
+  if (usage !== null) ariaParts.push(t("system.aria.gpuUsage", { percent: formatPercent(usage, locale) }));
+  if (vramLabel) ariaParts.push(`${t("system.gpu.vram")} ${vramLabel}`);
+  if (tempLabel) ariaParts.push(t("system.aria.gpuTemp", { temp: tempLabel }));
 
   const ariaLabel = loading
-    ? "GPU: cargando"
+    ? t("system.aria.gpuLoading")
     : unavailable && !name
-      ? "GPU: no disponible"
+      ? t("system.aria.gpuUnavailable")
       : ariaParts.length > 0
-        ? `GPU: ${ariaParts.join(", ")}`
-        : "GPU: sin sensores";
+        ? `${gpuLabel}: ${ariaParts.join(", ")}`
+        : t("system.aria.gpuNoSensors");
+
+  const metricError = error ?? t("system.aria.metricError");
 
   return (
     <div className={styles.metric} data-tone={tone} aria-label={ariaLabel}>
       <div className={styles.metricHead}>
-        <span className={styles.metricLabel}>GPU</span>
+        <span className={styles.metricLabel}>{gpuLabel}</span>
         {status === "error" ? (
-          <span className={styles.errorIcon} title={error ?? "Error al leer métrica"}>
+          <span className={styles.errorIcon} title={metricError}>
             <AlertTriangle size={12} aria-hidden="true" />
-            <span className={styles.visuallyHidden}>{error ?? "Error al leer métrica"}</span>
+            <span className={styles.visuallyHidden}>{metricError}</span>
           </span>
         ) : null}
       </div>
@@ -99,23 +107,23 @@ export function GpuMetric({
         ) : hasAnyMetric ? (
           <>
             <span className={styles.gpuStat}>
-              <span className={styles.gpuStatLabel}>Uso</span>
+              <span className={styles.gpuStatLabel}>{t("system.gpu.usage")}</span>
               <span className={styles.gpuStatValue}>
-                {usage !== null ? formatPercent(usage) : "--"}
+                {usage !== null ? formatPercent(usage, locale) : "--"}
               </span>
             </span>
             <span className={styles.gpuStat}>
-              <span className={styles.gpuStatLabel}>VRAM</span>
+              <span className={styles.gpuStatLabel}>{t("system.gpu.vram")}</span>
               <span className={styles.gpuStatValue}>{vramLabel ?? "--"}</span>
             </span>
             <span className={styles.gpuStat}>
-              <span className={styles.gpuStatLabel}>Temp</span>
+              <span className={styles.gpuStatLabel}>{t("system.gpu.temp")}</span>
               <span className={styles.gpuStatValue}>{tempLabel ?? "--"}</span>
             </span>
           </>
         ) : (
           <span className={styles.metricPrimary} title={name ?? undefined}>
-            {name ? "Sin sensores" : "--"}
+            {name ? t("system.gpu.noSensors") : "--"}
           </span>
         )}
       </div>

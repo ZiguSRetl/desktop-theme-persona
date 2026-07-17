@@ -1,5 +1,9 @@
 import { invoke } from "@tauri-apps/api/core";
+import { detectSystemLanguage } from "../../i18n/detectLanguage";
+import { isAppLanguage } from "../../i18n/types";
+import { tSystem } from "../../i18n/translate";
 import type {
+  AppLanguage,
   DesktopSettings,
   LauncherItem,
   LauncherItemType,
@@ -9,7 +13,7 @@ import type {
   WindowBounds,
   WindowMode,
 } from "../../types/desktop";
-import { seedLauncherItems } from "./defaultItems";
+import { createSeedLauncherItems } from "./defaultItems";
 
 const STORAGE_KEY = "persona5-explorer-launcher-state";
 const VALID_TYPES: LauncherItemType[] = ["application", "game", "folder", "url"];
@@ -18,15 +22,29 @@ const VALID_WINDOW_MODES: WindowMode[] = ["window", "maximized", "fullscreen"];
 const VALID_ANIMATION = ["reduced", "normal", "high"] as const;
 const VALID_CLOSE = ["hide", "exit"] as const;
 
-export const DEFAULT_SETTINGS: DesktopSettings = {
-  globalShortcut: "Ctrl+Space",
-  launchOnStartup: false,
-  soundEnabled: true,
-  animationIntensity: "normal",
-  closeBehavior: "hide",
-  windowMode: "maximized",
-  desktopMode: false,
-};
+export function createDefaultSettings(): DesktopSettings {
+  return {
+    globalShortcut: "Ctrl+Space",
+    launchOnStartup: false,
+    soundEnabled: true,
+    animationIntensity: "normal",
+    closeBehavior: "hide",
+    windowMode: "maximized",
+    desktopMode: false,
+    language: detectSystemLanguage(),
+  };
+}
+
+/** Snapshot at module load; prefer `createDefaultSettings()` for fresh defaults. */
+export const DEFAULT_SETTINGS: DesktopSettings = createDefaultSettings();
+
+function resolveLanguage(raw: unknown): AppLanguage {
+  if (typeof raw !== "string" || !raw.trim()) {
+    return detectSystemLanguage();
+  }
+  if (isAppLanguage(raw)) return raw;
+  return "en";
+}
 
 function isTauri(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
@@ -115,28 +133,30 @@ function validateLauncherItem(raw: unknown, index: number): LauncherItem | null 
 }
 
 export function validateSettings(raw: unknown): DesktopSettings {
-  if (!isRecord(raw)) return { ...DEFAULT_SETTINGS };
+  const defaults = createDefaultSettings();
+  if (!isRecord(raw)) return defaults;
 
   const animationIntensity = raw.animationIntensity;
   const closeBehavior = raw.closeBehavior;
   const windowMode = raw.windowMode;
 
   return {
-    globalShortcut: asString(raw.globalShortcut, DEFAULT_SETTINGS.globalShortcut),
-    launchOnStartup: asBoolean(raw.launchOnStartup, DEFAULT_SETTINGS.launchOnStartup),
-    soundEnabled: asBoolean(raw.soundEnabled, DEFAULT_SETTINGS.soundEnabled),
+    globalShortcut: asString(raw.globalShortcut, defaults.globalShortcut),
+    launchOnStartup: asBoolean(raw.launchOnStartup, defaults.launchOnStartup),
+    soundEnabled: asBoolean(raw.soundEnabled, defaults.soundEnabled),
     animationIntensity: VALID_ANIMATION.includes(
       animationIntensity as (typeof VALID_ANIMATION)[number],
     )
       ? (animationIntensity as DesktopSettings["animationIntensity"])
-      : DEFAULT_SETTINGS.animationIntensity,
+      : defaults.animationIntensity,
     closeBehavior: VALID_CLOSE.includes(closeBehavior as (typeof VALID_CLOSE)[number])
       ? (closeBehavior as DesktopSettings["closeBehavior"])
-      : DEFAULT_SETTINGS.closeBehavior,
+      : defaults.closeBehavior,
     windowMode: VALID_WINDOW_MODES.includes(windowMode as WindowMode)
       ? (windowMode as WindowMode)
-      : DEFAULT_SETTINGS.windowMode,
-    desktopMode: asBoolean(raw.desktopMode, DEFAULT_SETTINGS.desktopMode),
+      : defaults.windowMode,
+    desktopMode: asBoolean(raw.desktopMode, defaults.desktopMode),
+    language: resolveLanguage(raw.language),
     selectedGpuId:
       typeof raw.selectedGpuId === "string" && raw.selectedGpuId.trim()
         ? raw.selectedGpuId.trim()
@@ -157,9 +177,12 @@ export function validatePersistedState(raw: unknown): PersistedDesktopState {
 
   const schemaVersion = raw.schemaVersion;
   if (schemaVersion !== 1) {
-    throw new Error(`Versión de esquema no soportada: ${String(schemaVersion)}`);
+    throw new Error(
+      tSystem("services.persistence.unsupportedSchema", { version: String(schemaVersion) }),
+    );
   }
 
+  const settings = validateSettings(raw.settings);
   const itemsRaw = Array.isArray(raw.items) ? raw.items : [];
   const items = itemsRaw
     .map((item, index) => validateLauncherItem(item, index))
@@ -167,19 +190,20 @@ export function validatePersistedState(raw: unknown): PersistedDesktopState {
 
   return {
     schemaVersion: 1,
-    items: items.length > 0 ? items : [...seedLauncherItems],
-    settings: validateSettings(raw.settings),
+    items: items.length > 0 ? items : createSeedLauncherItems(settings.language),
+    settings,
   };
 }
 
 export function createInitialState(
-  items: LauncherItem[] = [...seedLauncherItems],
-  settings: DesktopSettings = { ...DEFAULT_SETTINGS },
+  items?: LauncherItem[],
+  settings?: DesktopSettings,
 ): PersistedDesktopState {
+  const resolvedSettings = settings ?? createDefaultSettings();
   return {
     schemaVersion: 1,
-    items,
-    settings: { ...settings },
+    items: items ?? createSeedLauncherItems(resolvedSettings.language),
+    settings: { ...resolvedSettings },
   };
 }
 

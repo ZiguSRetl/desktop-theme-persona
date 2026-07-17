@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { motion } from "motion/react";
 import type { WallpaperCrop } from "../../../types/desktop";
+import { useT } from "../../../i18n";
 import { useEffectiveReducedMotion } from "../../../features/settings/useAnimationProfile";
 import {
   clampWallpaperCrop,
@@ -30,6 +31,7 @@ export function BackgroundCropEditor({
   onConfirm,
   onCancel,
 }: BackgroundCropEditorProps) {
+  const t = useT();
   const reduceMotion = useEffectiveReducedMotion();
   const dragState = useRef<{ startX: number; startY: number; crop: WallpaperCrop } | null>(null);
   const [crop, setCrop] = useState<WallpaperCrop>(
@@ -113,10 +115,8 @@ export function BackgroundCropEditor({
       >
         <ComicPanel variant="white" shadowColor="black" rotation={-0.5}>
           <div className={styles.content}>
-            <h2 className={styles.title}>Recortar fondo</h2>
-            <p className={styles.description}>
-              Arrastra el recuadro azul para elegir la zona que ocupará toda la pantalla.
-            </p>
+            <h2 className={styles.title}>{t("wallpaperEditor.title")}</h2>
+            <p className={styles.description}>{t("wallpaperEditor.description")}</p>
 
             <div className={styles.stage}>
               {displaySize ? (
@@ -150,7 +150,7 @@ export function BackgroundCropEditor({
               ) : (
                 <div className={styles.loadingFrame}>
                   {loadError ? (
-                    <p className={styles.errorText}>No se pudo cargar la imagen.</p>
+                    <p className={styles.errorText}>{t("wallpaperEditor.loadError")}</p>
                   ) : (
                     <img
                       className={styles.imageHidden}
@@ -167,7 +167,7 @@ export function BackgroundCropEditor({
 
             <div className={styles.actions}>
               <CutoutButton variant="default" rotation={-1} onClick={onCancel}>
-                Cancelar
+                {t("wallpaperEditor.cancel")}
               </CutoutButton>
               <CutoutButton
                 variant="active"
@@ -175,7 +175,7 @@ export function BackgroundCropEditor({
                 disabled={!displaySize || loadError}
                 onClick={() => onConfirm(clampWallpaperCrop(crop))}
               >
-                Aplicar
+                {t("wallpaperEditor.apply")}
               </CutoutButton>
             </div>
           </div>

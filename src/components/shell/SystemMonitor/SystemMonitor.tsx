@@ -13,6 +13,8 @@ import {
   normalizePercent,
 } from "../../../features/system/formatMetrics";
 import type { SystemMetrics, SystemMonitorStatus } from "../../../features/system/types";
+import { useSettingsStore } from "../../../features/settings/settingsStore";
+import { getLocaleTag, useT } from "../../../i18n";
 import { GpuMetric } from "./GpuMetric";
 import { NetworkMetric } from "./NetworkMetric";
 import { SystemMetric } from "./SystemMetric";
@@ -37,13 +39,20 @@ function metricStatus(
   return hasData ? "ready" : "unavailable";
 }
 
-function formatCpuPrimary(usagePercent: number, temperatureCelsius: number | null): string {
-  const usage = formatPercent(usagePercent);
+function formatCpuPrimary(
+  usagePercent: number,
+  temperatureCelsius: number | null,
+  locale: string,
+): string {
+  const usage = formatPercent(usagePercent, locale);
   if (temperatureCelsius === null) return usage;
-  return `${usage} · ${formatTemperature(temperatureCelsius)}`;
+  return `${usage} · ${formatTemperature(temperatureCelsius, locale)}`;
 }
 
 export function SystemMonitor({ metrics, status, error = null }: SystemMonitorProps) {
+  const t = useT();
+  const language = useSettingsStore((state) => state.settings.language);
+  const locale = getLocaleTag(language);
   const sampleTs = status === "ready" && metrics ? metrics.timestamp : null;
   const [cpuAlert, setCpuAlert] = useState<{
     timestamp: number | null;
@@ -78,40 +87,40 @@ export function SystemMonitor({ metrics, status, error = null }: SystemMonitorPr
   return (
     <section
       className={styles.monitor}
-      aria-label="Monitor del sistema"
+      aria-label={t("system.monitor.aria")}
       aria-live="polite"
     >
       <SystemMetric
-        label="CPU"
+        label={t("system.metrics.cpu")}
         status={metricStatus(status, cpuPercent !== null)}
         percent={cpuPercent}
         primary={
-          cpuPercent !== null ? formatCpuPrimary(cpuPercent, cpuTemp) : "--"
+          cpuPercent !== null ? formatCpuPrimary(cpuPercent, cpuTemp, locale) : "--"
         }
         tone={cpuTone}
         error={error}
       />
       <SystemMetric
-        label="RAM"
+        label={t("system.metrics.ram")}
         status={metricStatus(status, memoryPercent !== null)}
         percent={memoryPercent}
-        primary={memoryPercent !== null ? formatPercent(memoryPercent) : "--"}
+        primary={memoryPercent !== null ? formatPercent(memoryPercent, locale) : "--"}
         secondary={
           metrics
-            ? formatMemorySecondary(metrics.memory.usedBytes, metrics.memory.totalBytes)
+            ? formatMemorySecondary(metrics.memory.usedBytes, metrics.memory.totalBytes, locale)
             : null
         }
         tone={memoryPercent !== null ? capacityTone(memoryPercent) : "normal"}
         error={error}
       />
       <SystemMetric
-        label="DISCO"
+        label={t("system.metrics.disk")}
         status={metricStatus(status, Boolean(metrics?.disk))}
         percent={diskPercent}
-        primary={diskPercent !== null ? formatPercent(diskPercent) : "--"}
+        primary={diskPercent !== null ? formatPercent(diskPercent, locale) : "--"}
         secondary={
           metrics?.disk
-            ? formatDiskSecondary(metrics.disk.usedBytes, metrics.disk.totalBytes)
+            ? formatDiskSecondary(metrics.disk.usedBytes, metrics.disk.totalBytes, locale)
             : null
         }
         tone={diskPercent !== null ? capacityTone(diskPercent) : "normal"}

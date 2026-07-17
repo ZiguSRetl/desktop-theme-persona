@@ -1,16 +1,17 @@
 import { Sparkles, type LucideIcon } from "lucide-react";
+import { tt, type TranslationKey } from "../../i18n";
 
 export type ScriptId = "clean";
 
 export interface ScriptPlannedStep {
   id: string;
-  label: string;
+  labelKey: TranslationKey;
 }
 
 export interface ScriptDefinition {
   id: ScriptId;
-  name: string;
-  description: string;
+  readonly name: string;
+  readonly description: string;
   icon: LucideIcon;
   accent: string;
   plannedSteps: ScriptPlannedStep[];
@@ -29,17 +30,20 @@ export const APPS_TO_CLOSE = [
 export const SCRIPTS: ScriptDefinition[] = [
   {
     id: "clean",
-    name: "Clean",
-    description:
-      "Prepara el PC para jugar liberando RAM en caché, VRAM y cachés de shaders. Activa Alto rendimiento y cierra apps que suelen consumir GPU/RAM.",
+    get name() {
+      return tt("scripts.clean.name");
+    },
+    get description() {
+      return tt("scripts.clean.description");
+    },
     icon: Sparkles,
     accent: "#e60012",
     plannedSteps: [
-      { id: "power-plan", label: "Activar plan de energía Alto rendimiento" },
-      { id: "close-apps", label: "Cerrar apps en segundo plano" },
-      { id: "purge-standby", label: "Purgar RAM standby" },
-      { id: "clear-cache", label: "Limpiar cachés temporales y de shaders" },
-      { id: "gpu-reset", label: "Resetear GPU NVIDIA (si está disponible)" },
+      { id: "power-plan", labelKey: "scripts.clean.steps.powerPlan" },
+      { id: "close-apps", labelKey: "scripts.clean.steps.closeApps" },
+      { id: "purge-standby", labelKey: "scripts.clean.steps.purgeStandby" },
+      { id: "clear-cache", labelKey: "scripts.clean.steps.clearCache" },
+      { id: "gpu-reset", labelKey: "scripts.clean.steps.gpuReset" },
     ],
     appsToClose: [...APPS_TO_CLOSE],
   },

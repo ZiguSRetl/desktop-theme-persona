@@ -20,6 +20,7 @@ import {
 } from "../features/settings/wallpaperService";
 import { wallpaperCropToBackgroundStyle } from "../features/settings/wallpaperUtils";
 import { useGpuDevices } from "../features/system/useGpuDevices";
+import { APP_LANGUAGES, useT } from "../i18n";
 import settingStyles from "../components/comic/ComicSettingRow/ComicSettingRow.module.css";
 import type { DesktopSettings, WallpaperCrop } from "../types/desktop";
 import styles from "./SettingsPage.module.css";
@@ -48,6 +49,7 @@ function SettingToggle({
 }
 
 export function SettingsPage() {
+  const t = useT();
   const settings = useSettingsStore((state) => state.settings);
   const updateSetting = useSettingsStore((state) => state.updateSetting);
   const resetToDefaults = useSettingsStore((state) => state.resetToDefaults);
@@ -111,33 +113,29 @@ export function SettingsPage() {
 
   const handleShortcutChange = async (value: string) => {
     if (!isValidGlobalShortcut(value)) {
-      showLaunchError(
-        new Error('Formato inválido. Usa Ctrl, Alt o Shift + tecla (ej. "Ctrl+Space").'),
-      );
+      showLaunchError(new Error(t("settings.toasts.shortcutInvalid")));
       return;
     }
 
-    await handleUpdate("globalShortcut", value, "Atajo global actualizado.");
+    await handleUpdate("globalShortcut", value, t("settings.toasts.shortcutUpdated"));
   };
 
   const handleExport = async () => {
     try {
       const path = await exportConfig();
-      if (path) showSuccess("Configuración exportada.");
+      if (path) showSuccess(t("settings.toasts.exported"));
     } catch (error) {
       showLaunchError(error);
     }
   };
 
   const handleImport = async () => {
-    const confirmed = window.confirm(
-      "¿Importar configuración? Se reemplazarán accesos y ajustes actuales.",
-    );
+    const confirmed = window.confirm(t("settings.confirm.import"));
     if (!confirmed) return;
 
     try {
       const imported = await importConfig();
-      if (imported) showSuccess("Configuración importada.");
+      if (imported) showSuccess(t("settings.toasts.imported"));
     } catch (error) {
       showLaunchError(error);
     }
@@ -185,7 +183,7 @@ export function SettingsPage() {
       await handleUpdate(
         "wallpaper",
         { path: storedPath, crop },
-        "Fondo personalizado aplicado.",
+        t("settings.toasts.wallpaperApplied"),
       );
       setCropEditorOpen(false);
     } catch (error) {
@@ -196,7 +194,7 @@ export function SettingsPage() {
   const handleRemoveWallpaper = async () => {
     try {
       await deleteStoredWallpaper();
-      await handleUpdate("wallpaper", undefined, "Fondo personalizado eliminado.");
+      await handleUpdate("wallpaper", undefined, t("settings.toasts.wallpaperRemoved"));
     } catch (error) {
       showLaunchError(error);
     }
@@ -204,12 +202,45 @@ export function SettingsPage() {
 
   return (
     <div className="page-layout settings-page">
-      <SectionBadge label="Preferencias" />
+      <SectionBadge label={t("sections.badges.settings")} />
 
       <div className="settings-panel" role="list">
           <ComicSettingRow
-            label="Modo de ventana"
-            description="Cómo se abre el launcher al mostrarse."
+            label={t("settings.language.label")}
+            description={t("settings.language.description")}
+            rotation={-1}
+          >
+            <select
+              value={settings.language}
+              onChange={(event) =>
+                void handleUpdate(
+                  "language",
+                  event.target.value as DesktopSettings["language"],
+                  t("settings.language.updated"),
+                )
+              }
+            >
+              {APP_LANGUAGES.map((lang) => (
+                <option key={lang} value={lang}>
+                  {t(
+                    (
+                      {
+                        es: "settings.language.options.es",
+                        en: "settings.language.options.en",
+                        de: "settings.language.options.de",
+                        fr: "settings.language.options.fr",
+                        ja: "settings.language.options.ja",
+                      } as const
+                    )[lang],
+                  )}
+                </option>
+              ))}
+            </select>
+          </ComicSettingRow>
+
+          <ComicSettingRow
+            label={t("settings.windowMode.label")}
+            description={t("settings.windowMode.description")}
             rotation={-1}
           >
             <select
@@ -218,19 +249,19 @@ export function SettingsPage() {
                 void handleUpdate(
                   "windowMode",
                   event.target.value as DesktopSettings["windowMode"],
-                  "Modo de ventana actualizado.",
+                  t("settings.toasts.windowModeUpdated"),
                 )
               }
             >
-              <option value="window">Ventana</option>
-              <option value="maximized">Maximizada</option>
-              <option value="fullscreen">Pantalla completa</option>
+              <option value="window">{t("settings.windowMode.options.window")}</option>
+              <option value="maximized">{t("settings.windowMode.options.maximized")}</option>
+              <option value="fullscreen">{t("settings.windowMode.options.fullscreen")}</option>
             </select>
           </ComicSettingRow>
 
           <ComicSettingRow
-            label="Intensidad de animaciones"
-            description="Controla la energía visual de transiciones y hover."
+            label={t("settings.animationIntensity.label")}
+            description={t("settings.animationIntensity.description")}
             rotation={-1}
           >
             <select
@@ -239,19 +270,19 @@ export function SettingsPage() {
                 void handleUpdate(
                   "animationIntensity",
                   event.target.value as DesktopSettings["animationIntensity"],
-                  "Intensidad de animaciones actualizada.",
+                  t("settings.toasts.animationUpdated"),
                 )
               }
             >
-              <option value="reduced">Reducida</option>
-              <option value="normal">Normal</option>
-              <option value="high">Alta</option>
+              <option value="reduced">{t("settings.animationIntensity.options.reduced")}</option>
+              <option value="normal">{t("settings.animationIntensity.options.normal")}</option>
+              <option value="high">{t("settings.animationIntensity.options.high")}</option>
             </select>
           </ComicSettingRow>
 
           <ComicSettingRow
-            label="Fondo personalizado"
-            description="Elige una imagen y recorta la zona visible bajo el estilo cómic. Se aplica en todas las secciones."
+            label={t("settings.wallpaper.label")}
+            description={t("settings.wallpaper.description")}
             rotation={0.5}
           >
             <div className={styles.wallpaperControls}>
@@ -264,15 +295,15 @@ export function SettingsPage() {
               ) : null}
               <div className="settings-actions settings-actions--inline">
                 <CutoutButton variant="default" rotation={-1} onClick={() => void handlePickWallpaper()}>
-                  Elegir imagen
+                  {t("settings.wallpaper.pick")}
                 </CutoutButton>
                 {isWallpaperConfigured(settings.wallpaper) ? (
                   <>
                     <CutoutButton variant="default" rotation={0.5} onClick={handleRecropWallpaper}>
-                      Recortar
+                      {t("settings.wallpaper.recrop")}
                     </CutoutButton>
                     <CutoutButton variant="default" rotation={1} onClick={() => void handleRemoveWallpaper()}>
-                      Quitar
+                      {t("settings.wallpaper.remove")}
                     </CutoutButton>
                   </>
                 ) : null}
@@ -281,26 +312,26 @@ export function SettingsPage() {
           </ComicSettingRow>
 
           <ComicSettingRow
-            label="Sonidos de interfaz"
-            description="Efectos cortos al lanzar, navegar y confirmar acciones."
+            label={t("settings.sound.label")}
+            description={t("settings.sound.description")}
             rotation={0.5}
           >
             <SettingToggle
-              label="Sonidos de interfaz"
+              label={t("settings.sound.label")}
               checked={settings.soundEnabled}
               onChange={(value) =>
                 void handleUpdate(
                   "soundEnabled",
                   value,
-                  value ? "Sonidos activados." : "Sonidos desactivados.",
+                  value ? t("settings.toasts.soundOn") : t("settings.toasts.soundOff"),
                 )
               }
             />
           </ComicSettingRow>
 
           <ComicSettingRow
-            label="GPU del monitor"
-            description="Elige qué GPU mostrar en el pie (uso, VRAM y temperatura). Automática prioriza la dedicada con sensores."
+            label={t("settings.gpu.label")}
+            description={t("settings.gpu.description")}
             rotation={-0.5}
           >
             <select
@@ -311,98 +342,96 @@ export function SettingsPage() {
                 void handleUpdate(
                   "selectedGpuId",
                   next ? next : undefined,
-                  next ? "GPU del monitor actualizada." : "GPU del monitor en automático.",
+                  next ? t("settings.toasts.gpuUpdated") : t("settings.toasts.gpuAutomatic"),
                 );
               }}
-              aria-label="GPU del monitor"
+              aria-label={t("settings.gpu.ariaLabel")}
             >
-              <option value="">Automática</option>
+              <option value="">{t("settings.gpu.automatic")}</option>
               {settings.selectedGpuId &&
               !gpuDevices.some((gpu) => gpu.id === settings.selectedGpuId) ? (
-                <option value={settings.selectedGpuId}>
-                  GPU guardada (no disponible)
-                </option>
+                <option value={settings.selectedGpuId}>{t("settings.gpu.savedUnavailable")}</option>
               ) : null}
               {gpuDevices.map((gpu) => (
                 <option key={gpu.id} value={gpu.id}>
                   {gpu.name}
-                  {gpu.supportsMetrics ? "" : " (sin sensores)"}
+                  {gpu.supportsMetrics ? "" : t("settings.gpu.noSensorsSuffix")}
                 </option>
               ))}
             </select>
           </ComicSettingRow>
 
           <ComicSettingRow
-            label="Atajo global"
-            description="Muestra u oculta el launcher desde cualquier aplicación (p. ej. Ctrl+Space)."
+            label={t("settings.globalShortcut.label")}
+            description={t("settings.globalShortcut.description")}
             rotation={-0.5}
           >
             <input
               type="text"
               value={settings.globalShortcut}
               onChange={(event) => void handleShortcutChange(event.target.value)}
-              aria-label="Atajo global"
-              placeholder="Ctrl+Space"
+              aria-label={t("settings.globalShortcut.ariaLabel")}
+              placeholder={t("settings.globalShortcut.placeholder")}
             />
           </ComicSettingRow>
 
           <ComicSettingRow
-            label="Usar como escritorio (Win+D)"
-            description="Pantalla completa detrás de tus ventanas abiertas en todos los monitores. Oculta iconos del escritorio y activa el inicio con Windows."
+            label={t("settings.desktopMode.label")}
+            description={t("settings.desktopMode.description")}
             rotation={-0.5}
           >
             <SettingToggle
-              label="Usar como escritorio (Win+D)"
+              label={t("settings.desktopMode.label")}
               checked={settings.desktopMode}
               onChange={(value) =>
                 void handleUpdate(
                   "desktopMode",
                   value,
                   value
-                    ? "Modo escritorio activado. Pulsa Win+D para ver el launcher."
-                    : "Modo escritorio desactivado.",
+                    ? t("settings.toasts.desktopModeOn")
+                    : t("settings.toasts.desktopModeOff"),
                 )
               }
             />
           </ComicSettingRow>
 
           <ComicSettingRow
-            label="Varios monitores"
-            description="El launcher se abre en cada monitor detectado. El estado (accesos y ajustes) se sincroniza entre ventanas."
+            label={t("settings.multiMonitor.label")}
+            description={t("settings.multiMonitor.description")}
             rotation={0.4}
           >
-            <span className={settingStyles.hint}>Activo automáticamente</span>
+            <span className={settingStyles.hint}>{t("settings.multiMonitor.hint")}</span>
           </ComicSettingRow>
 
           <ComicSettingRow
-            label="Recuperación de emergencia"
-            description="Si algo falla: bandeja → Restaurar escritorio de Windows, o Ctrl+Shift+Esc para el Administrador de tareas."
+            label={t("settings.emergency.label")}
+            description={t("settings.emergency.description")}
             rotation={0.5}
           >
-            <span className={settingStyles.hint}>Siempre disponible</span>
+            <span className={settingStyles.hint}>{t("settings.emergency.hint")}</span>
           </ComicSettingRow>
 
           <ComicSettingRow
-            label="Iniciar con Windows"
-            description="Abre Persona5 Explorer automáticamente al iniciar sesión."
+            label={t("settings.launchOnStartup.label")}
+            description={t("settings.launchOnStartup.description")}
             rotation={1}
           >
             <SettingToggle
-              label="Iniciar con Windows"
+              label={t("settings.launchOnStartup.label")}
               checked={settings.launchOnStartup}
               onChange={(value) =>
                 void handleUpdate(
                   "launchOnStartup",
                   value,
-                  value ? "Autoinicio activado." : "Autoinicio desactivado.",
+                  value ? t("settings.toasts.startupOn") : t("settings.toasts.startupOff"),
                 )
               }
             />
           </ComicSettingRow>
 
           <ComicSettingRow
-            label="Comportamiento al cerrar"
-            description="Con «Ocultar», la app sigue en la bandeja del sistema al pulsar la X."
+            label={t("settings.closeBehavior.label")}
+            description={t("settings.closeBehavior.description")}
             rotation={-1}
           >
             <select
@@ -411,34 +440,34 @@ export function SettingsPage() {
                 void handleUpdate(
                   "closeBehavior",
                   event.target.value as DesktopSettings["closeBehavior"],
-                  "Comportamiento al cerrar actualizado.",
+                  t("settings.toasts.closeBehaviorUpdated"),
                 )
               }
             >
-              <option value="hide">Ocultar</option>
-              <option value="exit">Salir</option>
+              <option value="hide">{t("settings.closeBehavior.options.hide")}</option>
+              <option value="exit">{t("settings.closeBehavior.options.exit")}</option>
             </select>
           </ComicSettingRow>
 
           <ComicSettingRow
-            label="Bandeja del sistema"
-            description="Icono con menú Mostrar, Configuración, Ocultar y Salir."
+            label={t("settings.tray.label")}
+            description={t("settings.tray.description")}
             rotation={0.5}
           >
-            <span className={settingStyles.hint}>Siempre activa</span>
+            <span className={settingStyles.hint}>{t("settings.tray.hint")}</span>
           </ComicSettingRow>
 
           <ComicSettingRow
-            label="Copia de seguridad"
-            description="Exporta o importa accesos y ajustes como archivo JSON."
+            label={t("settings.backup.label")}
+            description={t("settings.backup.description")}
             rotation={-0.5}
           >
             <div className="settings-actions settings-actions--inline">
               <CutoutButton variant="default" rotation={-1} onClick={() => void handleExport()}>
-                Exportar
+                {t("settings.backup.export")}
               </CutoutButton>
               <CutoutButton variant="default" rotation={1} onClick={() => void handleImport()}>
-                Importar
+                {t("settings.backup.import")}
               </CutoutButton>
             </div>
           </ComicSettingRow>
@@ -449,14 +478,14 @@ export function SettingsPage() {
               rotation={-1}
               onClick={() => {
                 void resetToDefaults().then(() =>
-                  showSuccess("Valores predeterminados restaurados."),
+                  showSuccess(t("settings.toasts.defaultsRestored")),
                 );
               }}
             >
-              Restaurar predeterminados
+              {t("settings.actions.resetDefaults")}
             </CutoutButton>
             <CutoutButton variant="default" rotation={1} onClick={() => void exitAppCompletely()}>
-              Salir completamente
+              {t("settings.actions.exitCompletely")}
             </CutoutButton>
           </div>
       </div>

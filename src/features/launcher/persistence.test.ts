@@ -13,7 +13,7 @@ describe("validatePersistedState", () => {
   it("rejects unsupported schema versions", () => {
     expect(() =>
       validatePersistedState({ schemaVersion: 99, items: [], settings: {} }),
-    ).toThrow(/esquema no soportada/);
+    ).toThrow(/99/);
   });
 
   it("drops corrupt items and seeds when none remain", () => {
@@ -112,5 +112,25 @@ describe("validatePersistedState", () => {
       favoriteOrder: 0,
       order: 5,
     });
+  });
+
+  it("keeps a supported language", () => {
+    const state = validatePersistedState({
+      schemaVersion: 1,
+      items: [],
+      settings: { language: "ja" },
+    });
+
+    expect(state.settings.language).toBe("ja");
+  });
+
+  it("falls back to en for unsupported language values", () => {
+    const state = validatePersistedState({
+      schemaVersion: 1,
+      items: [],
+      settings: { language: "pt-BR" },
+    });
+
+    expect(state.settings.language).toBe("en");
   });
 });

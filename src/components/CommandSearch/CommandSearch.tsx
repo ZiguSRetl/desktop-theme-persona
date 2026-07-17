@@ -5,10 +5,12 @@ import { useLauncherStore } from "../../features/launcher/launcherStore";
 import { searchLauncherItems } from "../../features/launcher/searchSelectors";
 import { showLaunchError } from "../../features/launcher/toastStore";
 import { useEffectiveReducedMotion } from "../../features/settings/useAnimationProfile";
+import { useT } from "../../i18n";
 import { ComicPanel } from "../comic/ComicPanel";
 import styles from "./CommandSearch.module.css";
 
 export function CommandSearch() {
+  const t = useT();
   const items = useLauncherStore((state) => state.items);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -101,7 +103,7 @@ export function CommandSearch() {
         className={styles.commandSearchPanel}
         role="dialog"
         aria-modal="true"
-        aria-label="Buscar accesos"
+        aria-label={t("search.command.ariaLabel")}
         initial={reduceMotion ? false : { scale: 0.95, opacity: 0, y: -12 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         transition={{ duration: 0.18 }}
@@ -109,7 +111,7 @@ export function CommandSearch() {
       >
         <ComicPanel variant="white" shadowColor="red" rotation={-1}>
           <div className={styles.form}>
-            <h2 className={styles.title}>Buscar accesos</h2>
+            <h2 className={styles.title}>{t("search.command.title")}</h2>
             <input
               ref={inputRef}
               className={styles.input}
@@ -118,14 +120,14 @@ export function CommandSearch() {
                 setQuery(event.target.value);
                 setActiveIndex(0);
               }}
-              placeholder="Escribe para filtrar…"
-              aria-label="Buscar accesos"
+              placeholder={t("search.command.placeholder")}
+              aria-label={t("search.command.ariaLabel")}
               autoComplete="off"
             />
-            <p className={styles.hint}>Ctrl+K · Enter para abrir · Esc para cerrar</p>
+            <p className={styles.hint}>{t("search.command.hint")}</p>
 
             {results.length === 0 ? (
-              <p className={styles.empty}>Sin resultados.</p>
+              <p className={styles.empty}>{t("search.command.empty")}</p>
             ) : (
               <ul className={styles.results} role="listbox">
                 {results.map((item, index) => (

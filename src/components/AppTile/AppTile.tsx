@@ -7,6 +7,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { LauncherItemType } from "../../types/desktop";
+import { useT } from "../../i18n";
 import styles from "./AppTile.module.css";
 
 const iconByType: Record<LauncherItemType, LucideIcon> = {
@@ -33,6 +34,7 @@ export function AppTile({
   tabIndex = 0,
   onSelect,
 }: AppTileProps) {
+  const t = useT();
   const Icon = iconByType[type];
 
   return (
@@ -49,20 +51,20 @@ export function AppTile({
         <Icon size={24} />
       </span>
       <span className={styles.name}>{name}</span>
-      <span className={styles.type}>{typeLabel(type)}</span>
+      <span className={styles.type}>{typeLabel(type, t)}</span>
     </button>
   );
 }
 
-function typeLabel(type: LauncherItemType): string {
+function typeLabel(type: LauncherItemType, t: ReturnType<typeof useT>): string {
   switch (type) {
     case "application":
-      return "Aplicación";
+      return t("launcher.types.application.cap");
     case "game":
-      return "Juego";
+      return t("launcher.types.game.cap");
     case "folder":
-      return "Carpeta";
+      return t("launcher.types.folder.cap");
     case "url":
-      return "Enlace";
+      return t("launcher.types.url.cap");
   }
 }

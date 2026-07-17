@@ -17,6 +17,9 @@ export interface LauncherItem {
 
 export type WindowMode = "window" | "maximized" | "fullscreen";
 
+export type { AppLanguage } from "../i18n/types";
+import type { AppLanguage } from "../i18n/types";
+
 export interface WindowBounds {
   x: number;
   y: number;
@@ -45,6 +48,8 @@ export interface DesktopSettings {
   closeBehavior: "hide" | "exit";
   windowMode: WindowMode;
   desktopMode: boolean;
+  /** UI language; initial value from OS, unsupported locales → `en`. */
+  language: AppLanguage;
   /** Stable GPU id from `list_gpus`; omit/`undefined` = auto (prefer dedicated with metrics). */
   selectedGpuId?: string;
   lastMonitorIndex?: number;
