@@ -1,0 +1,44 @@
+.row {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.row:focus-visible {
+  outline: 3px solid var(--color-red);
+  outline-offset: 3px;
+}
+
+.panel {
+  padding: clamp(0.75rem, 1.2vw, 1rem) clamp(0.875rem, 1.5vw, 1.15rem);
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(0.75rem, 1.2vw, 1rem);
+  min-width: 0;
+}
+
+.label {
+  margin: 0;
+  font-family: var(--font-bebas);
+  font-size: clamp(1rem, 1.1vw + 0.55rem, 1.25rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-black);
+}
+
+.chevron {
+  flex-shrink: 0;
+  font-family: var(--font-bebas);
+  font-size: clamp(1.1rem, 1.2vw + 0.55rem, 1.35rem);
+  letter-spacing: 0;
+  color: var(--color-red);
+  line-height: 1;
+}

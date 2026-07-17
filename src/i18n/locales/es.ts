@@ -52,7 +52,16 @@ export const es = {
   "settings.language.options.ja": "日本語",
   "settings.language.updated": "Idioma actualizado.",
 
+  "settings.menu.back": "Volver",
+  "settings.categories.general": "General",
+  "settings.categories.display": "Pantalla",
+  "settings.categories.shortcuts": "Atajos",
+  "settings.categories.desktop": "Escritorio",
+  "settings.categories.system": "Sistema",
+  "settings.categories.data": "Datos",
+
   "settings.windowMode.label": "Modo de ventana",
+
   "settings.windowMode.description": "Cómo se abre el launcher al mostrarse.",
   "settings.windowMode.options.window": "Ventana",
   "settings.windowMode.options.maximized": "Maximizada",

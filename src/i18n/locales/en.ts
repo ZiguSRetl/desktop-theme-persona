@@ -54,7 +54,16 @@ export const en = {
   "settings.language.options.ja": "日本語",
   "settings.language.updated": "Language updated.",
 
+  "settings.menu.back": "Back",
+  "settings.categories.general": "General",
+  "settings.categories.display": "Display",
+  "settings.categories.shortcuts": "Shortcuts",
+  "settings.categories.desktop": "Desktop",
+  "settings.categories.system": "System",
+  "settings.categories.data": "Data",
+
   "settings.windowMode.label": "Window mode",
+
   "settings.windowMode.description": "How the launcher opens when shown.",
   "settings.windowMode.options.window": "Window",
   "settings.windowMode.options.maximized": "Maximized",

@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { motion } from "motion/react";
 import {
   Crown,
@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { staggerChildren } from "../../lib/motionPresets";
 import { playUiSound, primeAudioContext } from "../../features/audio/soundService";
+import { useSettingsMenuStore } from "../../features/settings/settingsMenuStore";
 import { useEffectiveReducedMotion } from "../../features/settings/useAnimationProfile";
 import { useT } from "../../i18n";
 import styles from "./Navigation.module.css";
@@ -26,7 +27,10 @@ const navItems = [
 
 export function Navigation() {
   const reduceMotion = useEffectiveReducedMotion();
+  const location = useLocation();
   const t = useT();
+  const goBackToRoot = useSettingsMenuStore((state) => state.goBackToRoot);
+  const activeCategory = useSettingsMenuStore((state) => state.activeCategory);
 
   return (
     <nav className={styles.nav} aria-label={t("nav.ariaLabel")}>
@@ -64,6 +68,15 @@ export function Navigation() {
               onMouseEnter={() => {
                 primeAudioContext();
                 playUiSound("hover");
+              }}
+              onClick={() => {
+                if (
+                  to === "/settings" &&
+                  location.pathname === "/settings" &&
+                  activeCategory !== null
+                ) {
+                  goBackToRoot();
+                }
               }}
               className={({ isActive }) =>
                 [
