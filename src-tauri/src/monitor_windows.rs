@@ -3,8 +3,8 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 use tauri::{
-    AppHandle, Emitter, Manager, Monitor, PhysicalPosition, PhysicalSize, Position, Size, WebviewUrl,
-    WebviewWindow, WebviewWindowBuilder,
+    AppHandle, Emitter, Manager, Monitor, PhysicalPosition, PhysicalSize, Position, Size,
+    WebviewUrl, WebviewWindow, WebviewWindowBuilder,
 };
 
 pub const MAIN_WINDOW_LABEL: &str = "main";
@@ -57,7 +57,10 @@ pub fn ordered_monitors(app: &AppHandle) -> Result<Vec<Monitor>, String> {
     });
 
     if let Some(primary) = primary {
-        if let Some(index) = monitors.iter().position(|monitor| same_monitor(monitor, &primary)) {
+        if let Some(index) = monitors
+            .iter()
+            .position(|monitor| same_monitor(monitor, &primary))
+        {
             let primary_monitor = monitors.remove(index);
             monitors.insert(0, primary_monitor);
         }
@@ -149,8 +152,8 @@ pub fn focus_launcher_under_cursor(app: &AppHandle) -> Result<(), String> {
         return Ok(());
     };
 
-    let Some(window) = launcher_window_for_point(app, x, y)
-        .or_else(|| app.get_webview_window(MAIN_WINDOW_LABEL))
+    let Some(window) =
+        launcher_window_for_point(app, x, y).or_else(|| app.get_webview_window(MAIN_WINDOW_LABEL))
     else {
         return Ok(());
     };
@@ -240,11 +243,7 @@ fn attach_close_handler(app: &AppHandle, window: &WebviewWindow) {
 
 fn desktop_mode_active(app: &AppHandle) -> bool {
     let state = app.state::<crate::DesktopModeState>();
-    state
-        .active
-        .lock()
-        .map(|value| *value)
-        .unwrap_or(false)
+    state.active.lock().map(|value| *value).unwrap_or(false)
 }
 
 pub async fn sync_monitor_windows_impl(app: AppHandle) -> Result<(), String> {
@@ -295,8 +294,7 @@ pub async fn sync_monitor_windows_impl(app: AppHandle) -> Result<(), String> {
         app.webview_windows()
             .into_keys()
             .filter(|label| {
-                label.starts_with(SATELLITE_PREFIX)
-                    && !next_labels.iter().any(|keep| keep == label)
+                label.starts_with(SATELLITE_PREFIX) && !next_labels.iter().any(|keep| keep == label)
             })
             .chain(
                 current

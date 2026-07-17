@@ -301,7 +301,9 @@ fn names_match(a: &str, b: &str) -> bool {
 }
 
 fn parse_csv_fields(line: &str) -> Vec<String> {
-    line.split(',').map(|part| part.trim().to_string()).collect()
+    line.split(',')
+        .map(|part| part.trim().to_string())
+        .collect()
 }
 
 fn parse_f32_field(raw: &str) -> Option<f32> {
@@ -442,11 +444,7 @@ fn query_wmi_gpus() -> Vec<GpuDeviceDto> {
             if name.is_empty() {
                 return None;
             }
-            let pnp = device
-                .pnp_device_id
-                .unwrap_or_default()
-                .trim()
-                .to_string();
+            let pnp = device.pnp_device_id.unwrap_or_default().trim().to_string();
             let id = if pnp.is_empty() {
                 format!("wmi:{}", name.to_ascii_lowercase().replace(' ', "-"))
             } else {
@@ -479,7 +477,9 @@ fn merge_gpu_devices(nvidia: &[NvidiaGpuSample], wmi: Vec<GpuDeviceDto>) -> Vec<
         .collect();
 
     for candidate in wmi {
-        let matched = nvidia.iter().any(|gpu| names_match(&gpu.name, &candidate.name));
+        let matched = nvidia
+            .iter()
+            .any(|gpu| names_match(&gpu.name, &candidate.name));
         if matched {
             continue;
         }
@@ -489,7 +489,10 @@ fn merge_gpu_devices(nvidia: &[NvidiaGpuSample], wmi: Vec<GpuDeviceDto>) -> Vec<
     devices.sort_by(|a, b| match (a.supports_metrics, b.supports_metrics) {
         (true, false) => std::cmp::Ordering::Less,
         (false, true) => std::cmp::Ordering::Greater,
-        _ => a.name.to_ascii_lowercase().cmp(&b.name.to_ascii_lowercase()),
+        _ => a
+            .name
+            .to_ascii_lowercase()
+            .cmp(&b.name.to_ascii_lowercase()),
     });
 
     devices
@@ -615,7 +618,10 @@ fn select_primary_disk(disks: &Disks) -> Option<DiskMetricsDto> {
     let mut chosen = None;
 
     for root in &roots {
-        if let Some(disk) = list.iter().find(|disk| path_on_mount(root, disk.mount_point())) {
+        if let Some(disk) = list
+            .iter()
+            .find(|disk| path_on_mount(root, disk.mount_point()))
+        {
             chosen = Some(disk);
             break;
         }
@@ -629,7 +635,10 @@ fn select_primary_disk(disks: &Disks) -> Option<DiskMetricsDto> {
     }
 
     if chosen.is_none() {
-        chosen = list.iter().filter(|disk| disk.total_space() > 0).max_by_key(|d| d.total_space());
+        chosen = list
+            .iter()
+            .filter(|disk| disk.total_space() > 0)
+            .max_by_key(|d| d.total_space());
     }
 
     let disk = chosen?;

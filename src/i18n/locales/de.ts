@@ -118,6 +118,10 @@ export const de = {
   "settings.tray.label": "Systemablage",
   "settings.tray.description": "Symbol mit Menü Anzeigen, Einstellungen, Ausblenden und Beenden.",
   "settings.tray.hint": "Immer aktiv",
+  "settings.updates.label": "Updates",
+  "settings.updates.description": "Prüfe, ob auf GitHub Releases eine neue Version verfügbar ist.",
+  "settings.updates.check": "Nach Updates suchen",
+  "settings.updates.checking": "Suche…",
   "settings.backup.label": "Sicherung",
   "settings.backup.description":
     "Verknüpfungen und Einstellungen als JSON-Datei exportieren oder importieren.",
@@ -148,6 +152,15 @@ export const de = {
   "settings.toasts.defaultsRestored": "Standardwerte wiederhergestellt.",
   "settings.confirm.import":
     "Konfiguration importieren? Aktuelle Verknüpfungen und Einstellungen werden ersetzt.",
+
+  "updater.dialog.title": "Update verfügbar",
+  "updater.dialog.lead": "Eine neue Version ist verfügbar: {{version}}.",
+  "updater.dialog.notesTitle": "Neuigkeiten",
+  "updater.dialog.restartNote": "Die App startet nach der Installation neu.",
+  "updater.dialog.update": "Aktualisieren",
+  "updater.dialog.later": "Später",
+  "updater.dialog.installing": "Wird installiert…",
+  "updater.toasts.upToDate": "Du hast bereits die neueste Version.",
 
   "wallpaperEditor.title": "Hintergrund zuschneiden",
   "wallpaperEditor.description":

@@ -118,6 +118,10 @@ export const en = {
   "settings.tray.label": "System tray",
   "settings.tray.description": "Icon with Show, Settings, Hide and Exit menu.",
   "settings.tray.hint": "Always active",
+  "settings.updates.label": "Updates",
+  "settings.updates.description": "Check for a new version on GitHub Releases.",
+  "settings.updates.check": "Check for updates",
+  "settings.updates.checking": "Checking…",
   "settings.backup.label": "Backup",
   "settings.backup.description": "Export or import shortcuts and settings as a JSON file.",
   "settings.backup.export": "Export",
@@ -147,6 +151,15 @@ export const en = {
   "settings.toasts.defaultsRestored": "Default settings restored.",
   "settings.confirm.import":
     "Import settings? Current shortcuts and settings will be replaced.",
+
+  "updater.dialog.title": "Update available",
+  "updater.dialog.lead": "A new version is available: {{version}}.",
+  "updater.dialog.notesTitle": "What's new",
+  "updater.dialog.restartNote": "The app will restart when installation finishes.",
+  "updater.dialog.update": "Update",
+  "updater.dialog.later": "Later",
+  "updater.dialog.installing": "Installing…",
+  "updater.toasts.upToDate": "You're already on the latest version.",
 
   "wallpaperEditor.title": "Crop wallpaper",
   "wallpaperEditor.description":

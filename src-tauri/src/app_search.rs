@@ -66,7 +66,12 @@ fn push_entry(
     });
 }
 
-fn walk_shortcuts(root: &Path, entries: &mut Vec<AppEntry>, seen: &mut HashSet<String>, source: &str) {
+fn walk_shortcuts(
+    root: &Path,
+    entries: &mut Vec<AppEntry>,
+    seen: &mut HashSet<String>,
+    source: &str,
+) {
     let Ok(read_dir) = fs::read_dir(root) else {
         return;
     };
@@ -232,7 +237,10 @@ pub fn search_installed_apps(query: &str, limit: usize) -> Result<Vec<InstalledA
 }
 
 #[cfg(not(windows))]
-pub fn search_installed_apps(_query: &str, _limit: usize) -> Result<Vec<InstalledAppResult>, String> {
+pub fn search_installed_apps(
+    _query: &str,
+    _limit: usize,
+) -> Result<Vec<InstalledAppResult>, String> {
     Ok(Vec::new())
 }
 

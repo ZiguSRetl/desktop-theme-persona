@@ -13,7 +13,8 @@ fn wallpaper_dir(app: &AppHandle) -> Result<PathBuf, String> {
         .app_data_dir()
         .map_err(|e| format!("No se pudo obtener el directorio de datos: {e}"))?;
 
-    fs::create_dir_all(&dir).map_err(|e| format!("No se pudo crear el directorio de datos: {e}"))?;
+    fs::create_dir_all(&dir)
+        .map_err(|e| format!("No se pudo crear el directorio de datos: {e}"))?;
     Ok(dir)
 }
 

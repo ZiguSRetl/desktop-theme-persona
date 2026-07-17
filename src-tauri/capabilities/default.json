@@ -33,6 +33,8 @@
     "fs:read-all",
     "fs:write-all",
     "autostart:default",
-    "global-shortcut:default"
+    "global-shortcut:default",
+    "updater:default",
+    "process:default"
   ]
 }

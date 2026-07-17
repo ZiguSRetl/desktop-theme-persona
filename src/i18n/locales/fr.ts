@@ -119,6 +119,10 @@ export const fr = {
   "settings.tray.label": "Barre d'état système",
   "settings.tray.description": "Icône avec menu Afficher, Paramètres, Masquer et Quitter.",
   "settings.tray.hint": "Toujours active",
+  "settings.updates.label": "Mises à jour",
+  "settings.updates.description": "Vérifie s'il existe une nouvelle version sur GitHub Releases.",
+  "settings.updates.check": "Rechercher des mises à jour",
+  "settings.updates.checking": "Recherche…",
   "settings.backup.label": "Sauvegarde",
   "settings.backup.description":
     "Exportez ou importez les raccourcis et paramètres sous forme de fichier JSON.",
@@ -149,6 +153,15 @@ export const fr = {
   "settings.toasts.defaultsRestored": "Valeurs par défaut restaurées.",
   "settings.confirm.import":
     "Importer la configuration ? Les raccourcis et paramètres actuels seront remplacés.",
+
+  "updater.dialog.title": "Mise à jour disponible",
+  "updater.dialog.lead": "Une nouvelle version est disponible : {{version}}.",
+  "updater.dialog.notesTitle": "Nouveautés",
+  "updater.dialog.restartNote": "L'application redémarrera à la fin de l'installation.",
+  "updater.dialog.update": "Mettre à jour",
+  "updater.dialog.later": "Plus tard",
+  "updater.dialog.installing": "Installation…",
+  "updater.toasts.upToDate": "Vous avez déjà la dernière version.",
 
   "wallpaperEditor.title": "Recadrer le fond d'écran",
   "wallpaperEditor.description":

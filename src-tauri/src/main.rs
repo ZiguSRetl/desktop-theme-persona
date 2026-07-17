@@ -3,7 +3,10 @@
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    if args.iter().any(|arg| arg == tauri_app_lib::system_clean::CLEAN_WORKER_FLAG) {
+    if args
+        .iter()
+        .any(|arg| arg == tauri_app_lib::system_clean::CLEAN_WORKER_FLAG)
+    {
         let output_path = args
             .iter()
             .find_map(|arg| arg.strip_prefix(tauri_app_lib::system_clean::CLEAN_OUTPUT_PREFIX))
@@ -17,7 +20,8 @@ fn main() {
             });
 
         if let Some(output_path) = output_path {
-            if let Err(error) = tauri_app_lib::system_clean::run_clean_worker_to_file(&output_path) {
+            if let Err(error) = tauri_app_lib::system_clean::run_clean_worker_to_file(&output_path)
+            {
                 eprintln!("{error}");
                 std::process::exit(1);
             }

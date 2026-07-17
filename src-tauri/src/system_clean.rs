@@ -95,10 +95,7 @@ fn parse_u64_mib_to_bytes(raw: &str) -> Option<u64> {
 fn read_vram_used_bytes() -> Option<u64> {
     let output = run_hidden_command(
         "nvidia-smi",
-        &[
-            "--query-gpu=memory.used",
-            "--format=csv,noheader,nounits",
-        ],
+        &["--query-gpu=memory.used", "--format=csv,noheader,nounits"],
     )?;
     if !output.status.success() {
         return None;
@@ -144,8 +141,10 @@ fn process_is_running(name: &str) -> bool {
     run_hidden_command("tasklist", &["/FI", &format!("IMAGENAME eq {name}")])
         .map(|output| {
             let text = String::from_utf8_lossy(&output.stdout);
-            text.lines()
-                .any(|line| line.to_ascii_lowercase().contains(&name.to_ascii_lowercase()))
+            text.lines().any(|line| {
+                line.to_ascii_lowercase()
+                    .contains(&name.to_ascii_lowercase())
+            })
         })
         .unwrap_or(false)
 }
@@ -183,11 +182,7 @@ fn purge_standby_list() -> Result<(), String> {
 
     #[link(name = "ntdll")]
     extern "system" {
-        fn NtSetSystemInformation(
-            class: u32,
-            info: *mut std::ffi::c_void,
-            length: u32,
-        ) -> i32;
+        fn NtSetSystemInformation(class: u32, info: *mut std::ffi::c_void, length: u32) -> i32;
     }
 
     let mut command = MEMORY_PURGE_STANDBY_LIST;
@@ -285,7 +280,8 @@ fn clear_dir_contents(path: &Path, roots: &[PathBuf]) -> Result<u64, String> {
     }
 
     let freed = dir_size_bytes(path);
-    let entries = fs::read_dir(path).map_err(|e| format!("No se pudo leer {}: {e}", path.display()))?;
+    let entries =
+        fs::read_dir(path).map_err(|e| format!("No se pudo leer {}: {e}", path.display()))?;
 
     for entry in entries.flatten() {
         let entry_path = entry.path();
@@ -414,12 +410,7 @@ pub fn perform_clean() -> CleanScriptResult {
     }
 
     match reset_nvidia_gpu() {
-        Ok(()) => steps.push(step(
-            "gpu-reset",
-            "Resetear GPU NVIDIA",
-            "ok",
-            None,
-        )),
+        Ok(()) => steps.push(step("gpu-reset", "Resetear GPU NVIDIA", "ok", None)),
         Err(error) => steps.push(step(
             "gpu-reset",
             "Resetear GPU NVIDIA",
@@ -441,7 +432,9 @@ pub fn perform_clean() -> CleanScriptResult {
 #[cfg(windows)]
 fn is_elevated() -> bool {
     use windows::Win32::Foundation::{CloseHandle, HANDLE};
-    use windows::Win32::Security::{GetTokenInformation, TokenElevation, TOKEN_ELEVATION, TOKEN_QUERY};
+    use windows::Win32::Security::{
+        GetTokenInformation, TokenElevation, TOKEN_ELEVATION, TOKEN_QUERY,
+    };
     use windows::Win32::System::Threading::{GetCurrentProcess, OpenProcessToken};
 
     unsafe {
@@ -468,11 +461,11 @@ fn is_elevated() -> bool {
 #[cfg(windows)]
 fn run_elevated_worker(exe: &Path, output_path: &Path) -> Result<(), String> {
     use std::os::windows::ffi::OsStrExt;
+    use windows::core::PCWSTR;
     use windows::Win32::Foundation::WAIT_TIMEOUT;
     use windows::Win32::System::Threading::WaitForSingleObject;
     use windows::Win32::UI::Shell::{ShellExecuteExW, SEE_MASK_NOCLOSEPROCESS, SHELLEXECUTEINFOW};
     use windows::Win32::UI::WindowsAndMessaging::SW_HIDE;
-    use windows::core::PCWSTR;
     use windows_core::w;
 
     let parameters = format!(
@@ -492,7 +485,8 @@ fn run_elevated_worker(exe: &Path, output_path: &Path) -> Result<(), String> {
     info.nShow = SW_HIDE.0 as i32;
 
     unsafe {
-        ShellExecuteExW(&mut info).map_err(|_| "Se canceló la elevación de permisos.".to_string())?;
+        ShellExecuteExW(&mut info)
+            .map_err(|_| "Se canceló la elevación de permisos.".to_string())?;
         if info.hProcess.0.is_null() {
             return Err("Se canceló la elevación de permisos.".into());
         }
@@ -540,10 +534,8 @@ pub fn run_clean_script() -> Result<CleanScriptResult, String> {
             return Ok(perform_clean());
         }
 
-        let output_path = std::env::temp_dir().join(format!(
-            "p5-clean-{}.json",
-            system_time_now_millis()
-        ));
+        let output_path =
+            std::env::temp_dir().join(format!("p5-clean-{}.json", system_time_now_millis()));
         let _ = fs::remove_file(&output_path);
 
         let exe = std::env::current_exe()
@@ -588,6 +580,9 @@ mod tests {
     #[test]
     fn rejects_paths_outside_allowed_roots() {
         let roots = vec![PathBuf::from("C:\\Users\\test\\AppData\\Local")];
-        assert!(!is_safe_cache_path(Path::new("C:\\Windows\\System32"), &roots));
+        assert!(!is_safe_cache_path(
+            Path::new("C:\\Windows\\System32"),
+            &roots
+        ));
     }
 }
