@@ -5,14 +5,47 @@ import {
   PhysicalPosition,
   PhysicalSize,
 } from "@tauri-apps/api/window";
+import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { invoke } from "@tauri-apps/api/core";
 import type { DesktopSettings, WindowBounds, WindowMode } from "../../types/desktop";
 import { mergeAndSaveState } from "../launcher/persistence";
 import { isPrimaryWindow } from "./monitorWindowsService";
 import { centeredLogicalWindowOnMonitor, resolveRestorePosition } from "./windowPlacement";
 
+/** Matches `--color-black` when the shell is opaque. */
+const OPAQUE_SHELL_COLOR = { red: 5, green: 5, blue: 5, alpha: 255 };
+const TRANSPARENT_SHELL_COLOR = { red: 0, green: 0, blue: 0, alpha: 0 };
+
 function isTauri(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+}
+
+function setDocumentPassthrough(enabled: boolean): void {
+  if (typeof document === "undefined") return;
+  document.documentElement.dataset.wallpaperPassthrough = enabled ? "true" : "false";
+}
+
+/** Toggle CSS + native clear color so Wallpaper Engine / desktop shows through. */
+export async function applyWallpaperPassthrough(enabled: boolean): Promise<void> {
+  setDocumentPassthrough(enabled);
+
+  if (!isTauri()) return;
+
+  const color = enabled ? TRANSPARENT_SHELL_COLOR : OPAQUE_SHELL_COLOR;
+  const window = getCurrentWindow();
+  const webview = getCurrentWebview();
+
+  try {
+    await window.setBackgroundColor(color);
+  } catch {
+    // Older runtimes may lack the API; CSS still covers the common case.
+  }
+
+  try {
+    await webview.setBackgroundColor(color);
+  } catch {
+    // Same as window — non-fatal when transparency APIs are unavailable.
+  }
 }
 
 export async function applyWindowMode(mode: WindowMode): Promise<void> {
@@ -105,6 +138,7 @@ export async function hideMainWindow(): Promise<void> {
 }
 
 export async function applyWindowSettings(settings: DesktopSettings): Promise<void> {
+  await applyWallpaperPassthrough(settings.wallpaperPassthrough);
   if (!isTauri() || settings.desktopMode) return;
   await restoreWindowPlacement(settings);
 }

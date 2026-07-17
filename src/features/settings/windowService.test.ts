@@ -8,6 +8,8 @@ const {
   unmaximize,
   setSize,
   setPosition,
+  setBackgroundColor,
+  setWebviewBackgroundColor,
   outerPosition,
   outerSize,
   currentMonitor,
@@ -41,6 +43,8 @@ const {
     unmaximize: vi.fn(async () => undefined),
     setSize: vi.fn(async () => undefined),
     setPosition: vi.fn(async () => undefined),
+    setBackgroundColor: vi.fn(async () => undefined),
+    setWebviewBackgroundColor: vi.fn(async () => undefined),
     outerPosition: vi.fn(async () => ({ x: 100, y: 80 })),
     outerSize: vi.fn(async () => ({ width: 1280, height: 720 })),
     currentMonitor: vi.fn(),
@@ -62,11 +66,18 @@ vi.mock("@tauri-apps/api/window", () => ({
     setPosition,
     outerPosition,
     outerSize,
+    setBackgroundColor,
   }),
   currentMonitor,
   availableMonitors,
   PhysicalSize,
   PhysicalPosition,
+}));
+
+vi.mock("@tauri-apps/api/webview", () => ({
+  getCurrentWebview: () => ({
+    setBackgroundColor: setWebviewBackgroundColor,
+  }),
 }));
 
 vi.mock("@tauri-apps/api/core", () => ({
@@ -88,6 +99,7 @@ vi.mock("./monitorWindowsService", () => ({
 }));
 
 import {
+  applyWallpaperPassthrough,
   applyWindowMode,
   applyWindowSettings,
   saveWindowPlacement,
@@ -151,6 +163,37 @@ describe("windowService", () => {
     expect(setFullscreen).not.toHaveBeenCalled();
     expect(maximize).not.toHaveBeenCalled();
     expect(setSize).not.toHaveBeenCalled();
+    expect(setBackgroundColor).toHaveBeenCalled();
+  });
+
+  it("applyWallpaperPassthrough sets transparent document and clear colors", async () => {
+    await applyWallpaperPassthrough(true);
+
+    expect(document.documentElement.dataset.wallpaperPassthrough).toBe("true");
+    expect(setBackgroundColor).toHaveBeenCalledWith({
+      red: 0,
+      green: 0,
+      blue: 0,
+      alpha: 0,
+    });
+    expect(setWebviewBackgroundColor).toHaveBeenCalledWith({
+      red: 0,
+      green: 0,
+      blue: 0,
+      alpha: 0,
+    });
+  });
+
+  it("applyWallpaperPassthrough restores opaque shell colors when off", async () => {
+    await applyWallpaperPassthrough(false);
+
+    expect(document.documentElement.dataset.wallpaperPassthrough).toBe("false");
+    expect(setBackgroundColor).toHaveBeenCalledWith({
+      red: 5,
+      green: 5,
+      blue: 5,
+      alpha: 255,
+    });
   });
 
   it("saveWindowPlacement skips when not in window mode", async () => {

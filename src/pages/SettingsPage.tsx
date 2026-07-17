@@ -186,6 +186,7 @@ export function SettingsPage() {
   };
 
   const handlePickWallpaper = async () => {
+    if (settings.wallpaperPassthrough) return;
     try {
       const sourcePath = await pickWallpaperImagePath();
       if (!sourcePath) return;
@@ -197,6 +198,7 @@ export function SettingsPage() {
   };
 
   const handleRecropWallpaper = () => {
+    if (settings.wallpaperPassthrough) return;
     if (!isWallpaperConfigured(settings.wallpaper)) return;
     void openCropEditor(settings.wallpaper.path, {
       initialCrop: settings.wallpaper.crop,
@@ -341,12 +343,32 @@ export function SettingsPage() {
             </ComicSettingRow>
 
             <ComicSettingRow
+              label={t("settings.wallpaperPassthrough.label")}
+              description={t("settings.wallpaperPassthrough.description")}
+              rotation={-0.4}
+            >
+              <SettingToggle
+                label={t("settings.wallpaperPassthrough.label")}
+                checked={settings.wallpaperPassthrough}
+                onChange={(value) =>
+                  void handleUpdate(
+                    "wallpaperPassthrough",
+                    value,
+                    value
+                      ? t("settings.toasts.wallpaperPassthroughOn")
+                      : t("settings.toasts.wallpaperPassthroughOff"),
+                  )
+                }
+              />
+            </ComicSettingRow>
+
+            <ComicSettingRow
               label={t("settings.wallpaper.label")}
               description={t("settings.wallpaper.description")}
               rotation={0.5}
             >
               <div className={styles.wallpaperControls}>
-                {wallpaperPreviewStyle ? (
+                {wallpaperPreviewStyle && !settings.wallpaperPassthrough ? (
                   <div
                     className={styles.wallpaperPreview}
                     style={wallpaperPreviewStyle}
@@ -357,6 +379,7 @@ export function SettingsPage() {
                   <CutoutButton
                     variant="default"
                     rotation={-1}
+                    disabled={settings.wallpaperPassthrough}
                     onClick={() => void handlePickWallpaper()}
                   >
                     {t("settings.wallpaper.pick")}
@@ -366,6 +389,7 @@ export function SettingsPage() {
                       <CutoutButton
                         variant="default"
                         rotation={0.5}
+                        disabled={settings.wallpaperPassthrough}
                         onClick={handleRecropWallpaper}
                       >
                         {t("settings.wallpaper.recrop")}
@@ -373,6 +397,7 @@ export function SettingsPage() {
                       <CutoutButton
                         variant="default"
                         rotation={1}
+                        disabled={settings.wallpaperPassthrough}
                         onClick={() => void handleRemoveWallpaper()}
                       >
                         {t("settings.wallpaper.remove")}

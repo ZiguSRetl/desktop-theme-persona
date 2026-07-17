@@ -17,6 +17,7 @@
         "width": 1280,
         "height": 720,
         "decorations": false,
+        "transparent": true,
         "fullscreen": false,
         "minimizable": false
       }

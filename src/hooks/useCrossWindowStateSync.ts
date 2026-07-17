@@ -4,7 +4,10 @@ import { loadFullState } from "../features/launcher/persistence";
 import { useLauncherStore } from "../features/launcher/launcherStore";
 import { useSettingsStore } from "../features/settings/settingsStore";
 import { getWindowLabel } from "../features/settings/monitorWindowsService";
-import { applyWindowMode } from "../features/settings/windowService";
+import {
+  applyWallpaperPassthrough,
+  applyWindowMode,
+} from "../features/settings/windowService";
 
 export const PERSISTED_STATE_EVENT = "persisted-state-changed";
 
@@ -24,6 +27,8 @@ export async function hydrateFromRemotePersist(): Promise<void> {
   const previousWindowMode = useSettingsStore.getState().settings.windowMode;
   useLauncherStore.getState().hydrate(persisted.items);
   useSettingsStore.getState().hydrate(persisted.settings);
+
+  await applyWallpaperPassthrough(persisted.settings.wallpaperPassthrough);
 
   if (
     !persisted.settings.desktopMode &&

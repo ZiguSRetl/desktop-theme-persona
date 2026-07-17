@@ -28,6 +28,7 @@ const sectionOffsets: Record<AppSection, { shape1: number; shape2: number }> = {
 
 export function HalftoneBackground({ section }: HalftoneBackgroundProps) {
   const wallpaper = useSetting("wallpaper");
+  const wallpaperPassthrough = useSetting("wallpaperPassthrough");
   const reduceMotion = useEffectiveReducedMotion();
   const [isVisible, setIsVisible] = useState(
     () => typeof document !== "undefined" && document.visibilityState === "visible",
@@ -48,7 +49,7 @@ export function HalftoneBackground({ section }: HalftoneBackgroundProps) {
   }, []);
 
   useEffect(() => {
-    if (!isWallpaperConfigured(wallpaper)) {
+    if (wallpaperPassthrough || !isWallpaperConfigured(wallpaper)) {
       queueMicrotask(() => setWallpaperUrl(""));
       return;
     }
@@ -67,7 +68,7 @@ export function HalftoneBackground({ section }: HalftoneBackgroundProps) {
     return () => {
       cancelled = true;
     };
-  }, [wallpaper]);
+  }, [wallpaper, wallpaperPassthrough]);
 
   const wallpaperStyle = useMemo(() => {
     if (!wallpaperUrl || !isWallpaperConfigured(wallpaper)) return undefined;
@@ -76,6 +77,10 @@ export function HalftoneBackground({ section }: HalftoneBackgroundProps) {
 
   const paused = reduceMotion || !isVisible;
   const hasWallpaper = Boolean(wallpaperStyle);
+
+  if (wallpaperPassthrough) {
+    return <div className={styles.background} aria-hidden="true" data-passthrough="true" />;
+  }
 
   return (
     <div className={styles.background} aria-hidden="true" data-paused={paused}>

@@ -82,6 +82,9 @@ export const de = {
   "settings.wallpaper.pick": "Bild wählen",
   "settings.wallpaper.recrop": "Zuschneiden",
   "settings.wallpaper.remove": "Entfernen",
+  "settings.wallpaperPassthrough.label": "Desktop-Hintergrund (Wallpaper Engine)",
+  "settings.wallpaperPassthrough.description":
+    "Transparentes Fenster, damit Wallpaper Engine oder ein anderer Systemhintergrund hinter der UI sichtbar ist. Am besten mit Desktopmodus.",
   "settings.sound.label": "Oberflächenklänge",
   "settings.sound.description": "Kurze Effekte beim Starten, Navigieren und Bestätigen von Aktionen.",
   "settings.gpu.label": "Überwachte GPU",
@@ -134,6 +137,9 @@ export const de = {
   "settings.toasts.animationUpdated": "Animationsintensität aktualisiert.",
   "settings.toasts.wallpaperApplied": "Eigener Hintergrund angewendet.",
   "settings.toasts.wallpaperRemoved": "Eigener Hintergrund entfernt.",
+  "settings.toasts.wallpaperPassthroughOn":
+    "Desktop-Hintergrund sichtbar. Wallpaper Engine laufen lassen und idealerweise Desktopmodus nutzen.",
+  "settings.toasts.wallpaperPassthroughOff": "Interner Launcher-Hintergrund wiederhergestellt.",
   "settings.toasts.soundOn": "Klänge aktiviert.",
   "settings.toasts.soundOff": "Klänge deaktiviert.",
   "settings.toasts.gpuUpdated": "Überwachte GPU aktualisiert.",
