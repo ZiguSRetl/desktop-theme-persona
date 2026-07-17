@@ -12,6 +12,7 @@ pub const SATELLITE_PREFIX: &str = "monitor-";
 
 static WATCHER_RUNNING: AtomicBool = AtomicBool::new(false);
 static SYNC_IN_FLIGHT: AtomicBool = AtomicBool::new(false);
+static FOCUS_REDIRECT_IN_FLIGHT: AtomicBool = AtomicBool::new(false);
 
 pub struct MonitorWindowsState {
     pub satellite_labels: Mutex<Vec<String>>,
@@ -97,6 +98,84 @@ pub fn launcher_windows(app: &AppHandle) -> Vec<WebviewWindow> {
     windows
 }
 
+/// Physical rect hit-test for a monitor (exclusive right/bottom edges).
+pub fn monitor_contains_point(monitor: &Monitor, x: i32, y: i32) -> bool {
+    let pos = monitor.position();
+    let size = monitor.size();
+    let right = pos.x.saturating_add(size.width as i32);
+    let bottom = pos.y.saturating_add(size.height as i32);
+    x >= pos.x && x < right && y >= pos.y && y < bottom
+}
+
+#[cfg(windows)]
+fn cursor_physical_position() -> Option<(i32, i32)> {
+    use windows::Win32::Foundation::POINT;
+    use windows::Win32::UI::WindowsAndMessaging::GetCursorPos;
+
+    let mut point = POINT::default();
+    // SAFETY: GetCursorPos writes into a valid POINT; no handles involved.
+    unsafe {
+        if GetCursorPos(&mut point).is_ok() {
+            Some((point.x, point.y))
+        } else {
+            None
+        }
+    }
+}
+
+#[cfg(not(windows))]
+fn cursor_physical_position() -> Option<(i32, i32)> {
+    None
+}
+
+pub fn launcher_window_for_point(app: &AppHandle, x: i32, y: i32) -> Option<WebviewWindow> {
+    let monitors = ordered_monitors(app).ok()?;
+    let windows = launcher_windows(app);
+    let index = monitors
+        .iter()
+        .position(|monitor| monitor_contains_point(monitor, x, y))?;
+    windows.get(index).cloned()
+}
+
+/// Focus the launcher window on the monitor under the cursor.
+/// No-op if that window is already focused. Used for taskbar activation.
+pub fn focus_launcher_under_cursor(app: &AppHandle) -> Result<(), String> {
+    if FOCUS_REDIRECT_IN_FLIGHT.swap(true, Ordering::SeqCst) {
+        return Ok(());
+    }
+    let _guard = FocusRedirectGuard;
+
+    let Some((x, y)) = cursor_physical_position() else {
+        return Ok(());
+    };
+
+    let Some(window) = launcher_window_for_point(app, x, y)
+        .or_else(|| app.get_webview_window(MAIN_WINDOW_LABEL))
+    else {
+        return Ok(());
+    };
+
+    if window.is_focused().unwrap_or(false) {
+        return Ok(());
+    }
+
+    window
+        .show()
+        .map_err(|e| format!("No se pudo mostrar la ventana: {e}"))?;
+    window
+        .set_focus()
+        .map_err(|e| format!("No se pudo enfocar la ventana: {e}"))?;
+    Ok(())
+}
+
+struct FocusRedirectGuard;
+
+impl Drop for FocusRedirectGuard {
+    fn drop(&mut self) {
+        FOCUS_REDIRECT_IN_FLIGHT.store(false, Ordering::SeqCst);
+    }
+}
+
 fn window_matches_monitor(window: &WebviewWindow, monitor: &Monitor) -> bool {
     let Ok(pos) = window.outer_position() else {
         return false;
@@ -142,6 +221,7 @@ fn create_satellite(
         .title("Persona5 Explorer")
         .decorations(false)
         .skip_taskbar(true)
+        .minimizable(false)
         .visible(true)
         .focused(false)
         .inner_size(size.width as f64, size.height as f64)
@@ -149,6 +229,7 @@ fn create_satellite(
         .build()
         .map_err(|e| format!("No se pudo crear la ventana {label}: {e}"))?;
 
+    let _ = window.set_minimizable(false);
     place_window_on_monitor(&window, monitor)?;
     Ok(window)
 }
@@ -179,9 +260,10 @@ pub async fn sync_monitor_windows_impl(app: AppHandle) -> Result<(), String> {
     // Ensure main exists. Outside desktop mode the frontend owns its geometry via
     // windowMode — do not force full-monitor size (overwrites windowed / fights maximize).
     // In desktop mode Win32 overlays own geometry; Tauri set_position fights them.
-    let _ = app
+    let main = app
         .get_webview_window(MAIN_WINDOW_LABEL)
         .ok_or_else(|| "No se encontró la ventana principal.".to_string())?;
+    let _ = main.set_minimizable(false);
 
     let mut next_labels = Vec::new();
     for index in 1..monitors.len() {
@@ -189,6 +271,7 @@ pub async fn sync_monitor_windows_impl(app: AppHandle) -> Result<(), String> {
         let monitor = &monitors[index];
 
         if let Some(existing) = app.get_webview_window(&label) {
+            let _ = existing.set_minimizable(false);
             if !desktop_active {
                 place_window_on_monitor(&existing, monitor)?;
             }
