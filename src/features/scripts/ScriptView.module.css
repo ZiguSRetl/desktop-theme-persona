@@ -1,0 +1,30 @@
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.gridWrap {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--tile-size));
+  justify-content: start;
+  gap: var(--tile-gap);
+  width: 100%;
+  min-width: 0;
+}
+
+.detailAside {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding-left: clamp(0.25rem, 0.5vw, 0.5rem);
+}

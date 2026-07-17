@@ -1,0 +1,54 @@
+.addCutout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.45rem, 1vw, 0.65rem);
+  min-height: clamp(7.5rem, 18vh, 10rem);
+  min-width: 0;
+  padding: clamp(0.75rem, 1.2vw, 1rem);
+  color: var(--color-white);
+  background: transparent;
+  border: var(--border-thick) dashed var(--color-muted);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5);
+  transform: rotate(-1deg);
+  cursor: pointer;
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+  transition:
+    border-color var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    background-color var(--duration-fast) ease;
+}
+
+.addCutout:hover {
+  color: var(--color-black);
+  background: var(--color-white);
+  border-color: var(--color-black);
+}
+
+.iconWrap {
+  display: grid;
+  place-items: center;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  border: var(--border-thick) currentColor;
+  flex-shrink: 0;
+}
+
+.label {
+  font-family: var(--font-bebas);
+  font-size: clamp(1rem, 1.2vw + 0.5rem, 1.2rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.addCutout:focus-visible {
+  outline: 3px solid var(--color-red);
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .addCutout {
+    transform: none;
+  }
+}

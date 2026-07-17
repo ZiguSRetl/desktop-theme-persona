@@ -1,0 +1,16 @@
+.wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.page {
+  height: 100%;
+  will-change: transform, opacity, clip-path;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page {
+    will-change: auto;
+  }
+}

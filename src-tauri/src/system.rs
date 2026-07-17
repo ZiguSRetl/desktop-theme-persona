@@ -1,0 +1,365 @@
+use serde::Deserialize;
+use std::sync::Mutex;
+use tauri::{
+    menu::{Menu, MenuItem},
+    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    AppHandle, Emitter, Manager, RunEvent, WindowEvent,
+};
+
+use crate::desktop_mode::{apply_desktop_mode_setting, restore_windows_desktop, detach_before_exit};
+use crate::monitor_windows::{
+    any_launcher_window_visible, hide_all_launcher_windows, is_launcher_window_label,
+    show_all_launcher_windows, MAIN_WINDOW_LABEL,
+};
+use crate::DesktopModeState;
+
+#[cfg(desktop)]
+use tauri_plugin_autostart::MacosLauncher;
+#[cfg(desktop)]
+use tauri_plugin_autostart::ManagerExt;
+#[cfg(desktop)]
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
+
+pub struct NativeSettingsState {
+    pub close_behavior: Mutex<String>,
+}
+
+impl Default for NativeSettingsState {
+    fn default() -> Self {
+        Self {
+            close_behavior: Mutex::new("hide".to_string()),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DesktopSettingsPayload {
+    pub global_shortcut: String,
+    pub launch_on_startup: bool,
+    pub close_behavior: String,
+    pub desktop_mode: bool,
+}
+
+pub fn main_window(app: &AppHandle) -> Result<tauri::WebviewWindow, String> {
+    app.get_webview_window(MAIN_WINDOW_LABEL)
+        .ok_or_else(|| "No se encontró la ventana principal.".to_string())
+}
+
+pub fn show_main_window(app: &AppHandle) -> Result<(), String> {
+    show_all_launcher_windows(app)
+}
+
+pub fn hide_main_window(app: &AppHandle) -> Result<(), String> {
+    hide_all_launcher_windows(app)
+}
+
+pub fn toggle_main_window(app: &AppHandle) -> Result<(), String> {
+    if any_launcher_window_visible(app)? {
+        hide_main_window(app)
+    } else {
+        show_main_window(app)
+    }
+}
+
+fn normalize_shortcut(input: &str) -> String {
+    input
+        .trim()
+        .replace("CmdOrCtrl", "Control")
+        .replace("CommandOrControl", "Control")
+        .replace("Ctrl", "Control")
+        .split('+')
+        .map(|part| {
+            let part = part.trim();
+            if part.eq_ignore_ascii_case("control") {
+                "Control".to_string()
+            } else if part.eq_ignore_ascii_case("alt") {
+                "Alt".to_string()
+            } else if part.eq_ignore_ascii_case("shift") {
+                "Shift".to_string()
+            } else if part.len() == 1 {
+                part.to_uppercase()
+            } else {
+                part.to_string()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("+")
+}
+
+#[cfg(desktop)]
+fn apply_global_shortcut(app: &AppHandle, shortcut_str: &str) -> Result<(), String> {
+    let normalized = normalize_shortcut(shortcut_str);
+    if normalized.is_empty() {
+        return Err("El atajo global está vacío.".into());
+    }
+
+    app.global_shortcut()
+        .unregister_all()
+        .map_err(|e| format!("No se pudieron limpiar atajos previos: {e}"))?;
+
+    let shortcut: Shortcut = normalized
+        .parse()
+        .map_err(|e| format!("Atajo inválido ({normalized}): {e}"))?;
+
+    app.global_shortcut()
+        .on_shortcut(shortcut, |app, _, event| {
+            if event.state() == ShortcutState::Pressed {
+                let _ = toggle_main_window(app);
+            }
+        })
+        .map_err(|e| format!("No se pudo registrar el atajo ({normalized}): {e}"))?;
+
+    Ok(())
+}
+
+#[cfg(not(desktop))]
+fn apply_global_shortcut(_app: &AppHandle, _shortcut_str: &str) -> Result<(), String> {
+    Ok(())
+}
+
+#[cfg(desktop)]
+pub(crate) fn apply_autostart(app: &AppHandle, enabled: bool) -> Result<(), String> {
+    let autostart = app.autolaunch();
+    if enabled {
+        autostart
+            .enable()
+            .map_err(|e| format!("No se pudo activar el inicio con Windows: {e}"))?;
+    } else {
+        autostart
+            .disable()
+            .map_err(|e| format!("No se pudo desactivar el inicio con Windows: {e}"))?;
+    }
+    Ok(())
+}
+
+#[cfg(not(desktop))]
+fn apply_autostart(_app: &AppHandle, _enabled: bool) -> Result<(), String> {
+    Ok(())
+}
+
+fn apply_close_behavior(state: &NativeSettingsState, close_behavior: &str) {
+    if let Ok(mut current) = state.close_behavior.lock() {
+        *current = close_behavior.to_string();
+    }
+}
+
+pub fn current_close_behavior(state: &NativeSettingsState) -> String {
+    state
+        .close_behavior
+        .lock()
+        .map(|value| value.clone())
+        .unwrap_or_else(|_| "hide".to_string())
+}
+
+pub async fn sync_native_settings_impl(
+    app: &AppHandle,
+    native_state: &NativeSettingsState,
+    desktop_state: &DesktopModeState,
+    settings: DesktopSettingsPayload,
+) -> Result<(), String> {
+    apply_close_behavior(native_state, &settings.close_behavior);
+    apply_global_shortcut(app, &settings.global_shortcut)?;
+
+    let should_autostart = settings.launch_on_startup || settings.desktop_mode;
+    apply_autostart(app, should_autostart)?;
+    apply_desktop_mode_setting(app, desktop_state, settings.desktop_mode).await?;
+    Ok(())
+}
+
+pub async fn apply_persisted_desktop_mode(app: &AppHandle) -> Result<(), String> {
+    let state = app.state::<DesktopModeState>();
+    let path = crate::state_path(app)?;
+
+    if !path.exists() {
+        return Ok(());
+    }
+
+    let contents = std::fs::read_to_string(&path)
+        .map_err(|e| format!("No se pudo leer el estado guardado: {e}"))?;
+
+    let parsed: serde_json::Value = serde_json::from_str(&contents)
+        .map_err(|e| format!("El estado guardado es inválido: {e}"))?;
+
+    let desktop_mode = parsed
+        .get("settings")
+        .and_then(|settings| settings.get("desktopMode"))
+        .and_then(|value| value.as_bool())
+        .unwrap_or(false);
+
+    let _ = crate::monitor_windows::sync_monitor_windows_impl(app.clone()).await;
+
+    if desktop_mode {
+        apply_desktop_mode_setting(app, &state, true).await?;
+    }
+
+    Ok(())
+}
+
+pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+    let restore_desktop_item = MenuItem::with_id(
+        app,
+        "tray_restore_desktop",
+        "Restaurar escritorio de Windows",
+        true,
+        None::<&str>,
+    )?;
+    let show_item = MenuItem::with_id(app, "tray_show", "Mostrar P5 Explorer", true, None::<&str>)?;
+    let hide_item = MenuItem::with_id(app, "tray_hide", "Ocultar", true, None::<&str>)?;
+    let settings_item = MenuItem::with_id(app, "tray_settings", "Configuración", true, None::<&str>)?;
+    let quit_item = MenuItem::with_id(app, "tray_quit", "Salir", true, None::<&str>)?;
+    let menu = Menu::with_items(
+        app,
+        &[
+            &show_item,
+            &hide_item,
+            &settings_item,
+            &restore_desktop_item,
+            &quit_item,
+        ],
+    )?;
+
+    let icon = app
+        .default_window_icon()
+        .cloned()
+        .ok_or("No se encontró icono para la bandeja del sistema.")?;
+
+    let _tray = TrayIconBuilder::with_id("main-tray")
+        .icon(icon)
+        .tooltip("Persona5 Explorer")
+        .menu(&menu)
+        .show_menu_on_left_click(false)
+        .on_menu_event(|app, event| match event.id.as_ref() {
+            "tray_show" => {
+                let _ = show_main_window(app);
+            }
+            "tray_hide" => {
+                let _ = hide_main_window(app);
+            }
+            "tray_settings" => {
+                let _ = show_main_window(app);
+                let _ = app.emit("navigate-settings", ());
+            }
+            "tray_restore_desktop" => {
+                let handle = app.clone();
+                tauri::async_runtime::spawn(async move {
+                    let state = handle.state::<DesktopModeState>();
+                    let _ = restore_windows_desktop(&handle, &state).await;
+                    let _ = handle.emit("desktop-mode-changed", false);
+                });
+            }
+            "tray_quit" => {
+                let state = app.state::<DesktopModeState>();
+                detach_before_exit(app, &state);
+                app.exit(0);
+            }
+            _ => {}
+        })
+        .on_tray_icon_event(|tray, event| {
+            if let TrayIconEvent::Click {
+                button: MouseButton::Left,
+                button_state: MouseButtonState::Up,
+                ..
+            } = event
+            {
+                let _ = toggle_main_window(tray.app_handle());
+            }
+        })
+        .build(app)?;
+
+    Ok(())
+}
+
+pub fn attach_launcher_window_events(app: &AppHandle, window: &tauri::WebviewWindow) {
+    let app_handle = app.clone();
+    let label = window.label().to_string();
+    let _ = window.on_window_event(move |event| {
+        match event {
+            WindowEvent::CloseRequested { api, .. } => {
+                let state = app_handle.state::<NativeSettingsState>();
+                if current_close_behavior(&state) == "hide" {
+                    api.prevent_close();
+                    let _ = hide_all_launcher_windows(&app_handle);
+                } else if label != MAIN_WINDOW_LABEL {
+                    // Keep the app alive when closing a satellite; only hide it.
+                    api.prevent_close();
+                    if let Some(window) = app_handle.get_webview_window(&label) {
+                        let _ = window.hide();
+                    }
+                }
+            }
+            WindowEvent::Focused(focused) => {
+                if !focused {
+                    let desktop_state = app_handle.state::<DesktopModeState>();
+                    let desktop_active = desktop_state
+                        .active
+                        .lock()
+                        .map(|value| *value)
+                        .unwrap_or(false);
+                    if desktop_active {
+                        // Pin z-order only — full refresh on blur caused a multi-window focus loop.
+                        let _ = crate::desktop_mode::pin_all_desktop_overlays(&app_handle);
+                    }
+                }
+            }
+            _ => {}
+        }
+    });
+}
+
+pub fn setup_window_close_handler(app: &AppHandle) {
+    for window in app.webview_windows().into_values() {
+        if is_launcher_window_label(window.label()) {
+            attach_launcher_window_events(app, &window);
+        }
+    }
+}
+
+pub fn setup_plugins(builder: tauri::Builder<tauri::Wry>) -> tauri::Builder<tauri::Wry> {
+    #[cfg(desktop)]
+    {
+        builder
+            .plugin(tauri_plugin_autostart::init(
+                MacosLauncher::LaunchAgent,
+                Some(vec![]),
+            ))
+            .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+    }
+
+    #[cfg(not(desktop))]
+    {
+        builder
+    }
+}
+
+pub fn on_run_event(app: &AppHandle, event: RunEvent) {
+    if let RunEvent::ExitRequested { api, .. } = event {
+        let state = app.state::<NativeSettingsState>();
+        let behavior = state
+            .close_behavior
+            .lock()
+            .map(|value| value.clone())
+            .unwrap_or_else(|_| "hide".to_string());
+
+        if behavior == "hide" {
+            api.prevent_exit();
+            let _ = hide_main_window(app);
+        }
+    }
+}
+
+#[tauri::command]
+pub fn exit_app(app: AppHandle, desktop_state: tauri::State<'_, DesktopModeState>) {
+    detach_before_exit(&app, &desktop_state);
+    app.exit(0);
+}
+
+#[tauri::command]
+pub async fn sync_native_settings(
+    app: AppHandle,
+    native_state: tauri::State<'_, NativeSettingsState>,
+    desktop_state: tauri::State<'_, DesktopModeState>,
+    settings: DesktopSettingsPayload,
+) -> Result<(), String> {
+    sync_native_settings_impl(&app, &native_state, &desktop_state, settings).await
+}

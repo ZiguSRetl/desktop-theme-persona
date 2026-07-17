@@ -1,0 +1,41 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Persona5 Explorer",
+  "version": "0.1.0",
+  "identifier": "com.zigus.persona5-explorer",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Persona5 Explorer",
+        "width": 1280,
+        "height": 720,
+        "decorations": false,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "shortDescription": "Launcher de escritorio con estética cómic roja y negra.",
+    "longDescription": "Persona5 Explorer es un launcher personal para Windows con accesos rápidos, favoritos, búsqueda y comportamiento de bandeja del sistema.",
+    "publisher": "zigus"
+  }
+}

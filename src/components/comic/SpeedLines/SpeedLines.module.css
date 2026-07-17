@@ -1,0 +1,48 @@
+.container {
+  position: absolute;
+  inset: -12px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.line {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120%;
+  height: 2px;
+  background: var(--color-white);
+  opacity: 0.35;
+  transform-origin: center;
+  animation: speedLineSweep 0.2s ease-out forwards;
+}
+
+.diagonal-left .line {
+  transform: translate(calc(-50% + var(--line-offset)), -50%) rotate(-25deg);
+}
+
+.diagonal-right .line {
+  transform: translate(calc(-50% + var(--line-offset)), -50%) rotate(25deg);
+}
+
+.radial .line {
+  transform: translate(-50%, -50%) rotate(calc(var(--line-index) * 18deg));
+  transform-origin: 0 50%;
+  width: 80%;
+}
+
+.low .line {
+  opacity: 0.2;
+}
+
+.high .line {
+  opacity: 0.5;
+  height: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .container {
+    display: none;
+  }
+}

@@ -1,0 +1,328 @@
+@import "./reset.css";
+@import "./tokens.css";
+@import "./comic-utils.css";
+@import "./animations.css";
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-white);
+  background: var(--color-black);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+.desktop-shell {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--nav-width) minmax(0, 1fr);
+  width: 100%;
+  height: 100dvh;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--color-black);
+  isolation: isolate;
+}
+
+.desktop-shell__main {
+  position: relative;
+  z-index: var(--z-content);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  padding: var(--content-padding);
+  padding-top: var(--content-padding-top);
+  overflow: hidden;
+  container-type: inline-size;
+  container-name: main;
+}
+
+.desktop-shell__content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Page layout — flex column, scroll only in .page-content */
+.page-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.page-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  gap: var(--tile-gap);
+  overflow: hidden;
+}
+
+.page-layout--with-panel .page-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--context-panel-width);
+  align-items: start;
+}
+
+.page-content {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.page-layout--with-panel .page-content {
+  min-height: 0;
+}
+
+/* Launcher layout — grid + detail panel */
+.launcher-page {
+  flex: 1;
+  min-height: 0;
+}
+
+.launcher-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--detail-panel-width);
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  gap: var(--tile-gap);
+  overflow: hidden;
+}
+
+.launcher-panel__details {
+  height: 100%;
+  min-height: 0;
+}
+
+.launcher-panel__details .context-panel__content {
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: clamp(0.25rem, 0.5vw, 0.5rem);
+  box-sizing: border-box;
+}
+
+.settings-page {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.settings-page .settings-panel {
+  max-width: min(100%, 42rem);
+}
+
+.context-panel__details {
+  min-width: 0;
+}
+
+.context-panel__toggle {
+  display: none;
+  list-style: none;
+  cursor: pointer;
+  padding: clamp(0.5rem, 1vw, 0.75rem) clamp(0.75rem, 1.5vw, 1rem);
+  font-family: var(--font-bebas);
+  font-size: clamp(0.85rem, 1vw + 0.4rem, 1rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-white);
+  background: var(--color-red);
+  border: var(--border-thick) var(--color-black);
+  box-shadow: var(--shadow-black);
+}
+
+.context-panel__toggle::-webkit-details-marker {
+  display: none;
+}
+
+.cutout-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--tile-min)), 1fr));
+  gap: var(--tile-gap);
+  width: 100%;
+  min-width: 0;
+  padding-bottom: clamp(1rem, 2vw, 1.5rem);
+}
+
+.cutout-grid--home .app-cutout:nth-child(3n + 1) {
+  transform: rotate(-2deg);
+}
+
+.cutout-grid--home .app-cutout:nth-child(3n + 2) {
+  transform: rotate(1.5deg) translateY(6px);
+}
+
+.cutout-grid--home .app-cutout:nth-child(3n) {
+  transform: rotate(-1deg) translateY(-4px);
+}
+
+.settings-panel {
+  display: grid;
+  gap: clamp(0.75rem, 1.2vw, 1rem);
+  max-width: min(100%, 36rem);
+  width: 100%;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(0.75rem, 1.2vw, 1rem);
+  padding: clamp(0.75rem, 1.2vw, 1rem) clamp(0.875rem, 1.5vw, 1.25rem);
+  background: var(--color-white);
+  color: var(--color-black);
+  border: var(--border-thick) var(--color-black);
+  box-shadow: var(--shadow-black);
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+}
+
+.settings-row__label {
+  font-family: var(--font-bebas);
+  font-size: clamp(0.95rem, 1vw + 0.5rem, 1.1rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.settings-row__value {
+  font-family: var(--font-body);
+  color: var(--color-muted);
+  font-size: clamp(0.8rem, 0.9vw + 0.4rem, 0.875rem);
+}
+
+.settings-row__badge {
+  padding: 0.25rem 0.75rem;
+  background: var(--color-red);
+  color: var(--color-white);
+  border: 2px solid var(--color-black);
+  font-family: var(--font-bebas);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.launcher-loading {
+  font-family: var(--font-bebas);
+  font-size: clamp(1rem, 1.5vw + 0.5rem, 1.25rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.settings-actions {
+  margin-top: 0.5rem;
+}
+
+.settings-actions--inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+}
+
+.settings-actions button {
+  width: auto;
+}
+
+[data-paused="true"] .halftone-pattern,
+[data-paused="true"] .halftone-pattern-light,
+[data-paused="true"] .desktop-shell__background-shape {
+  animation-play-state: paused !important;
+}
+
+[data-animation-intensity="reduced"] .desktop-shell__background-shape,
+[data-animation-intensity="reduced"] .halftone-pattern,
+[data-animation-intensity="reduced"] .halftone-pattern-light {
+  animation: none !important;
+}
+
+[data-animation-intensity="high"] {
+  --duration-fast: 150ms;
+  --duration-normal: 240ms;
+  --duration-spring: 310ms;
+  --duration-page: 360ms;
+}
+
+/* Container queries — grid adapts to content column width */
+@container main (max-width: 36rem) {
+  .desktop-shell__main {
+    --tile-min: clamp(6.5rem, 18cqi, 8.5rem);
+  }
+}
+
+/* Sidebar compact: width OR height */
+@media (max-width: 960px), (max-height: 720px) {
+  .desktop-shell {
+    --nav-width: var(--nav-width-compact);
+  }
+
+  .cutout-grid--home .app-cutout:nth-child(n) {
+    transform: none;
+  }
+}
+
+/* Short viewports — compact header area */
+@media (max-height: 760px) {
+  .cutout-grid--home .app-cutout:nth-child(n) {
+    transform: none;
+  }
+}
+
+/* Contextual / detail panel stacks on narrow viewports */
+@media (max-width: 72rem), (max-height: 760px) {
+  .launcher-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  .context-panel__toggle {
+    display: block;
+  }
+
+  .launcher-layout .detailAside,
+  .launcher-layout > aside {
+    order: -1;
+  }
+}
+
+/* Wide + tall: detail panel always visible */
+@media (min-width: 72rem) and (min-height: 761px) {
+  .context-panel__toggle {
+    display: none;
+  }
+
+  .launcher-panel__details .context-panel__content {
+    display: block !important;
+  }
+}
+
+/* Detail panel open by default; content visible when open */
+.launcher-panel__details[open] .context-panel__content,
+.launcher-panel__details .context-panel__content {
+  display: block;
+}
+
+/* Ultrawide — constrain content width */
+@media (min-width: 2560px) {
+  .desktop-shell__content {
+    max-width: var(--shell-max-width);
+    margin-inline: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cutout-grid--home .app-cutout:nth-child(n) {
+    transform: none;
+  }
+}

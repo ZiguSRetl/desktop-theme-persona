@@ -1,0 +1,1 @@
+export { ComicPageHeader } from "./ComicPageHeader";

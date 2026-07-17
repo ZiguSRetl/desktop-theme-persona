@@ -1,0 +1,17 @@
+---
+description: Comic UI, CSS tokens, and motion conventions
+globs:
+  - src/components/**/*
+  - src/styles/**/*
+  - "**/*.module.css"
+alwaysApply: false
+---
+
+# UI (comic)
+
+- Style with co-located CSS Modules (`Component.module.css`) and tokens from `src/styles/`.
+- Prefer existing `components/comic/*` primitives over new card/dashboard patterns.
+- Colors/fonts: Persona red/black/cream tokens (`--color-red`, etc.) — do not introduce purple/SaaS defaults.
+- Motion uses `motion` + `lib/motionPresets.ts` and respects `useAnimationProfile` / reduced-motion.
+- Keep Spanish labels consistent with Navigation and shell chrome.
+- No Tailwind; do not invent a parallel design system.

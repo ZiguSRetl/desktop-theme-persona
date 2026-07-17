@@ -1,0 +1,32 @@
+.burst {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.element {
+  position: absolute;
+  display: flex;
+  color: var(--color-red);
+}
+
+.cross {
+  color: var(--color-white);
+}
+
+.dot {
+  display: block;
+  border-radius: 50%;
+  background: var(--color-red);
+}
+
+.slash {
+  display: block;
+  background: var(--color-black);
+  transform: rotate(-35deg);
+}
+
+.star {
+  color: var(--color-white);
+}

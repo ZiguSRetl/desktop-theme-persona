@@ -1,0 +1,245 @@
+.cutout {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(0.45rem, 1vw, 0.65rem);
+  min-height: clamp(7.5rem, 18vh, 10rem);
+  padding: clamp(0.75rem, 1.2vw, 1.15rem) clamp(0.75rem, 1.2vw, 1rem)
+    clamp(0.75rem, 1.2vw, 1rem);
+  text-align: left;
+  border: var(--border-thick) var(--color-black);
+  box-shadow: var(--shadow-black);
+  transform: rotate(var(--cutout-rotation, 0deg));
+  cursor: pointer;
+  overflow: hidden;
+  user-select: none;
+  min-width: 0;
+  transition:
+    background-color var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease;
+}
+
+.white {
+  background: var(--color-white);
+  color: var(--color-black);
+}
+
+.red {
+  background: var(--color-red);
+  color: var(--color-white);
+  box-shadow: var(--shadow-red);
+}
+
+.black {
+  background: var(--color-black);
+  color: var(--color-white);
+  border-color: var(--color-white);
+}
+
+.hovered.white {
+  background: var(--color-red);
+  color: var(--color-white);
+  box-shadow: var(--shadow-red);
+}
+
+.hovered.red {
+  background: var(--color-black);
+  color: var(--color-white);
+  box-shadow: var(--shadow-white);
+}
+
+.hovered.black {
+  background: var(--color-white);
+  color: var(--color-black);
+  box-shadow: var(--shadow-black);
+}
+
+.iconWrap {
+  display: grid;
+  place-items: center;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  color: var(--cutout-accent, var(--color-red));
+  background: rgba(0, 0, 0, 0.08);
+  border: 2px solid currentColor;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+  flex-shrink: 0;
+}
+
+.red .iconWrap,
+.black .iconWrap {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-white);
+}
+
+.hovered .iconWrap {
+  color: inherit;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.name {
+  font-family: var(--font-bebas);
+  font-size: clamp(1rem, 1.5vw + 0.5rem, 1.35rem);
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.category {
+  margin-top: auto;
+  font-family: var(--font-body);
+  font-size: clamp(0.6rem, 0.8vw + 0.3rem, 0.68rem);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.flash {
+  position: absolute;
+  inset: 0;
+  background: var(--color-white);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.launching {
+  z-index: 5;
+}
+
+.cutout:focus-visible {
+  outline: 3px solid var(--color-red);
+  outline-offset: 4px;
+}
+
+.removeBtn {
+  position: absolute;
+  top: clamp(0.35rem, 0.8vw, 0.5rem);
+  right: clamp(0.35rem, 0.8vw, 0.5rem);
+  z-index: 2;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  padding: 0 0.35rem;
+  font-family: var(--font-bebas);
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--color-white);
+  background: var(--color-black);
+  border: 2px solid var(--color-white);
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity var(--duration-fast) ease;
+}
+
+.removeBtn:hover {
+  background: var(--color-red);
+}
+
+.dragHandle,
+.favoriteBtn,
+.editBtn {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: clamp(1.5rem, 2vw, 1.75rem);
+  height: clamp(1.5rem, 2vw, 1.75rem);
+  padding: 0;
+  color: var(--color-white);
+  background: var(--color-black);
+  border: 2px solid var(--color-white);
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity var(--duration-fast) ease;
+}
+
+.dragHandle {
+  top: clamp(0.35rem, 0.8vw, 0.5rem);
+  left: clamp(0.35rem, 0.8vw, 0.5rem);
+}
+
+.favoriteBtn {
+  top: clamp(0.35rem, 0.8vw, 0.5rem);
+  left: clamp(2rem, 3vw, 2.5rem);
+}
+
+.favoriteBtnActive {
+  color: var(--color-red);
+  background: var(--color-white);
+}
+
+.editBtn {
+  top: clamp(0.35rem, 0.8vw, 0.5rem);
+  right: clamp(2rem, 3vw, 2.5rem);
+}
+
+.reorderBtns {
+  position: absolute;
+  bottom: clamp(0.35rem, 0.8vw, 0.5rem);
+  right: clamp(0.35rem, 0.8vw, 0.5rem);
+  z-index: 2;
+  display: flex;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: opacity var(--duration-fast) ease;
+}
+
+.reorderBtn {
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  font-family: var(--font-bebas);
+  font-size: 0.85rem;
+  color: var(--color-white);
+  background: var(--color-black);
+  border: 2px solid var(--color-white);
+  cursor: pointer;
+}
+
+.cutout:hover .dragHandle,
+.cutout:hover .favoriteBtn,
+.cutout:hover .editBtn,
+.cutout:focus-within .dragHandle,
+.cutout:focus-within .favoriteBtn,
+.cutout:focus-within .editBtn,
+.cutout:hover .reorderBtns,
+.cutout:focus-within .reorderBtns,
+.removeBtnConfirm {
+  opacity: 1;
+}
+
+.cutout:hover .removeBtn,
+.cutout:focus-within .removeBtn,
+
+.removeBtnConfirm {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--color-red);
+  min-width: auto;
+  padding: 0.2rem 0.45rem;
+}
+
+.removeBtn:hover {
+  background: var(--color-red);
+}
+
+:global(.cutout-grid:has(.app-cutout:hover)) .cutout:not(:hover) {
+  transform: rotate(var(--cutout-rotation, 0deg)) translateY(4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cutout {
+    transform: none;
+  }
+
+  :global(.cutout-grid:has(.app-cutout:hover)) .cutout:not(:hover) {
+    transform: none;
+  }
+}

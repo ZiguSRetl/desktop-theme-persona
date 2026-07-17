@@ -1,0 +1,63 @@
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.gridWrap {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--tile-size));
+  justify-content: start;
+  gap: var(--tile-gap);
+  width: 100%;
+  min-width: 0;
+}
+
+.detailAside {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding-left: clamp(0.25rem, 0.5vw, 0.5rem);
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: clamp(0.35rem, 0.8vw, 0.5rem);
+  padding: clamp(0.75rem, 1.5vw, 1rem) 0;
+  flex-shrink: 0;
+}
+
+.dot {
+  width: clamp(0.5rem, 1vw, 0.65rem);
+  height: clamp(0.5rem, 1vw, 0.65rem);
+  padding: 0;
+  background: rgba(255, 255, 255, 0.25);
+  border: 2px solid var(--color-black);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background var(--duration-fast) ease;
+}
+
+.dotActive {
+  background: var(--color-red);
+}
+
+.dot:hover {
+  background: rgba(230, 0, 18, 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot {
+    transition: none;
+  }
+}

@@ -1,0 +1,14 @@
+---
+description: Feature-slice architecture and domain boundaries for Persona5 Explorer
+alwaysApply: true
+---
+
+# Architecture
+
+- Put domain logic in `src/features/<domain>/` (stores, services, selectors, hooks).
+- Keep `src/pages/` thin: wire a view or feature entry only.
+- Shared domain types live in `src/types/desktop.ts` — do not duplicate launcher/settings shapes.
+- UI primitives go in `src/components/` (`comic/` for design-system pieces, `shell/` for chrome).
+- Prefer Zustand stores over React Context for domain state.
+- User-facing strings and error messages stay in Spanish; code identifiers stay in English.
+- Do not grow `pages/` into business logic hubs.

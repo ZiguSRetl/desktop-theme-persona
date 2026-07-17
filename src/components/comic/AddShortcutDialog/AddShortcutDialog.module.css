@@ -1,0 +1,132 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(5, 5, 5, 0.72);
+}
+
+.dialogWrap {
+  width: min(100%, 480px);
+}
+
+.dialogWrapWide {
+  width: min(100%, 560px);
+}
+
+.form {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.title {
+  font-family: var(--font-anton);
+  font-size: 2rem;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--color-black);
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.label {
+  font-family: var(--font-bebas);
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.input,
+.select {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--color-black);
+  background: var(--color-white);
+  border: var(--border-thick) var(--color-black);
+}
+
+.input:focus-visible,
+.select:focus-visible {
+  outline: 2px solid var(--color-red);
+  outline-offset: 2px;
+}
+
+.targetRow {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.targetRow .input {
+  flex: 1;
+}
+
+.browseBtn {
+  flex-shrink: 0;
+  padding: 0.65rem 0.85rem;
+  font-family: var(--font-bebas);
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-white);
+  background: var(--color-black);
+  border: var(--border-thick) var(--color-black);
+  cursor: pointer;
+}
+
+.browseBtn:hover {
+  background: var(--color-red);
+}
+
+.manualLink {
+  justify-self: start;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--color-muted);
+  text-decoration: underline;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.manualLink:hover {
+  color: var(--color-red);
+}
+
+.checkboxField {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--color-black);
+}
+
+.error {
+  padding: 0.5rem 0.65rem;
+  font-size: 0.85rem;
+  color: var(--color-white);
+  background: var(--color-red);
+  border: 2px solid var(--color-black);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.actions button {
+  width: auto;
+  min-width: 120px;
+}

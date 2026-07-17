@@ -1,0 +1,200 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.875rem, 1.5vw, 1.25rem);
+  min-width: 0;
+  height: 100%;
+  padding: clamp(1rem, 2vw, 1.5rem);
+  box-sizing: border-box;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 8rem;
+  padding: 1rem;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.75rem, 1.2vw, 1rem);
+  width: 100%;
+  text-align: center;
+}
+
+.iconWrap {
+  display: grid;
+  place-items: center;
+  width: var(--icon-size-detail);
+  height: var(--icon-size-detail);
+  color: var(--color-red);
+  background: rgba(0, 0, 0, 0.06);
+  border: var(--border-thick) var(--color-black);
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+}
+
+.name {
+  font-family: var(--font-anton);
+  font-size: clamp(1.25rem, 2vw + 0.5rem, 1.75rem);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-black);
+}
+
+.description {
+  font-family: var(--font-body);
+  font-size: clamp(0.8rem, 0.9vw + 0.4rem, 0.875rem);
+  line-height: 1.5;
+  color: var(--color-muted);
+}
+
+.primaryActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.runBtn {
+  flex: 1;
+  padding: clamp(0.65rem, 1.2vw, 0.85rem) clamp(1rem, 2vw, 1.5rem);
+  font-family: var(--font-bebas);
+  font-size: clamp(1.1rem, 1.5vw + 0.5rem, 1.35rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-white);
+  background: var(--color-red);
+  border: var(--border-thick) var(--color-black);
+  box-shadow: var(--shadow-black);
+  cursor: pointer;
+  transition: background var(--duration-fast) ease;
+}
+
+.runBtn:hover:not(:disabled) {
+  background: var(--color-red-dark);
+}
+
+.runBtn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sectionTitle {
+  font-family: var(--font-bebas);
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-black);
+}
+
+.stepList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stepItem {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.stepBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.stepLabel {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--color-black);
+}
+
+.stepDetail {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  word-break: break-word;
+}
+
+.stepOk {
+  color: #1a7f37;
+  flex-shrink: 0;
+}
+
+.stepFailed {
+  color: var(--color-red);
+  flex-shrink: 0;
+}
+
+.stepSkipped,
+.stepPending {
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+
+.stepSpinner {
+  color: var(--color-red);
+  flex-shrink: 0;
+  animation: spin 1s linear infinite;
+}
+
+.metricRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+}
+
+.metricLabel {
+  color: var(--color-muted);
+}
+
+.metricValue {
+  color: var(--color-black);
+  text-align: right;
+}
+
+.closedApps {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  margin: 0;
+}
+
+.error {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--color-red-dark);
+  margin: 0;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stepSpinner {
+    animation: none;
+  }
+}

@@ -1,0 +1,1 @@
+export { ComicPanel } from "./ComicPanel";

@@ -1,0 +1,14 @@
+---
+description: Persistence schema, validation, and Zustand mutation patterns
+globs: src/features/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Persistence and state
+
+- `PersistedDesktopState.schemaVersion` is `1`. Changing shape means updating types, defaults, and `validatePersistedState`.
+- All durable mutations go through `mergeAndSaveState` / `saveFullState` in `persistence.ts` — persist first, then `set` the store.
+- Validate untrusted payloads with `validatePersistedState` (never assume JSON shape).
+- Hydrate stores via `useDesktopInit` / store `hydrate` helpers; do not bypass with ad-hoc localStorage writes.
+- Empty/corrupt item lists fall back to seed items from `defaultItems.ts`.
+- Browser/non-Tauri path uses the `persona5-explorer-launcher-state` localStorage key.

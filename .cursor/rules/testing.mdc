@@ -1,0 +1,14 @@
+---
+description: Vitest conventions and required post-change test runs
+alwaysApply: true
+---
+
+# Testing
+
+- After changing code under `src/` or tests, run `npm test` before finishing the turn.
+- Colocate tests as `*.test.ts` / `*.test.tsx` next to the unit under test.
+- Prefer testing stores, selectors, validators, and pure helpers over shallow UI smoke.
+- Mock `@tauri-apps/*` and `mergeAndSaveState` / native window helpers — never hit real Tauri in unit tests.
+- Use factories from `src/test/factories.ts` for `LauncherItem` / settings fixtures.
+- Do not add empty or misnamed suites (e.g. a `configTransfer` test that only calls `validatePersistedState`).
+- A project `stop` hook also runs Vitest when agent edits touch code; fix failures instead of ignoring them.

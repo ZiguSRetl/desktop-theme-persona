@@ -1,0 +1,20 @@
+.wallpaperControls {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: end;
+}
+
+.wallpaperPreview {
+  width: clamp(5.5rem, 12vw, 7.5rem);
+  aspect-ratio: 16 / 9;
+  border: 2px solid var(--color-black);
+  box-shadow: var(--shadow-black);
+  background-color: var(--color-black);
+}
+
+@media (max-width: 600px), (max-height: 640px) {
+  .wallpaperControls {
+    width: 100%;
+    justify-items: stretch;
+  }
+}

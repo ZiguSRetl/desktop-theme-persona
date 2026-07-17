@@ -1,0 +1,18 @@
+---
+description: Tauri invoke wrappers, guards, and desktop-mode conventions
+globs:
+  - src/**/*.{ts,tsx}
+  - src-tauri/**/*.rs
+alwaysApply: false
+---
+
+# Tauri bridge
+
+- Call Rust only through `*Service.ts` / feature helpers — never `invoke` from presentational UI.
+- Guard with `isTauri()` / `__TAURI_INTERNALS__`; non-Tauri paths no-op or use localStorage.
+- Invoke payloads use serde **camelCase** matching TS types.
+- Register new commands in `src-tauri/src/lib.rs` `generate_handler!` and capabilities when needed.
+- Apply desktop mode via `desktopMode` setting → `sync_native_settings` / `applyNativeSettings`, not ad-hoc window APIs.
+- Enabling `desktopMode` also forces `launchOnStartup: true` in `settingsStore`.
+- Known tray/events: `navigate-settings`, `desktop-mode-changed`.
+- Windows-only embed logic lives behind `#[cfg(windows)]` with stubs elsewhere.

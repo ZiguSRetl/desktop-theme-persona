@@ -1,0 +1,43 @@
+.panel {
+  position: relative;
+  transform: rotate(var(--panel-rotation, 0deg));
+  border: var(--border-thick) var(--color-black);
+}
+
+.white {
+  background: var(--color-white);
+  color: var(--color-black);
+}
+
+.red {
+  background: var(--color-red);
+  color: var(--color-white);
+}
+
+.black {
+  background: var(--color-black);
+  color: var(--color-white);
+  border-color: var(--color-white);
+}
+
+.shadow-black {
+  box-shadow: var(--shadow-black);
+}
+
+.shadow-red {
+  box-shadow: var(--shadow-red);
+}
+
+.shadow-white {
+  box-shadow: var(--shadow-white);
+}
+
+.shadow-none {
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    transform: none;
+  }
+}

@@ -1,0 +1,91 @@
+:root {
+  --color-red: #e60012;
+  --color-red-dark: #8f0010;
+  --color-black: #050505;
+  --color-surface: #0e0e0e;
+  --color-surface-elevated: #161616;
+  --color-white: #f5f1e8;
+  --color-muted: #999999;
+
+  --font-anton: "Anton", "Arial Black", sans-serif;
+  --font-bebas: "Bebas Neue", "Arial Narrow", sans-serif;
+  --font-display: "Archivo Black", "Arial Black", sans-serif;
+  --font-body: "Inter", "Segoe UI", sans-serif;
+
+  --duration-fast: 120ms;
+  --duration-normal: 200ms;
+  --duration-spring: 260ms;
+  --duration-page: 300ms;
+
+  --ease-comic: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-sharp: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Layout tokens — fluid via clamp(), not resolution-specific */
+  --nav-width: clamp(3.75rem, 10vw + 1rem, 12.5rem);
+  --nav-width-compact: clamp(3.25rem, 6vw, 4rem);
+  --content-padding: clamp(0.875rem, 1.5vw + 0.5rem, 2.5rem);
+  --content-padding-top: clamp(0.75rem, 1.5vw + 0.25rem, 1.75rem);
+  --tile-gap: clamp(0.75rem, 1.2vw, 1.25rem);
+  --tile-min: clamp(7.5rem, 12cqi, 11rem);
+  --tile-size: clamp(7rem, 9cqi, 9.5rem);
+  --icon-size: clamp(3rem, 4vw, 4.25rem);
+  --icon-size-tile: min(4.75rem, calc(var(--tile-size) * 0.58));
+  --icon-size-detail: clamp(4.75rem, 10vw, 6.5rem);
+  --icon-image-scale: 1;
+  --font-page-title: clamp(2rem, 4vw + 1rem, 6rem);
+  --font-nav: clamp(0.85rem, 1vw + 0.5rem, 1.05rem);
+  --header-clock-space: clamp(9rem, 20vw, 16rem);
+  --shell-max-width: min(100%, 2400px);
+  --context-panel-width: clamp(16rem, 28cqi, 22rem);
+  --detail-panel-width: clamp(16rem, 28cqi, 22rem);
+  --header-height: clamp(4rem, 10vh, 7rem);
+  --footer-height: clamp(3.625rem, 6.5vh, 5.75rem);
+  --launcher-tile-bg: var(--color-surface-elevated);
+  --launcher-selected-border: var(--color-red);
+
+  /* Breakpoint reference (applied via media queries in global.css):
+     --bp-nav-compact: max-width 960px OR max-height 720px
+     --bp-panel-stack: max-width 72rem OR max-height 760px
+     --bp-panel-collapsed: max-height 640px
+     --bp-ultrawide: min-width 2560px */
+
+  --border-thick: 3px solid;
+  --border-thicker: 5px solid;
+
+  --rotate-min: -3deg;
+  --rotate-max: 3deg;
+
+  --shadow-black: 6px 6px 0 var(--color-black);
+  --shadow-red: 6px 6px 0 var(--color-red);
+  --shadow-white: 4px 4px 0 var(--color-white);
+  --shadow-soft: 8px 8px 0 rgba(0, 0, 0, 0.6);
+
+  --z-bg: 0;
+  --z-content: 1;
+  --z-nav: 10;
+  --z-nav-active: 11;
+  --z-clock: 20;
+  --z-overlay: 50;
+
+  --section-accent: var(--color-red);
+}
+
+.desktop-shell[data-section="home"] {
+  --section-accent: #e60012;
+}
+
+.desktop-shell[data-section="apps"] {
+  --section-accent: #ff4d4d;
+}
+
+.desktop-shell[data-section="games"] {
+  --section-accent: #c40010;
+}
+
+.desktop-shell[data-section="system"] {
+  --section-accent: #8f0010;
+}
+
+.desktop-shell[data-section="settings"] {
+  --section-accent: #a60012;
+}
