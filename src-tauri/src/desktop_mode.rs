@@ -65,16 +65,17 @@ pub async fn enable_desktop_mode_impl(
     hide_desktop_icons()?;
     refresh_all_desktop_overlays(app)?;
 
-    if let Some(main) = app.get_webview_window(crate::monitor_windows::MAIN_WINDOW_LABEL) {
-        main.set_focus()
-            .map_err(|e| format!("No se pudo enfocar la ventana: {e}"))?;
-    }
-
     if let Ok(mut active) = state.active.lock() {
         *active = true;
     }
 
+    // Start z-order keeper before focus so the shell stays behind other apps.
     start_desktop_overlay_watcher(app.clone());
+
+    // Z-order is enforced by WM_WINDOWPOSCHANGING subclass; avoid set_focus
+    // here so we don't raise above other apps on enable.
+    let _ = pin_all_desktop_overlays(app);
+
     Ok(())
 }
 
@@ -164,6 +165,7 @@ pub async fn restore_windows_desktop(
 
 pub fn detach_before_exit(app: &AppHandle, state: &DesktopModeState) {
     if is_desktop_mode_active(state) {
+        stop_desktop_overlay_watcher();
         if let Ok(mut guard) = state.active.lock() {
             *guard = false;
         }
