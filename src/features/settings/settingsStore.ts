@@ -47,8 +47,13 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       await applyNativeSettings(next);
     }
 
-    if (WINDOW_SETTING_KEYS.has(key)) {
+    if (WINDOW_SETTING_KEYS.has(key) && !next.desktopMode) {
       await applyWindowMode(next.windowMode);
+    }
+
+    // After leaving desktop mode, Rust detaches overlays but does not restore windowMode.
+    if (key === "desktopMode" && value === false) {
+      await applyWindowSettings(next);
     }
   },
 

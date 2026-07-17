@@ -2,7 +2,6 @@ import {
   availableMonitors,
   currentMonitor,
   getCurrentWindow,
-  LogicalSize,
   PhysicalPosition,
   PhysicalSize,
 } from "@tauri-apps/api/window";
@@ -10,7 +9,7 @@ import { invoke } from "@tauri-apps/api/core";
 import type { DesktopSettings, WindowBounds, WindowMode } from "../../types/desktop";
 import { mergeAndSaveState } from "../launcher/persistence";
 import { isPrimaryWindow } from "./monitorWindowsService";
-import { centeredWindowOnMonitor, resolveRestorePosition } from "./windowPlacement";
+import { centeredLogicalWindowOnMonitor, resolveRestorePosition } from "./windowPlacement";
 
 function isTauri(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
@@ -26,8 +25,7 @@ export async function applyWindowMode(mode: WindowMode): Promise<void> {
   if (!monitor) return;
 
   if (mode === "fullscreen") {
-    await window.setPosition(new PhysicalPosition(monitor.position.x, monitor.position.y));
-    await window.setSize(new PhysicalSize(monitor.size.width, monitor.size.height));
+    await window.unmaximize();
     await window.setFullscreen(true);
     return;
   }
@@ -35,20 +33,19 @@ export async function applyWindowMode(mode: WindowMode): Promise<void> {
   await window.setFullscreen(false);
 
   if (mode === "maximized") {
-    await window.setPosition(new PhysicalPosition(monitor.position.x, monitor.position.y));
-    await window.setSize(new PhysicalSize(monitor.size.width, monitor.size.height));
     await window.maximize();
     return;
   }
 
   await window.unmaximize();
-  const bounds = centeredWindowOnMonitor(monitor);
-  await window.setSize(new LogicalSize(1280, 720));
+  const bounds = centeredLogicalWindowOnMonitor(monitor);
+  await window.setSize(new PhysicalSize(bounds.width, bounds.height));
   await window.setPosition(new PhysicalPosition(bounds.x, bounds.y));
 }
 
 export async function saveWindowPlacement(settings: DesktopSettings): Promise<DesktopSettings> {
   if (!isTauri() || !isPrimaryWindow()) return settings;
+  if (settings.windowMode !== "window") return settings;
 
   const window = getCurrentWindow();
   const monitor = await currentMonitor();

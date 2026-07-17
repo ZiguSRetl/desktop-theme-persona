@@ -65,6 +65,8 @@ export const de = {
   "settings.windowMode.label": "Fenstermodus",
 
   "settings.windowMode.description": "Wie sich der Launcher beim Anzeigen öffnet.",
+  "settings.windowMode.descriptionDesktopMode":
+    "Nicht verfügbar, solange der Desktopmodus aktiv ist. Wird beim Deaktivieren angewendet.",
   "settings.windowMode.options.window": "Fenster",
   "settings.windowMode.options.maximized": "Maximiert",
   "settings.windowMode.options.fullscreen": "Vollbild",

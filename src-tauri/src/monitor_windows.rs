@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 use tauri::{
-    AppHandle, Manager, Monitor, PhysicalPosition, PhysicalSize, Position, Size, WebviewUrl,
+    AppHandle, Emitter, Manager, Monitor, PhysicalPosition, PhysicalSize, Position, Size, WebviewUrl,
     WebviewWindow, WebviewWindowBuilder,
 };
 
@@ -176,14 +176,12 @@ pub async fn sync_monitor_windows_impl(app: AppHandle) -> Result<(), String> {
     let state = app.state::<MonitorWindowsState>();
     let desktop_active = desktop_mode_active(&app);
 
-    let main = app
+    // Ensure main exists. Outside desktop mode the frontend owns its geometry via
+    // windowMode — do not force full-monitor size (overwrites windowed / fights maximize).
+    // In desktop mode Win32 overlays own geometry; Tauri set_position fights them.
+    let _ = app
         .get_webview_window(MAIN_WINDOW_LABEL)
         .ok_or_else(|| "No se encontró la ventana principal.".to_string())?;
-
-    // In desktop mode the Win32 overlay owns geometry; Tauri set_position fights it.
-    if !desktop_active {
-        place_window_on_monitor(&main, &monitors[0])?;
-    }
 
     let mut next_labels = Vec::new();
     for index in 1..monitors.len() {
@@ -273,8 +271,13 @@ pub fn start_monitor_layout_watcher(app: AppHandle) {
 
                     let sync_result =
                         tauri::async_runtime::block_on(sync_monitor_windows_impl(handle.clone()));
-                    if sync_result.is_ok() && desktop_active {
-                        let _ = crate::desktop_mode::refresh_all_desktop_overlays(&handle);
+                    if sync_result.is_ok() {
+                        if desktop_active {
+                            let _ = crate::desktop_mode::refresh_all_desktop_overlays(&handle);
+                        } else {
+                            // Let each webview re-apply persisted windowMode after layout shifts.
+                            let _ = handle.emit("monitor-layout-changed", ());
+                        }
                     }
                 }
             }

@@ -64,6 +64,8 @@ export const ja = {
   "settings.windowMode.label": "ウィンドウモード",
 
   "settings.windowMode.description": "表示時にランチャーがどのように開くかを設定します。",
+  "settings.windowMode.descriptionDesktopMode":
+    "デスクトップモード中は変更できません。無効にすると適用されます。",
   "settings.windowMode.options.window": "ウィンドウ",
   "settings.windowMode.options.maximized": "最大化",
   "settings.windowMode.options.fullscreen": "フルスクリーン",

@@ -79,6 +79,39 @@ describe("useSettingsStore", () => {
     expect(applyNativeSettings).not.toHaveBeenCalled();
   });
 
+  it("does not apply window mode while desktopMode is active", async () => {
+    useSettingsStore.setState({
+      settings: { ...DEFAULT_SETTINGS, desktopMode: true, launchOnStartup: true },
+      status: "ready",
+    });
+
+    await useSettingsStore.getState().updateSetting("windowMode", "fullscreen");
+
+    expect(useSettingsStore.getState().settings.windowMode).toBe("fullscreen");
+    expect(applyWindowMode).not.toHaveBeenCalled();
+  });
+
+  it("re-applies window settings when leaving desktopMode", async () => {
+    useSettingsStore.setState({
+      settings: {
+        ...DEFAULT_SETTINGS,
+        desktopMode: true,
+        launchOnStartup: true,
+        windowMode: "window",
+      },
+      status: "ready",
+    });
+
+    await useSettingsStore.getState().updateSetting("desktopMode", false);
+
+    expect(applyNativeSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ desktopMode: false }),
+    );
+    expect(applyWindowSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ desktopMode: false, windowMode: "window" }),
+    );
+  });
+
   it("does not sync native settings for soundEnabled", async () => {
     await useSettingsStore.getState().updateSetting("soundEnabled", false);
 

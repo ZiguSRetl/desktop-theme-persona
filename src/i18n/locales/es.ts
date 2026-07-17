@@ -63,6 +63,8 @@ export const es = {
   "settings.windowMode.label": "Modo de ventana",
 
   "settings.windowMode.description": "Cómo se abre el launcher al mostrarse.",
+  "settings.windowMode.descriptionDesktopMode":
+    "No disponible mientras el modo escritorio está activo. Se aplicará al desactivarlo.",
   "settings.windowMode.options.window": "Ventana",
   "settings.windowMode.options.maximized": "Maximizada",
   "settings.windowMode.options.fullscreen": "Pantalla completa",

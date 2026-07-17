@@ -291,11 +291,16 @@ export function SettingsPage() {
           <>
             <ComicSettingRow
               label={t("settings.windowMode.label")}
-              description={t("settings.windowMode.description")}
+              description={
+                settings.desktopMode
+                  ? t("settings.windowMode.descriptionDesktopMode")
+                  : t("settings.windowMode.description")
+              }
               rotation={-1}
             >
               <select
                 value={settings.windowMode}
+                disabled={settings.desktopMode}
                 onChange={(event) =>
                   void handleUpdate(
                     "windowMode",

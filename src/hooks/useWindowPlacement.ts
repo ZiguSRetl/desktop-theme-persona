@@ -1,6 +1,7 @@
+import { listen } from "@tauri-apps/api/event";
 import { useEffect } from "react";
 import { useSettingsStore } from "../features/settings/settingsStore";
-import { saveWindowPlacement } from "../features/settings/windowService";
+import { applyWindowSettings, saveWindowPlacement } from "../features/settings/windowService";
 
 function isTauri(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
@@ -19,6 +20,18 @@ export function useWindowPlacement() {
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+
+    let unlistenLayout: (() => void) | undefined;
+    void listen("monitor-layout-changed", () => {
+      const settings = useSettingsStore.getState().settings;
+      void applyWindowSettings(settings);
+    }).then((dispose) => {
+      unlistenLayout = dispose;
+    });
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      unlistenLayout?.();
+    };
   }, []);
 }
