@@ -7,7 +7,7 @@ describe("validatePersistedState", () => {
     const state = validatePersistedState(null);
     expect(state.schemaVersion).toBe(1);
     expect(state.settings.globalShortcut).toBe(DEFAULT_SETTINGS.globalShortcut);
-    expect(state.items.length).toBeGreaterThan(0);
+    expect(state.items).toEqual([]);
   });
 
   it("rejects unsupported schema versions", () => {
@@ -16,7 +16,7 @@ describe("validatePersistedState", () => {
     ).toThrow(/99/);
   });
 
-  it("drops corrupt items and seeds when none remain", () => {
+  it("drops corrupt items and leaves items empty when none remain", () => {
     const state = validatePersistedState({
       schemaVersion: 1,
       items: [{ name: "", type: "application", target: "", category: "apps" }],
@@ -24,8 +24,7 @@ describe("validatePersistedState", () => {
     });
 
     expect(state.settings.windowMode).toBe("maximized");
-    expect(state.items.length).toBeGreaterThan(0);
-    expect(state.items.every((item) => item.name && item.target)).toBe(true);
+    expect(state.items).toHaveLength(0);
   });
 
   it("keeps valid items and preserves optional fields", () => {

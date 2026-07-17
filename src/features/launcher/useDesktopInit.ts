@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import { tSystem } from "../../i18n";
-import { createSeedLauncherItems } from "../launcher/defaultItems";
 import { useLauncherStore } from "../launcher/launcherStore";
 import {
   createInitialState,
@@ -47,7 +46,7 @@ export function useDesktopInit() {
           return;
         }
 
-        const initial = createInitialState(createSeedLauncherItems());
+        const initial = createInitialState();
         if (primary) {
           await saveFullState(initial);
         }

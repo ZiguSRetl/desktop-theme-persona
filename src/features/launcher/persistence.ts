@@ -13,8 +13,6 @@ import type {
   WindowBounds,
   WindowMode,
 } from "../../types/desktop";
-import { createSeedLauncherItems } from "./defaultItems";
-
 const STORAGE_KEY = "persona5-explorer-launcher-state";
 const VALID_TYPES: LauncherItemType[] = ["application", "game", "folder", "url"];
 const VALID_CATEGORIES = ["apps", "games", "system"] as const;
@@ -190,7 +188,7 @@ export function validatePersistedState(raw: unknown): PersistedDesktopState {
 
   return {
     schemaVersion: 1,
-    items: items.length > 0 ? items : createSeedLauncherItems(settings.language),
+    items,
     settings,
   };
 }
@@ -202,7 +200,7 @@ export function createInitialState(
   const resolvedSettings = settings ?? createDefaultSettings();
   return {
     schemaVersion: 1,
-    items: items ?? createSeedLauncherItems(resolvedSettings.language),
+    items: items ?? [],
     settings: { ...resolvedSettings },
   };
 }
