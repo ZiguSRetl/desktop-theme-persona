@@ -8,8 +8,8 @@ use tauri::{
 
 use crate::desktop_mode::{apply_desktop_mode_setting, restore_windows_desktop, detach_before_exit};
 use crate::monitor_windows::{
-    any_launcher_window_visible, hide_all_launcher_windows, is_launcher_window_label,
-    show_all_launcher_windows, MAIN_WINDOW_LABEL,
+    any_launcher_window_visible, focus_launcher_under_cursor, hide_all_launcher_windows,
+    is_launcher_window_label, show_all_launcher_windows, MAIN_WINDOW_LABEL,
 };
 use crate::DesktopModeState;
 
@@ -397,7 +397,10 @@ pub fn attach_launcher_window_events(app: &AppHandle, window: &tauri::WebviewWin
                 }
             }
             WindowEvent::Focused(focused) => {
-                if !focused {
+                if *focused && label == MAIN_WINDOW_LABEL {
+                    // Taskbar activation: focus the launcher under the cursor, not always main.
+                    let _ = focus_launcher_under_cursor(&app_handle);
+                } else if !*focused {
                     let desktop_state = app_handle.state::<DesktopModeState>();
                     let desktop_active = desktop_state
                         .active
@@ -407,6 +410,18 @@ pub fn attach_launcher_window_events(app: &AppHandle, window: &tauri::WebviewWin
                     if desktop_active {
                         // Pin z-order only — full refresh on blur caused a multi-window focus loop.
                         let _ = crate::desktop_mode::pin_all_desktop_overlays(&app_handle);
+                    }
+                }
+            }
+            WindowEvent::Resized(_) | WindowEvent::Moved(_) => {
+                // Taskbar click on an already-focused main minimizes it; undo and refocus.
+                if label != MAIN_WINDOW_LABEL {
+                    return;
+                }
+                if let Some(window) = app_handle.get_webview_window(&label) {
+                    if window.is_minimized().unwrap_or(false) {
+                        let _ = window.unminimize();
+                        let _ = focus_launcher_under_cursor(&app_handle);
                     }
                 }
             }
