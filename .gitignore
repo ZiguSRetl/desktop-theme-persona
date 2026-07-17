@@ -23,5 +23,5 @@ dist-ssr
 *.sln
 *.sw?
 
-# Cursor agent hook runtime state
-.cursor/hooks/.pending-tests
+# Cursor (rules, skills, agent state)
+.cursor/
