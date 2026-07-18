@@ -47,10 +47,11 @@ export interface DesktopSettings {
   animationIntensity: "reduced" | "normal" | "high";
   closeBehavior: "hide" | "exit";
   windowMode: WindowMode;
+  /** Always true — shell runs as desktop overlay (not a toggleable window mode). */
   desktopMode: boolean;
   /**
    * Transparent window so the OS / Wallpaper Engine desktop shows through.
-   * Best used with desktopMode; disables in-app comic/custom wallpaper.
+   * Disables in-app comic/custom wallpaper.
    */
   wallpaperPassthrough: boolean;
   /** UI language; initial value from OS, unsupported locales → `en`. */

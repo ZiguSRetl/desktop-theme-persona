@@ -415,6 +415,18 @@ pub fn attach_launcher_window_events(app: &AppHandle, window: &tauri::WebviewWin
                 }
             }
             WindowEvent::Resized(_) | WindowEvent::Moved(_) => {
+                let desktop_state = app_handle.state::<DesktopModeState>();
+                let desktop_active = desktop_state
+                    .active
+                    .lock()
+                    .map(|value| *value)
+                    .unwrap_or(false);
+
+                if desktop_active {
+                    // Keep overlay edge-to-edge if geometry drifted (resize races / DPI).
+                    let _ = crate::desktop_mode::snap_overlays_if_drifted(&app_handle);
+                }
+
                 // Taskbar click on an already-focused main minimizes it; undo and refocus.
                 if label != MAIN_WINDOW_LABEL {
                     return;
@@ -422,12 +434,6 @@ pub fn attach_launcher_window_events(app: &AppHandle, window: &tauri::WebviewWin
                 if let Some(window) = app_handle.get_webview_window(&label) {
                     if window.is_minimized().unwrap_or(false) {
                         let _ = window.unminimize();
-                        let desktop_state = app_handle.state::<DesktopModeState>();
-                        let desktop_active = desktop_state
-                            .active
-                            .lock()
-                            .map(|value| *value)
-                            .unwrap_or(false);
                         if !desktop_active {
                             let _ = focus_launcher_under_cursor(&app_handle);
                         }

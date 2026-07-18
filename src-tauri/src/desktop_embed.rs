@@ -10,9 +10,10 @@ use windows::Win32::UI::Input::KeyboardAndMouse::EnableWindow;
 use windows::Win32::UI::Shell::{SHChangeNotify, SHCNE_ASSOCCHANGED, SHCNF_IDLIST};
 use windows::Win32::UI::WindowsAndMessaging::{
     CallWindowProcW, DefWindowProcW, EnumWindows, FindWindowExW, FindWindowW, GetWindowLongPtrW,
-    SendMessageTimeoutW, SetWindowLongPtrW, SetWindowPos, GWLP_WNDPROC, GWL_EXSTYLE, HWND_BOTTOM,
-    SMTO_NORMAL, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER, WINDOWPOS,
+    SendMessageTimeoutW, SetWindowLongPtrW, SetWindowPos, GWLP_WNDPROC, GWL_EXSTYLE, GWL_STYLE,
+    HWND_BOTTOM, SMTO_NORMAL, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER, WINDOWPOS,
     WM_WINDOWPOSCHANGING, WNDPROC, WS_EX_APPWINDOW, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW,
+    WS_MAXIMIZEBOX, WS_THICKFRAME,
 };
 use windows_core::BOOL;
 use winreg::enums::*;
@@ -26,6 +27,10 @@ const PROGMAN_SPAWN_WORKERW: u32 = 0x052C;
 
 static PIN_DEBOUNCE: Mutex<Option<Instant>> = Mutex::new(None);
 static PIN_IN_FLIGHT: AtomicBool = AtomicBool::new(false);
+static SNAP_DEBOUNCE: Mutex<Option<Instant>> = Mutex::new(None);
+/// When true, WM_WINDOWPOSCHANGING allows our intentional SetWindowPos geometry.
+static ALLOW_GEOMETRY_CHANGE: AtomicBool = AtomicBool::new(false);
+static LOCKED_GEOMETRY: Mutex<Option<HashMap<isize, (i32, i32, i32, i32)>>> = Mutex::new(None);
 static SUBCLASSED_PROCS: Mutex<Option<HashMap<isize, isize>>> = Mutex::new(None);
 
 pub struct DesktopModeState {
@@ -110,14 +115,52 @@ fn desktop_zorder_anchor() -> HWND {
 fn configure_overlay_window(hwnd: HWND) {
     unsafe {
         let ex_style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE) as u32;
-        let next_style = (ex_style | WS_EX_TOOLWINDOW.0) & !WS_EX_APPWINDOW.0 & !WS_EX_NOACTIVATE.0;
-        if next_style != ex_style {
-            SetWindowLongPtrW(hwnd, GWL_EXSTYLE, next_style as _);
+        let next_ex = (ex_style | WS_EX_TOOLWINDOW.0) & !WS_EX_APPWINDOW.0 & !WS_EX_NOACTIVATE.0;
+        if next_ex != ex_style {
+            SetWindowLongPtrW(hwnd, GWL_EXSTYLE, next_ex as _);
+        }
+
+        // Lock geometry: no thick-frame edge resize even if a style races back in.
+        let style = GetWindowLongPtrW(hwnd, GWL_STYLE) as u32;
+        let next_style = style & !WS_THICKFRAME.0 & !WS_MAXIMIZEBOX.0;
+        if next_style != style {
+            SetWindowLongPtrW(hwnd, GWL_STYLE, next_style as _);
         }
 
         let _ = EnableWindow(hwnd, true);
     }
     install_zorder_subclass(hwnd);
+}
+
+fn lock_geometry(hwnd: HWND, x: i32, y: i32, width: i32, height: i32) {
+    let Ok(mut guard) = LOCKED_GEOMETRY.lock() else {
+        return;
+    };
+    let map = guard.get_or_insert_with(HashMap::new);
+    map.insert(hwnd_key(hwnd), (x, y, width, height));
+}
+
+fn clear_locked_geometry(hwnd: HWND) {
+    if let Ok(mut guard) = LOCKED_GEOMETRY.lock() {
+        if let Some(map) = guard.as_mut() {
+            map.remove(&hwnd_key(hwnd));
+        }
+    }
+}
+
+struct AllowGeometryGuard;
+
+impl AllowGeometryGuard {
+    fn enter() -> Self {
+        ALLOW_GEOMETRY_CHANGE.store(true, Ordering::SeqCst);
+        Self
+    }
+}
+
+impl Drop for AllowGeometryGuard {
+    fn drop(&mut self) {
+        ALLOW_GEOMETRY_CHANGE.store(false, Ordering::SeqCst);
+    }
 }
 
 unsafe extern "system" fn overlay_wnd_proc(
@@ -133,6 +176,34 @@ unsafe extern "system" fn overlay_wnd_proc(
             // Only rewrite when Windows is trying to change z-order (e.g. raise on click).
             if (flags & SWP_NOZORDER).0 == 0 {
                 (*wp).hwndInsertAfter = desktop_zorder_anchor();
+            }
+
+            // Freeze move/resize unless we are applying intentional overlay geometry.
+            if !ALLOW_GEOMETRY_CHANGE.load(Ordering::SeqCst) {
+                let moving = (flags & SWP_NOMOVE).0 == 0;
+                let sizing = (flags & SWP_NOSIZE).0 == 0;
+                if moving || sizing {
+                    let locked = LOCKED_GEOMETRY
+                        .lock()
+                        .ok()
+                        .and_then(|guard| {
+                            guard
+                                .as_ref()
+                                .and_then(|map| map.get(&hwnd_key(hwnd)).copied())
+                        });
+                    if let Some((x, y, w, h)) = locked {
+                        if moving {
+                            (*wp).x = x;
+                            (*wp).y = y;
+                        }
+                        if sizing {
+                            (*wp).cx = w;
+                            (*wp).cy = h;
+                        }
+                    } else {
+                        (*wp).flags |= SWP_NOMOVE | SWP_NOSIZE;
+                    }
+                }
             }
         }
     }
@@ -176,6 +247,7 @@ fn install_zorder_subclass(hwnd: HWND) {
 }
 
 fn remove_zorder_subclass(hwnd: HWND) {
+    clear_locked_geometry(hwnd);
     let key = hwnd_key(hwnd);
     let Ok(mut guard) = SUBCLASSED_PROCS.lock() else {
         return;
@@ -192,6 +264,8 @@ fn remove_zorder_subclass(hwnd: HWND) {
 }
 
 fn position_hwnd_as_desktop_overlay(hwnd: HWND, x: i32, y: i32, width: i32, height: i32) {
+    lock_geometry(hwnd, x, y, width, height);
+    let _guard = AllowGeometryGuard::enter();
     unsafe {
         let _ = SetWindowPos(
             hwnd,
@@ -312,17 +386,51 @@ pub fn refresh_desktop_overlay(
     position_window_as_desktop_overlay(window, x, y, width, height)
 }
 
-/// Full geometry + z-order apply (layout changes / enabling desktop mode).
+/// Work-area geometry + z-order (excludes taskbar/docks).
 pub fn refresh_desktop_overlays_for_app(app: &AppHandle) -> Result<(), String> {
     let monitors = ordered_monitors(app)?;
     let windows = crate::monitor_windows::launcher_windows(app);
 
     for (index, window) in windows.iter().enumerate() {
         let monitor = monitors.get(index).unwrap_or(&monitors[0]);
-        let pos = monitor.position();
-        let size = monitor.size();
+        let (x, y, width, height) = crate::monitor_windows::monitor_work_geometry(monitor);
         embed_as_desktop(window, &DesktopModeState::default())?;
-        refresh_desktop_overlay(window, pos.x, pos.y, size.width as i32, size.height as i32)?;
+        refresh_desktop_overlay(window, x, y, width as i32, height as i32)?;
+    }
+
+    Ok(())
+}
+
+/// Re-apply work-area geometry only when a window has drifted (resize/move races).
+pub fn snap_desktop_overlays_if_drifted(app: &AppHandle) -> Result<(), String> {
+    {
+        let mut last = SNAP_DEBOUNCE
+            .lock()
+            .map_err(|_| "Debounce de snap bloqueado.".to_string())?;
+        if let Some(prev) = *last {
+            if prev.elapsed() < Duration::from_millis(80) {
+                return Ok(());
+            }
+        }
+        *last = Some(Instant::now());
+    }
+
+    let monitors = ordered_monitors(app)?;
+    let windows = crate::monitor_windows::launcher_windows(app);
+    let mut drifted = false;
+
+    for (index, window) in windows.iter().enumerate() {
+        let monitor = monitors.get(index).unwrap_or(&monitors[0]);
+        if !crate::monitor_windows::window_matches_work_area(window, monitor) {
+            drifted = true;
+            break;
+        }
+    }
+
+    if drifted {
+        refresh_desktop_overlays_for_app(app)?;
+    } else {
+        pin_desktop_overlays_zorder_inner(app, false)?;
     }
 
     Ok(())

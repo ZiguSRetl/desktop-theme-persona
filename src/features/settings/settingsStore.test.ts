@@ -54,65 +54,35 @@ describe("useSettingsStore", () => {
     vi.clearAllMocks();
     isPrimaryWindow.mockReturnValue(true);
     useSettingsStore.setState({
-      settings: { ...DEFAULT_SETTINGS, launchOnStartup: false, desktopMode: false },
+      settings: { ...DEFAULT_SETTINGS },
       status: "ready",
     });
   });
 
-  it("forces launchOnStartup when enabling desktopMode", async () => {
-    await useSettingsStore.getState().updateSetting("desktopMode", true);
+  it("ignores attempts to change desktopMode", async () => {
+    await useSettingsStore.getState().updateSetting("desktopMode", false);
 
-    const settings = useSettingsStore.getState().settings;
-    expect(settings.desktopMode).toBe(true);
-    expect(settings.launchOnStartup).toBe(true);
-    expect(mergeAndSaveState).toHaveBeenCalledWith({
-      settings: expect.objectContaining({ desktopMode: true, launchOnStartup: true }),
-    });
-    expect(applyNativeSettings).toHaveBeenCalledWith(
-      expect.objectContaining({ desktopMode: true, launchOnStartup: true }),
-    );
-    expect(applyWindowMode).not.toHaveBeenCalled();
-  });
-
-  it("applies window mode only for windowMode updates", async () => {
-    await useSettingsStore.getState().updateSetting("windowMode", "fullscreen");
-
-    expect(useSettingsStore.getState().settings.windowMode).toBe("fullscreen");
-    expect(applyWindowMode).toHaveBeenCalledWith("fullscreen");
+    expect(useSettingsStore.getState().settings.desktopMode).toBe(true);
+    expect(mergeAndSaveState).not.toHaveBeenCalled();
     expect(applyNativeSettings).not.toHaveBeenCalled();
   });
 
-  it("does not apply window mode while desktopMode is active", async () => {
-    useSettingsStore.setState({
-      settings: { ...DEFAULT_SETTINGS, desktopMode: true, launchOnStartup: true },
-      status: "ready",
+  it("hydrates with desktopMode forced on", () => {
+    useSettingsStore.getState().hydrate({
+      ...DEFAULT_SETTINGS,
+      desktopMode: false,
+      soundEnabled: false,
     });
 
+    expect(useSettingsStore.getState().settings.desktopMode).toBe(true);
+    expect(useSettingsStore.getState().settings.soundEnabled).toBe(false);
+  });
+
+  it("does not apply window mode while desktopMode is active", async () => {
     await useSettingsStore.getState().updateSetting("windowMode", "fullscreen");
 
     expect(useSettingsStore.getState().settings.windowMode).toBe("fullscreen");
     expect(applyWindowMode).not.toHaveBeenCalled();
-  });
-
-  it("re-applies window settings when leaving desktopMode", async () => {
-    useSettingsStore.setState({
-      settings: {
-        ...DEFAULT_SETTINGS,
-        desktopMode: true,
-        launchOnStartup: true,
-        windowMode: "window",
-      },
-      status: "ready",
-    });
-
-    await useSettingsStore.getState().updateSetting("desktopMode", false);
-
-    expect(applyNativeSettings).toHaveBeenCalledWith(
-      expect.objectContaining({ desktopMode: false }),
-    );
-    expect(applyWindowSettings).toHaveBeenCalledWith(
-      expect.objectContaining({ desktopMode: false, windowMode: "window" }),
-    );
   });
 
   it("does not sync native settings for soundEnabled", async () => {
@@ -137,14 +107,14 @@ describe("useSettingsStore", () => {
 
     expect(useSettingsStore.getState().settings.language).toBe("de");
     expect(applyNativeSettings).toHaveBeenCalledWith(
-      expect.objectContaining({ language: "de" }),
+      expect.objectContaining({ language: "de", desktopMode: true }),
     );
   });
 
   it("skips native sync when not the primary window", async () => {
     isPrimaryWindow.mockReturnValue(false);
 
-    await useSettingsStore.getState().updateSetting("desktopMode", true);
+    await useSettingsStore.getState().updateSetting("language", "fr");
 
     expect(applyNativeSettings).not.toHaveBeenCalled();
   });
@@ -154,8 +124,6 @@ describe("useSettingsStore", () => {
       settings: {
         ...DEFAULT_SETTINGS,
         soundEnabled: false,
-        desktopMode: true,
-        launchOnStartup: true,
       },
       status: "ready",
     });
@@ -164,6 +132,7 @@ describe("useSettingsStore", () => {
 
     expect(deleteStoredWallpaper).toHaveBeenCalledTimes(1);
     expect(useSettingsStore.getState().settings).toEqual(DEFAULT_SETTINGS);
+    expect(DEFAULT_SETTINGS.desktopMode).toBe(true);
     expect(applyNativeSettings).toHaveBeenCalledWith(DEFAULT_SETTINGS);
     expect(applyWindowSettings).toHaveBeenCalledWith(DEFAULT_SETTINGS);
   });

@@ -53,6 +53,26 @@ describe("validatePersistedState", () => {
     expect(state.settings.desktopMode).toBe(true);
   });
 
+  it("coerces legacy desktopMode false to true", () => {
+    const state = validatePersistedState({
+      schemaVersion: 1,
+      items: [],
+      settings: { desktopMode: false },
+    });
+
+    expect(state.settings.desktopMode).toBe(true);
+  });
+
+  it("defaults desktopMode to true when missing", () => {
+    const state = validatePersistedState({
+      schemaVersion: 1,
+      items: [],
+      settings: {},
+    });
+
+    expect(state.settings.desktopMode).toBe(true);
+  });
+
   it("keeps valid wallpaper settings", () => {
     const state = validatePersistedState({
       schemaVersion: 1,

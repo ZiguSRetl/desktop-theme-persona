@@ -113,7 +113,8 @@ export const en = {
   "settings.globalShortcut.placeholder": "Ctrl+Space",
   "settings.desktopMode.label": "Use as desktop (Win+D)",
   "settings.desktopMode.description":
-    "Fullscreen behind your open windows across all monitors. Hides desktop icons and enables launch with Windows.",
+    "The launcher is your desktop: fullscreen behind open windows on every monitor. Hides Windows desktop icons. Press Win+D to show it.",
+  "settings.desktopMode.hint": "Always active",
   "settings.multiMonitor.label": "Multiple monitors",
   "settings.multiMonitor.description":
     "The launcher opens on every detected monitor. State (shortcuts and settings) is synced between windows.",

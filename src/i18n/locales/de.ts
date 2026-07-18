@@ -113,7 +113,8 @@ export const de = {
   "settings.globalShortcut.placeholder": "Ctrl+Space",
   "settings.desktopMode.label": "Als Desktop verwenden (Win+D)",
   "settings.desktopMode.description":
-    "Vollbild hinter deinen geöffneten Fenstern auf allen Monitoren. Blendet Desktopsymbole aus und aktiviert den Start mit Windows.",
+    "Der Launcher ist dein Desktop: Vollbild hinter geöffneten Fenstern auf allen Monitoren. Blendet Windows-Desktopsymbole aus. Win+D zeigt ihn an.",
+  "settings.desktopMode.hint": "Immer aktiv",
   "settings.multiMonitor.label": "Mehrere Monitore",
   "settings.multiMonitor.description":
     "Der Launcher öffnet sich auf jedem erkannten Monitor. Der Zustand (Verknüpfungen und Einstellungen) wird zwischen den Fenstern synchronisiert.",

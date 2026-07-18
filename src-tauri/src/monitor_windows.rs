@@ -179,7 +179,7 @@ impl Drop for FocusRedirectGuard {
     }
 }
 
-fn window_matches_monitor(window: &WebviewWindow, monitor: &Monitor) -> bool {
+pub fn window_matches_monitor(window: &WebviewWindow, monitor: &Monitor) -> bool {
     let Ok(pos) = window.outer_position() else {
         return false;
     };
@@ -193,6 +193,31 @@ fn window_matches_monitor(window: &WebviewWindow, monitor: &Monitor) -> bool {
         && (pos.y - mpos.y).abs() <= 2
         && (size.width as i32 - msize.width as i32).abs() <= 2
         && (size.height as i32 - msize.height as i32).abs() <= 2
+}
+
+/// Work area = monitor minus taskbar/docks (physical pixels).
+pub fn monitor_work_geometry(monitor: &Monitor) -> (i32, i32, u32, u32) {
+    let work = monitor.work_area();
+    (
+        work.position.x,
+        work.position.y,
+        work.size.width,
+        work.size.height,
+    )
+}
+
+pub fn window_matches_work_area(window: &WebviewWindow, monitor: &Monitor) -> bool {
+    let Ok(pos) = window.outer_position() else {
+        return false;
+    };
+    let Ok(size) = window.outer_size() else {
+        return false;
+    };
+    let (wx, wy, ww, wh) = monitor_work_geometry(monitor);
+    (pos.x - wx).abs() <= 2
+        && (pos.y - wy).abs() <= 2
+        && (size.width as i32 - ww as i32).abs() <= 2
+        && (size.height as i32 - wh as i32).abs() <= 2
 }
 
 pub fn place_window_on_monitor(window: &WebviewWindow, monitor: &Monitor) -> Result<(), String> {
@@ -225,6 +250,7 @@ fn create_satellite(
         .decorations(false)
         .transparent(true)
         .skip_taskbar(true)
+        .resizable(false)
         .minimizable(false)
         .visible(true)
         .focused(false)
@@ -233,6 +259,7 @@ fn create_satellite(
         .build()
         .map_err(|e| format!("No se pudo crear la ventana {label}: {e}"))?;
 
+    let _ = window.set_resizable(false);
     let _ = window.set_minimizable(false);
     place_window_on_monitor(&window, monitor)?;
     Ok(window)
@@ -263,6 +290,7 @@ pub async fn sync_monitor_windows_impl(app: AppHandle) -> Result<(), String> {
     let main = app
         .get_webview_window(MAIN_WINDOW_LABEL)
         .ok_or_else(|| "No se encontró la ventana principal.".to_string())?;
+    let _ = main.set_resizable(false);
     let _ = main.set_minimizable(false);
 
     let mut next_labels = Vec::new();
@@ -271,6 +299,7 @@ pub async fn sync_monitor_windows_impl(app: AppHandle) -> Result<(), String> {
         let monitor = &monitors[index];
 
         if let Some(existing) = app.get_webview_window(&label) {
+            let _ = existing.set_resizable(false);
             let _ = existing.set_minimizable(false);
             if !desktop_active {
                 place_window_on_monitor(&existing, monitor)?;
