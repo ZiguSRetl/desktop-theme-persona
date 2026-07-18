@@ -6,6 +6,7 @@ import {
   checkForAppUpdate,
   clearPendingUpdateHandle,
   downloadAndInstallPendingUpdate,
+  getAppVersion,
   markUpdateCheckDone,
   shouldAutoCheckUpdates,
 } from "./updaterService";
@@ -14,9 +15,11 @@ type CheckOutcome = "available" | "upToDate" | "skipped" | "error";
 
 type UpdateStore = {
   available: AvailableUpdate | null;
+  currentVersion: string | null;
   checking: boolean;
   installing: boolean;
   dialogOpen: boolean;
+  loadCurrentVersion: () => Promise<void>;
   checkForUpdates: (options?: { manual?: boolean }) => Promise<CheckOutcome>;
   installUpdate: () => Promise<void>;
   dismissDialog: () => void;
@@ -24,9 +27,16 @@ type UpdateStore = {
 
 export const useUpdateStore = create<UpdateStore>((set, get) => ({
   available: null,
+  currentVersion: null,
   checking: false,
   installing: false,
   dialogOpen: false,
+
+  loadCurrentVersion: async () => {
+    if (get().currentVersion !== null) return;
+    const currentVersion = await getAppVersion();
+    set({ currentVersion });
+  },
 
   checkForUpdates: async (options) => {
     const manual = options?.manual === true;
@@ -73,6 +83,6 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
 
   dismissDialog: () => {
     clearPendingUpdateHandle();
-    set({ dialogOpen: false, available: null });
+    set({ dialogOpen: false });
   },
 }));

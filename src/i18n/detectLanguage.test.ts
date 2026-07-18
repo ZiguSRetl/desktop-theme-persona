@@ -28,6 +28,6 @@ describe("t", () => {
   });
 
   it("falls back to english catalog for missing keys in theory via en", () => {
-    expect(t("en", "nav.brand.title")).toBe("P5 Explorer");
+    expect(t("en", "nav.brand.title")).toBe("Explorer");
   });
 });

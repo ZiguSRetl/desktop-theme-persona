@@ -1,8 +1,7 @@
 /** Spanish catalog — source of truth for TranslationKey. */
 export const es = {
   "nav.ariaLabel": "Navegación principal",
-  "nav.brand.eyebrow": "Launcher",
-  "nav.brand.title": "P5 Explorer",
+  "nav.brand.title": "Explorer",
   "nav.items.home": "Inicio",
   "nav.items.apps": "Aplicaciones",
   "nav.items.games": "Juegos",

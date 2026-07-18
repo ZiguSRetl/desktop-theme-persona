@@ -2,8 +2,7 @@ import type { TranslationKey } from "./es";
 
 export const fr = {
   "nav.ariaLabel": "Navigation principale",
-  "nav.brand.eyebrow": "Launcher",
-  "nav.brand.title": "P5 Explorer",
+  "nav.brand.title": "Explorer",
   "nav.items.home": "Accueil",
   "nav.items.apps": "Applications",
   "nav.items.games": "Jeux",
