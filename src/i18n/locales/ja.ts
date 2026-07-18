@@ -111,7 +111,8 @@ export const ja = {
   "settings.globalShortcut.placeholder": "Ctrl+Space",
   "settings.desktopMode.label": "デスクトップとして使用 (Win+D)",
   "settings.desktopMode.description":
-    "すべてのモニターで開いているウィンドウの背後にフルスクリーン表示します。デスクトップアイコンを隠し、Windows起動時の自動起動を有効にします。",
+    "ランチャーがデスクトップになります。すべてのモニターで開いているウィンドウの背後にフルスクリーン表示し、Windowsのデスクトップアイコンを隠します。Win+Dで表示します。",
+  "settings.desktopMode.hint": "常に有効",
   "settings.multiMonitor.label": "マルチモニター",
   "settings.multiMonitor.description":
     "検出されたすべてのモニターでランチャーが開きます。状態(ショートカットと設定)はウィンドウ間で同期されます。",

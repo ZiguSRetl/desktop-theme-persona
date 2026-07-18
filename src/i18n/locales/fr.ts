@@ -114,7 +114,8 @@ export const fr = {
   "settings.globalShortcut.placeholder": "Ctrl+Space",
   "settings.desktopMode.label": "Utiliser comme bureau (Win+D)",
   "settings.desktopMode.description":
-    "Plein écran derrière vos fenêtres ouvertes sur tous les moniteurs. Masque les icônes du bureau et active le démarrage avec Windows.",
+    "Le launcher est votre bureau : plein écran derrière les fenêtres ouvertes sur tous les moniteurs. Masque les icônes du bureau Windows. Win+D pour l'afficher.",
+  "settings.desktopMode.hint": "Toujours actif",
   "settings.multiMonitor.label": "Plusieurs moniteurs",
   "settings.multiMonitor.description":
     "Le launcher s'ouvre sur chaque moniteur détecté. L'état (raccourcis et paramètres) est synchronisé entre les fenêtres.",

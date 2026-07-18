@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { listen } from "@tauri-apps/api/event";
 import { BackgroundCropEditor } from "../components/settings/BackgroundCropEditor";
 import { ComicSettingRow } from "../components/comic/ComicSettingRow";
 import { SettingsCategoryRow } from "../components/comic/SettingsCategoryRow";
@@ -119,20 +118,6 @@ export function SettingsPage() {
     if (!wallpaperPreviewUrl || !isWallpaperConfigured(settings.wallpaper)) return undefined;
     return wallpaperCropToBackgroundStyle(wallpaperPreviewUrl, settings.wallpaper.crop);
   }, [settings.wallpaper, wallpaperPreviewUrl]);
-
-  useEffect(() => {
-    let unlisten: (() => void) | undefined;
-
-    void listen<boolean>("desktop-mode-changed", (event) => {
-      void updateSetting("desktopMode", event.payload);
-    }).then((dispose) => {
-      unlisten = dispose;
-    });
-
-    return () => {
-      unlisten?.();
-    };
-  }, [updateSetting]);
 
   const handleUpdate = async <K extends keyof DesktopSettings>(
     key: K,
@@ -296,32 +281,6 @@ export function SettingsPage() {
         return (
           <>
             <ComicSettingRow
-              label={t("settings.windowMode.label")}
-              description={
-                settings.desktopMode
-                  ? t("settings.windowMode.descriptionDesktopMode")
-                  : t("settings.windowMode.description")
-              }
-              rotation={-1}
-            >
-              <select
-                value={settings.windowMode}
-                disabled={settings.desktopMode}
-                onChange={(event) =>
-                  void handleUpdate(
-                    "windowMode",
-                    event.target.value as DesktopSettings["windowMode"],
-                    t("settings.toasts.windowModeUpdated"),
-                  )
-                }
-              >
-                <option value="window">{t("settings.windowMode.options.window")}</option>
-                <option value="maximized">{t("settings.windowMode.options.maximized")}</option>
-                <option value="fullscreen">{t("settings.windowMode.options.fullscreen")}</option>
-              </select>
-            </ComicSettingRow>
-
-            <ComicSettingRow
               label={t("settings.animationIntensity.label")}
               description={t("settings.animationIntensity.description")}
               rotation={-1}
@@ -448,26 +407,6 @@ export function SettingsPage() {
       case "desktop":
         return (
           <>
-            <ComicSettingRow
-              label={t("settings.desktopMode.label")}
-              description={t("settings.desktopMode.description")}
-              rotation={-0.5}
-            >
-              <SettingToggle
-                label={t("settings.desktopMode.label")}
-                checked={settings.desktopMode}
-                onChange={(value) =>
-                  void handleUpdate(
-                    "desktopMode",
-                    value,
-                    value
-                      ? t("settings.toasts.desktopModeOn")
-                      : t("settings.toasts.desktopModeOff"),
-                  )
-                }
-              />
-            </ComicSettingRow>
-
             <ComicSettingRow
               label={t("settings.launchOnStartup.label")}
               description={t("settings.launchOnStartup.description")}

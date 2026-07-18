@@ -23,12 +23,13 @@ const VALID_CLOSE = ["hide", "exit"] as const;
 export function createDefaultSettings(): DesktopSettings {
   return {
     globalShortcut: "Ctrl+Space",
-    launchOnStartup: false,
+    launchOnStartup: true,
     soundEnabled: true,
     animationIntensity: "normal",
     closeBehavior: "hide",
     windowMode: "maximized",
-    desktopMode: false,
+    // Always on — this app is a desktop shell, not a toggleable window.
+    desktopMode: true,
     wallpaperPassthrough: false,
     language: detectSystemLanguage(),
   };
@@ -154,7 +155,8 @@ export function validateSettings(raw: unknown): DesktopSettings {
     windowMode: VALID_WINDOW_MODES.includes(windowMode as WindowMode)
       ? (windowMode as WindowMode)
       : defaults.windowMode,
-    desktopMode: asBoolean(raw.desktopMode, defaults.desktopMode),
+    // Coerce legacy `false` — desktop mode is no longer optional.
+    desktopMode: true,
     wallpaperPassthrough: asBoolean(raw.wallpaperPassthrough, defaults.wallpaperPassthrough),
     language: resolveLanguage(raw.language),
     selectedGpuId:

@@ -1,17 +1,17 @@
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, State};
 
 #[cfg(windows)]
 use crate::desktop_embed::{
     detach_from_desktop, embed_as_desktop, hide_desktop_icons, pin_desktop_overlays_zorder,
-    refresh_desktop_overlays_for_app, show_desktop_icons, start_desktop_overlay_watcher,
-    stop_desktop_overlay_watcher, DesktopModeState,
+    refresh_desktop_overlays_for_app, show_desktop_icons, snap_desktop_overlays_if_drifted,
+    start_desktop_overlay_watcher, stop_desktop_overlay_watcher, DesktopModeState,
 };
 
 #[cfg(not(windows))]
 use crate::desktop_embed_stub::{
     detach_from_desktop, embed_as_desktop, hide_desktop_icons, pin_desktop_overlays_zorder,
-    refresh_desktop_overlays_for_app, show_desktop_icons, start_desktop_overlay_watcher,
-    stop_desktop_overlay_watcher, DesktopModeState,
+    refresh_desktop_overlays_for_app, show_desktop_icons, snap_desktop_overlays_if_drifted,
+    start_desktop_overlay_watcher, stop_desktop_overlay_watcher, DesktopModeState,
 };
 
 use crate::monitor_windows::{launcher_windows, ordered_monitors, sync_monitor_windows_impl};
@@ -23,6 +23,10 @@ pub fn is_desktop_mode_active(state: &DesktopModeState) -> bool {
 
 pub fn refresh_all_desktop_overlays(app: &AppHandle) -> Result<(), String> {
     refresh_desktop_overlays_for_app(app)
+}
+
+pub fn snap_overlays_if_drifted(app: &AppHandle) -> Result<(), String> {
+    snap_desktop_overlays_if_drifted(app)
 }
 
 pub fn pin_all_desktop_overlays(app: &AppHandle) -> Result<(), String> {
@@ -46,6 +50,9 @@ pub async fn enable_desktop_mode_impl(
     prepare_monitor_windows(app).await?;
 
     for window in launcher_windows(app) {
+        window
+            .set_resizable(false)
+            .map_err(|e| format!("No se pudo bloquear el redimensionado: {e}"))?;
         window
             .set_skip_taskbar(true)
             .map_err(|e| format!("No se pudo ocultar de la barra de tareas: {e}"))?;

@@ -47,6 +47,10 @@ pub fn refresh_desktop_overlays_for_app(_app: &AppHandle) -> Result<(), String> 
     Ok(())
 }
 
+pub fn snap_desktop_overlays_if_drifted(_app: &AppHandle) -> Result<(), String> {
+    Ok(())
+}
+
 pub fn pin_desktop_overlays_zorder(_app: &AppHandle) -> Result<(), String> {
     Ok(())
 }

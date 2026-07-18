@@ -27,7 +27,7 @@ vi.mock("../features/launcher/launcherStore", () => ({
 vi.mock("../features/settings/settingsStore", () => ({
   useSettingsStore: {
     getState: () => ({
-      settings: { windowMode: "maximized", desktopMode: false },
+      settings: { windowMode: "maximized", desktopMode: true },
       hydrate: hydrateSettings,
     }),
   },
@@ -70,12 +70,12 @@ describe("hydrateFromRemotePersist", () => {
       ],
       settings: {
         globalShortcut: "Ctrl+Space",
-        launchOnStartup: false,
+        launchOnStartup: true,
         soundEnabled: true,
         animationIntensity: "normal",
         closeBehavior: "hide",
         windowMode: "maximized",
-        desktopMode: false,
+        desktopMode: true,
         wallpaperPassthrough: true,
       },
     });
@@ -88,18 +88,18 @@ describe("hydrateFromRemotePersist", () => {
     expect(applyWindowMode).not.toHaveBeenCalled();
   });
 
-  it("applies window mode when it changes remotely", async () => {
+  it("does not apply window mode while desktopMode is on", async () => {
     loadFullState.mockResolvedValue({
       schemaVersion: 1,
       items: [],
       settings: {
         globalShortcut: "Ctrl+Space",
-        launchOnStartup: false,
+        launchOnStartup: true,
         soundEnabled: true,
         animationIntensity: "normal",
         closeBehavior: "hide",
         windowMode: "fullscreen",
-        desktopMode: false,
+        desktopMode: true,
         wallpaperPassthrough: false,
       },
     });
@@ -107,6 +107,6 @@ describe("hydrateFromRemotePersist", () => {
     await hydrateFromRemotePersist();
 
     expect(applyWallpaperPassthrough).toHaveBeenCalledWith(false);
-    expect(applyWindowMode).toHaveBeenCalledWith("fullscreen");
+    expect(applyWindowMode).not.toHaveBeenCalled();
   });
 });

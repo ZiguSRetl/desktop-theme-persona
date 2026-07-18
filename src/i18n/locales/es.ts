@@ -110,7 +110,8 @@ export const es = {
   "settings.globalShortcut.placeholder": "Ctrl+Space",
   "settings.desktopMode.label": "Usar como escritorio (Win+D)",
   "settings.desktopMode.description":
-    "Pantalla completa detrás de tus ventanas abiertas en todos los monitores. Oculta iconos del escritorio y activa el inicio con Windows.",
+    "El launcher actúa como escritorio: pantalla completa detrás de tus ventanas en todos los monitores. Oculta los iconos del escritorio de Windows. Pulsa Win+D para mostrarlo.",
+  "settings.desktopMode.hint": "Siempre activo",
   "settings.multiMonitor.label": "Varios monitores",
   "settings.multiMonitor.description":
     "El launcher se abre en cada monitor detectado. El estado (accesos y ajustes) se sincroniza entre ventanas.",
