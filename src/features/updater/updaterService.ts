@@ -1,3 +1,4 @@
+import { getVersion } from "@tauri-apps/api/app";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 
@@ -14,6 +15,11 @@ let pendingUpdate: Update | null = null;
 
 function isTauri(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+}
+
+export async function getAppVersion(): Promise<string> {
+  if (!isTauri()) return "dev";
+  return getVersion();
 }
 
 export function shouldAutoCheckUpdates(

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { motion } from "motion/react";
 import {
@@ -13,6 +14,8 @@ import { staggerChildren } from "../../lib/motionPresets";
 import { playUiSound, primeAudioContext } from "../../features/audio/soundService";
 import { useSettingsMenuStore } from "../../features/settings/settingsMenuStore";
 import { useEffectiveReducedMotion } from "../../features/settings/useAnimationProfile";
+import { getBrandVersionParts } from "../../features/updater/brandVersion";
+import { useUpdateStore } from "../../features/updater/updateStore";
 import { useT } from "../../i18n";
 import styles from "./Navigation.module.css";
 
@@ -31,13 +34,40 @@ export function Navigation() {
   const t = useT();
   const goBackToRoot = useSettingsMenuStore((state) => state.goBackToRoot);
   const activeCategory = useSettingsMenuStore((state) => state.activeCategory);
+  const currentVersion = useUpdateStore((state) => state.currentVersion);
+  const availableVersion = useUpdateStore((state) => state.available?.version);
+  const loadCurrentVersion = useUpdateStore((state) => state.loadCurrentVersion);
+  const brandVersion = getBrandVersionParts(currentVersion, availableVersion);
+
+  useEffect(() => {
+    void loadCurrentVersion();
+  }, [loadCurrentVersion]);
 
   return (
     <nav className={styles.nav} aria-label={t("nav.ariaLabel")}>
       <div className={styles.brand}>
         <Crown className={styles.brandMark} size={28} aria-hidden="true" />
         <div className={styles.brandText}>
-          <span className={styles.brandEyebrow}>{t("nav.brand.eyebrow")}</span>
+          {brandVersion ? (
+            <span className={styles.brandVersion}>
+              <span
+                className={
+                  brandVersion.next ? styles.versionCurrentStale : styles.versionCurrent
+                }
+              >
+                {brandVersion.current}
+              </span>
+              {brandVersion.next ? (
+                <>
+                  <span className={styles.versionArrow} aria-hidden="true">
+                    {" "}
+                    →{" "}
+                  </span>
+                  <span className={styles.versionNext}>{brandVersion.next}</span>
+                </>
+              ) : null}
+            </span>
+          ) : null}
           <span className={styles.brandTitle}>{t("nav.brand.title")}</span>
         </div>
       </div>

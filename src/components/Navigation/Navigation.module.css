@@ -35,12 +35,32 @@
   overflow: hidden;
 }
 
-.brandEyebrow {
+.brandVersion {
   font-family: var(--font-bebas);
-  font-size: clamp(0.5rem, 0.8vw + 0.2rem, 0.6rem);
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
+  font-size: clamp(0.5rem, 0.8vw + 0.2rem, 0.65rem);
+  letter-spacing: 0.06em;
   color: var(--color-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.versionCurrent {
+  color: var(--color-muted);
+}
+
+.versionCurrentStale {
+  color: var(--color-muted);
+  text-decoration: line-through;
+  opacity: 0.65;
+}
+
+.versionArrow {
+  color: var(--color-muted);
+}
+
+.versionNext {
+  color: var(--color-red);
 }
 
 .brandTitle {
