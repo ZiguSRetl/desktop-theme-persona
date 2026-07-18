@@ -17,7 +17,7 @@ export const fr = {
   "sections.titles.scripts": "SCRIPTS",
   "sections.titles.settings": "PARAMÈTRES",
   "sections.badges.home": "Accès rapide",
-  "sections.badges.apps": "Productivité",
+  "sections.badges.apps": "Catalogue Windows",
   "sections.badges.games": "Divertissement",
   "sections.badges.system": "Utilitaires système",
   "sections.badges.scripts": "Scripts internes",
@@ -42,6 +42,19 @@ export const fr = {
   "search.appPicker.minChars": "Tapez au moins 2 caractères pour rechercher.",
   "search.appPicker.empty": "Aucun résultat.",
   "search.appPicker.loading": "Recherche en cours…",
+
+  "installedApps.loading": "Chargement des applications…",
+  "installedApps.error": "Impossible de charger le catalogue d'applications.",
+  "installedApps.empty": "Aucune application correspondante.",
+  "installedApps.search.placeholder": "Filtrer les applications…",
+  "installedApps.search.ariaLabel": "Filtrer les applications installées",
+  "installedApps.detail.empty": "Sélectionnez une application pour voir les détails.",
+  "installedApps.layout.gearAria": "Changer la disposition du catalogue",
+  "installedApps.layout.menuAria": "Modes d'affichage",
+  "installedApps.layout.grid": "Grille",
+  "installedApps.layout.list": "Liste pleine largeur",
+  "installedApps.layout.listSplit": "Liste demi-largeur",
+  "installedApps.layout.listRail": "Liste à gauche",
 
   "settings.language.label": "Langue",
   "settings.language.description":

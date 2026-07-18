@@ -60,12 +60,26 @@ pub fn state_path(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(dir.join(STATE_FILE))
 }
 
-fn is_uri(target: &str) -> bool {
-    target.contains("://")
-}
-
 fn is_lnk(target: &str) -> bool {
     target.to_ascii_lowercase().ends_with(".lnk")
+}
+
+fn launch_shell_app(target: &str) -> Result<(), String> {
+    let path = app_search::normalize_shell_app_target(target);
+    // explorer.exe reliably activates AppsFolder AUMIDs; cmd start mishandles `!`.
+    Command::new("explorer")
+        .arg(&path)
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| format!("No se pudo lanzar el acceso: {e}"))
+}
+
+fn launch_protocol_target(app: &AppHandle, target: &str) -> Result<(), String> {
+    let uri = app_search::normalize_protocol_target(target)
+        .unwrap_or_else(|| target.trim().to_string());
+    app.opener()
+        .open_url(&uri, None::<&str>)
+        .map_err(|e| format!("No se pudo abrir el URI: {e}"))
 }
 
 #[tauri::command]
@@ -79,10 +93,7 @@ fn launch_item(app: AppHandle, payload: LaunchPayload) -> Result<(), String> {
     }
 
     match item_type {
-        "url" => app
-            .opener()
-            .open_url(target, None::<&str>)
-            .map_err(|e| format!("No se pudo abrir la URL: {e}")),
+        "url" => launch_protocol_target(&app, target),
         "folder" => {
             if !std::path::Path::new(target).is_dir() {
                 return Err(format!("La carpeta no existe: {target}"));
@@ -94,11 +105,12 @@ fn launch_item(app: AppHandle, payload: LaunchPayload) -> Result<(), String> {
                 .map_err(|e| format!("No se pudo abrir la carpeta: {e}"))
         }
         "application" | "game" => {
-            if is_uri(target) {
-                return app
-                    .opener()
-                    .open_url(target, None::<&str>)
-                    .map_err(|e| format!("No se pudo abrir el URI: {e}"));
+            if app_search::is_protocol_target(target) {
+                return launch_protocol_target(&app, target);
+            }
+
+            if app_search::is_shell_app_target(target) {
+                return launch_shell_app(target);
             }
 
             if is_lnk(target) || target.contains(' ') {
@@ -136,8 +148,24 @@ fn search_installed_apps(
 }
 
 #[tauri::command]
-fn get_file_icon(target: String) -> Result<String, String> {
-    file_icon::get_file_icon(&target)
+fn list_installed_apps() -> Result<Vec<app_search::InstalledAppResult>, String> {
+    app_search::list_installed_apps()
+}
+
+#[tauri::command]
+fn start_installed_apps_scan(app: AppHandle, force: Option<bool>) -> Result<(), String> {
+    app_search::start_installed_apps_scan(app, force.unwrap_or(false));
+    Ok(())
+}
+
+#[tauri::command]
+fn refresh_installed_apps_index() -> Result<usize, String> {
+    app_search::refresh_installed_apps_index()
+}
+
+#[tauri::command]
+fn get_file_icon(target: String, size: Option<u32>) -> Result<String, String> {
+    file_icon::get_file_icon(&target, size)
 }
 
 #[tauri::command]
@@ -145,6 +173,16 @@ fn reveal_item_in_dir(app: AppHandle, target: String) -> Result<(), String> {
     let path = target.trim();
     if path.is_empty() {
         return Err("La ruta está vacía.".into());
+    }
+
+    if app_search::is_shell_app_target(path) {
+        return Err(
+            "Esta aplicación empaquetada no tiene una ubicación de archivo que abrir.".into(),
+        );
+    }
+
+    if app_search::is_protocol_target(path) {
+        return Err("Los enlaces y protocolos no tienen una ubicación de archivo que abrir.".into());
     }
 
     if !std::path::Path::new(path).exists() {
@@ -218,6 +256,9 @@ pub fn run() {
             launch_item,
             get_file_icon,
             search_installed_apps,
+            list_installed_apps,
+            start_installed_apps_scan,
+            refresh_installed_apps_index,
             reveal_item_in_dir,
             load_launcher_state,
             save_launcher_state,
