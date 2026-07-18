@@ -17,27 +17,40 @@ const ALPHA_THRESHOLD: u8 = 12;
 const MIN_USEFUL_OPAQUE: u64 = 8_000;
 
 #[cfg(windows)]
-pub fn get_file_icon(path: &str) -> Result<String, String> {
-    use base64::{engine::general_purpose::STANDARD, Engine as _};
-    use image::codecs::png::PngEncoder;
-    use image::{ExtendedColorType, ImageEncoder};
-    use std::io::Cursor;
-
+pub fn get_file_icon(path: &str, size: Option<u32>) -> Result<String, String> {
     let trimmed = path.trim();
     if trimmed.is_empty() {
         return Err("La ruta está vacía.".into());
     }
 
-    if !Path::new(trimmed).exists() {
-        return Err(format!("No se encontró la ruta: {trimmed}"));
+    let target_size = size.unwrap_or(TARGET_SIZE).clamp(32, 256);
+
+    if crate::app_search::is_protocol_target(trimmed) {
+        if let Some(image) = try_protocol_icon(trimmed, target_size)? {
+            return encode_icon_png_base64(&image);
+        }
+        return Err(format!(
+            "No se pudo resolver un icono para el protocolo: {trimmed}"
+        ));
     }
 
-    let candidates = icon_candidates(trimmed);
+    let resolved = if crate::app_search::is_shell_app_target(trimmed) {
+        crate::app_search::normalize_shell_app_target(trimmed)
+    } else {
+        trimmed.to_string()
+    };
+    let shell_item = is_shell_parsing_path(&resolved);
+
+    if !shell_item && !Path::new(&resolved).exists() {
+        return Err(format!("No se encontró la ruta: {resolved}"));
+    }
+
+    let candidates = icon_candidates(&resolved);
     let mut best: Option<(u64, RgbaImage)> = None;
     let mut last_error: Option<String> = None;
 
     for candidate in candidates {
-        match extract_normalized_icon(&candidate) {
+        match extract_normalized_icon(&candidate, target_size) {
             Ok(image) => {
                 let score = icon_quality_score(&image);
                 if best
@@ -57,6 +70,16 @@ pub fn get_file_icon(path: &str) -> Result<String, String> {
         }));
     };
 
+    encode_icon_png_base64(&image)
+}
+
+#[cfg(windows)]
+fn encode_icon_png_base64(image: &RgbaImage) -> Result<String, String> {
+    use base64::{engine::general_purpose::STANDARD, Engine as _};
+    use image::codecs::png::PngEncoder;
+    use image::{ExtendedColorType, ImageEncoder};
+    use std::io::Cursor;
+
     let mut buffer = Cursor::new(Vec::new());
     PngEncoder::new(&mut buffer)
         .write_image(
@@ -71,15 +94,225 @@ pub fn get_file_icon(path: &str) -> Result<String, String> {
 }
 
 #[cfg(windows)]
-fn extract_normalized_icon(path: &Path) -> Result<RgbaImage, String> {
-    let image = extract_shell_icon(path, TARGET_SIZE)?;
+fn try_protocol_icon(target: &str, size: u32) -> Result<Option<RgbaImage>, String> {
+    if let Some(app_id) = parse_steam_app_id(target) {
+        if let Some(image) = load_steam_app_icon(app_id, size)? {
+            return Ok(Some(image));
+        }
+    }
+    Ok(None)
+}
+
+#[cfg(windows)]
+fn parse_steam_app_id(target: &str) -> Option<u32> {
+    let normalized = crate::app_search::normalize_protocol_target(target)
+        .unwrap_or_else(|| target.trim().replace('\\', "/"));
+    let lower = normalized.to_ascii_lowercase();
+    let rest = lower.strip_prefix("steam://rungameid/")?;
+    let id = rest
+        .split(|c| matches!(c, '/' | '?' | '#' | '&'))
+        .next()
+        .unwrap_or("");
+    if id.is_empty() {
+        return None;
+    }
+    id.parse().ok()
+}
+
+#[cfg(windows)]
+fn steam_install_dirs() -> Vec<PathBuf> {
+    use winreg::enums::HKEY_CURRENT_USER;
+    use winreg::enums::HKEY_LOCAL_MACHINE;
+    use winreg::RegKey;
+
+    let mut dirs = Vec::new();
+
+    let push_dir = |dirs: &mut Vec<PathBuf>, value: String| {
+        let path = PathBuf::from(value.replace('/', "\\"));
+        if path.is_dir() && !dirs.iter().any(|existing| paths_equal(existing, &path)) {
+            dirs.push(path);
+        }
+    };
+
+    if let Ok(key) = RegKey::predef(HKEY_CURRENT_USER).open_subkey("Software\\Valve\\Steam") {
+        if let Ok(path) = key.get_value::<String, _>("SteamPath") {
+            push_dir(&mut dirs, path);
+        }
+    }
+
+    for root in [
+        RegKey::predef(HKEY_LOCAL_MACHINE).open_subkey("SOFTWARE\\WOW6432Node\\Valve\\Steam"),
+        RegKey::predef(HKEY_LOCAL_MACHINE).open_subkey("SOFTWARE\\Valve\\Steam"),
+    ]
+    .into_iter()
+    .flatten()
+    {
+        if let Ok(path) = root.get_value::<String, _>("InstallPath") {
+            push_dir(&mut dirs, path);
+        }
+    }
+
+    for env_key in ["ProgramFiles(x86)", "ProgramFiles"] {
+        if let Ok(base) = std::env::var(env_key) {
+            push_dir(&mut dirs, format!("{base}\\Steam"));
+        }
+    }
+
+    dirs
+}
+
+#[cfg(windows)]
+fn steam_library_cache_icon_paths(app_id: u32) -> Vec<PathBuf> {
+    let mut paths = Vec::new();
+    let id_prefix = format!("{app_id}_");
+    let id_exact = format!("{app_id}.");
+    let preferred = [
+        format!("{app_id}_icon.jpg"),
+        format!("{app_id}_icon.png"),
+        format!("{app_id}_logo.png"),
+        format!("{app_id}_header.jpg"),
+        format!("{app_id}_library_600x900.jpg"),
+        format!("{app_id}.jpg"),
+    ];
+
+    for steam_dir in steam_install_dirs() {
+        let cache = steam_dir.join("appcache").join("librarycache");
+        for name in &preferred {
+            let candidate = cache.join(name);
+            if candidate.is_file() {
+                paths.push(candidate);
+            }
+        }
+
+        if let Ok(entries) = std::fs::read_dir(&cache) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if !path.is_file() {
+                    continue;
+                }
+                let name = path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("")
+                    .to_ascii_lowercase();
+                let ext = path
+                    .extension()
+                    .and_then(|e| e.to_str())
+                    .unwrap_or("")
+                    .to_ascii_lowercase();
+                if !matches!(ext.as_str(), "jpg" | "jpeg" | "png") {
+                    continue;
+                }
+                if name.starts_with(&id_prefix) || name.starts_with(&id_exact) {
+                    if !paths.iter().any(|existing| paths_equal(existing, &path)) {
+                        paths.push(path);
+                    }
+                }
+            }
+        }
+
+        // Newer Steam layouts nest hashed assets under librarycache\<appid>\.
+        let nested = cache.join(app_id.to_string());
+        if nested.is_dir() {
+            if let Ok(entries) = std::fs::read_dir(&nested) {
+                for entry in entries.flatten() {
+                    let path = entry.path();
+                    let ext = path
+                        .extension()
+                        .and_then(|e| e.to_str())
+                        .unwrap_or("")
+                        .to_ascii_lowercase();
+                    let name = path
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or("")
+                        .to_ascii_lowercase();
+                    if matches!(ext.as_str(), "jpg" | "jpeg" | "png")
+                        && (name.contains("icon")
+                            || name.contains("logo")
+                            || name.contains("header")
+                            || name.contains("library"))
+                    {
+                        paths.push(path);
+                    }
+                }
+            }
+        }
+    }
+
+    paths
+}
+
+#[cfg(windows)]
+fn load_steam_app_icon(app_id: u32, size: u32) -> Result<Option<RgbaImage>, String> {
+    let mut best: Option<(u64, RgbaImage)> = None;
+
+    for path in steam_library_cache_icon_paths(app_id) {
+        match load_raster_icon(&path, size) {
+            Ok(image) => {
+                let score = icon_quality_score(&image);
+                // Prefer explicit *_icon.* files slightly by path name.
+                let name = path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("")
+                    .to_ascii_lowercase();
+                let bonus = if name.contains("icon") {
+                    50_000
+                } else if name.contains("logo") {
+                    20_000
+                } else {
+                    0
+                };
+                let score = score.saturating_add(bonus);
+                if best
+                    .as_ref()
+                    .map_or(true, |(best_score, _)| score > *best_score)
+                {
+                    best = Some((score, image));
+                }
+            }
+            Err(_) => continue,
+        }
+    }
+
+    Ok(best.map(|(_, image)| image))
+}
+
+#[cfg(windows)]
+fn load_raster_icon(path: &Path, size: u32) -> Result<RgbaImage, String> {
+    let image = image::open(path)
+        .map_err(|error| format!("No se pudo leer la imagen de icono: {error}"))?
+        .to_rgba8();
     let cropped = trim_transparent(image, ALPHA_THRESHOLD);
-    Ok(fit_icon_to_canvas(cropped, TARGET_SIZE))
+    Ok(fit_icon_to_canvas(cropped, size))
+}
+
+#[cfg(windows)]
+fn is_shell_parsing_path(path: &str) -> bool {
+    crate::app_search::is_shell_app_target(path)
+        || path
+            .get(..6)
+            .is_some_and(|prefix| prefix.eq_ignore_ascii_case("shell:"))
+}
+
+#[cfg(windows)]
+fn extract_normalized_icon(path: &Path, size: u32) -> Result<RgbaImage, String> {
+    let image = extract_shell_icon(path, size)?;
+    let cropped = trim_transparent(image, ALPHA_THRESHOLD);
+    Ok(fit_icon_to_canvas(cropped, size))
 }
 
 #[cfg(windows)]
 fn icon_candidates(path: &str) -> Vec<PathBuf> {
     let mut candidates: Vec<PathBuf> = Vec::new();
+
+    if crate::app_search::is_shell_app_target(path) {
+        let normalized = crate::app_search::normalize_shell_app_target(path);
+        candidates.push(PathBuf::from(normalized));
+        return candidates;
+    }
+
     let root = PathBuf::from(path);
     push_unique(&mut candidates, root.clone());
 
@@ -232,15 +465,24 @@ fn extract_shell_icon(path: &Path, size: u32) -> Result<RgbaImage, String> {
                 .map_err(|error| format!("No se pudo obtener la fábrica de iconos: {error}"))?;
 
             let flags = SIIGBF_ICONONLY | SIIGBF_RESIZETOFIT;
-            let hbitmap = factory
-                .GetImage(
-                    SIZE {
-                        cx: size as i32,
-                        cy: size as i32,
-                    },
-                    flags,
-                )
-                .map_err(|error| format!("No se pudo extraer el icono: {error}"))?;
+            let hbitmap = match factory.GetImage(
+                SIZE {
+                    cx: size as i32,
+                    cy: size as i32,
+                },
+                flags,
+            ) {
+                Ok(bitmap) => bitmap,
+                Err(_) => factory
+                    .GetImage(
+                        SIZE {
+                            cx: size as i32,
+                            cy: size as i32,
+                        },
+                        SIIGBF_RESIZETOFIT,
+                    )
+                    .map_err(|error| format!("No se pudo extraer el icono: {error}"))?,
+            };
 
             let image_result = hbitmap_to_rgba(hbitmap.0);
             let _ = DeleteObject(HGDIOBJ(hbitmap.0));
@@ -468,6 +710,24 @@ fn icon_quality_score(image: &RgbaImage) -> u64 {
 }
 
 #[cfg(not(windows))]
-pub fn get_file_icon(_path: &str) -> Result<String, String> {
+pub fn get_file_icon(_path: &str, _size: Option<u32>) -> Result<String, String> {
     Err("Los iconos de archivo solo están disponibles en Windows.".into())
+}
+
+#[cfg(all(test, windows))]
+mod tests {
+    use super::parse_steam_app_id;
+
+    #[test]
+    fn parses_steam_rungameid_targets() {
+        assert_eq!(
+            parse_steam_app_id(r"steam:\\rungameid\2807960"),
+            Some(2807960)
+        );
+        assert_eq!(
+            parse_steam_app_id("steam://rungameid/2807960"),
+            Some(2807960)
+        );
+        assert_eq!(parse_steam_app_id("uplay://launch/1"), None);
+    }
 }

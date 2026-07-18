@@ -17,7 +17,7 @@ export const en = {
   "sections.titles.scripts": "SCRIPTS",
   "sections.titles.settings": "SETTINGS",
   "sections.badges.home": "Quick access",
-  "sections.badges.apps": "Productivity",
+  "sections.badges.apps": "Windows catalog",
   "sections.badges.games": "Entertainment",
   "sections.badges.system": "System utilities",
   "sections.badges.scripts": "Internal scripts",
@@ -42,6 +42,19 @@ export const en = {
   "search.appPicker.minChars": "Type at least 2 characters to search.",
   "search.appPicker.empty": "No results.",
   "search.appPicker.loading": "Searching…",
+
+  "installedApps.loading": "Loading applications…",
+  "installedApps.error": "Could not load the application catalog.",
+  "installedApps.empty": "No matching applications.",
+  "installedApps.search.placeholder": "Filter applications…",
+  "installedApps.search.ariaLabel": "Filter installed applications",
+  "installedApps.detail.empty": "Select an application to see details.",
+  "installedApps.layout.gearAria": "Change catalog layout",
+  "installedApps.layout.menuAria": "Layout modes",
+  "installedApps.layout.grid": "Grid",
+  "installedApps.layout.list": "Full-width list",
+  "installedApps.layout.listSplit": "Half-width list",
+  "installedApps.layout.listRail": "Left-side list",
 
   "settings.language.label": "Language",
   "settings.language.description":

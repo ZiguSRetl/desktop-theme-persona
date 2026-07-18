@@ -32,12 +32,18 @@ export function isCurrentQualityIcon(icon?: string): boolean {
   return Boolean(icon?.startsWith(ICON_DATA_PREFIX));
 }
 
-export async function fetchFileIcon(target: string): Promise<string | undefined> {
+export async function fetchFileIcon(
+  target: string,
+  size?: number,
+): Promise<string | undefined> {
   const path = target.trim();
   if (!path || !isTauri()) return undefined;
 
   try {
-    const base64 = await invoke<string>("get_file_icon", { target: path });
+    const base64 = await invoke<string>("get_file_icon", {
+      target: path,
+      size: size ?? null,
+    });
     return toIconDataUrl(base64);
   } catch {
     return undefined;

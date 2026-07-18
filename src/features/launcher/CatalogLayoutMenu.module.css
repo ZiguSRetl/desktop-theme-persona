@@ -1,0 +1,68 @@
+.wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.gearBtn {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  color: var(--color-black);
+  background: var(--color-white);
+  border: var(--border-thick) var(--color-black);
+  box-shadow: var(--shadow-black);
+  cursor: pointer;
+  transition: background var(--duration-fast) ease, color var(--duration-fast) ease;
+}
+
+.gearBtn:hover,
+.gearBtn[aria-expanded="true"] {
+  color: var(--color-white);
+  background: var(--color-red);
+}
+
+.popover {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  right: 0;
+  z-index: calc(var(--z-overlay) + 2);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.45rem;
+  background: #1a1a1a;
+  border: var(--border-thick) var(--color-black);
+  box-shadow: var(--shadow-red);
+}
+
+.option {
+  display: grid;
+  place-items: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  color: rgba(255, 255, 255, 0.85);
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  transition: background var(--duration-fast) ease, color var(--duration-fast) ease;
+}
+
+.option:hover {
+  color: var(--color-white);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.optionActive {
+  color: var(--color-white);
+  background: rgba(0, 0, 0, 0.55);
+  border-color: var(--color-red);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gearBtn,
+  .option {
+    transition: none;
+  }
+}
