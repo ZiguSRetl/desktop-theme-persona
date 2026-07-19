@@ -13,6 +13,7 @@ import type {
   WindowBounds,
   WindowMode,
 } from "../../types/desktop";
+import { forcesDesktopMode, defaultWindowMode, withPlatformShellSettings } from "../system/platform";
 const STORAGE_KEY = "persona5-explorer-launcher-state";
 const VALID_TYPES: LauncherItemType[] = ["application", "game", "folder", "url"];
 const VALID_CATEGORIES = ["apps", "games", "system"] as const;
@@ -27,9 +28,9 @@ export function createDefaultSettings(): DesktopSettings {
     soundEnabled: true,
     animationIntensity: "normal",
     closeBehavior: "hide",
-    windowMode: "maximized",
-    // Always on — this app is a desktop shell, not a toggleable window.
-    desktopMode: true,
+    windowMode: defaultWindowMode(),
+    // Windows: desktop overlay shell. Linux/macOS: normal window.
+    desktopMode: forcesDesktopMode(),
     wallpaperPassthrough: false,
     language: detectSystemLanguage(),
   };
@@ -140,7 +141,7 @@ export function validateSettings(raw: unknown): DesktopSettings {
   const closeBehavior = raw.closeBehavior;
   const windowMode = raw.windowMode;
 
-  return {
+  return withPlatformShellSettings({
     globalShortcut: asString(raw.globalShortcut, defaults.globalShortcut),
     launchOnStartup: asBoolean(raw.launchOnStartup, defaults.launchOnStartup),
     soundEnabled: asBoolean(raw.soundEnabled, defaults.soundEnabled),
@@ -155,8 +156,8 @@ export function validateSettings(raw: unknown): DesktopSettings {
     windowMode: VALID_WINDOW_MODES.includes(windowMode as WindowMode)
       ? (windowMode as WindowMode)
       : defaults.windowMode,
-    // Coerce legacy `false` — desktop mode is no longer optional.
-    desktopMode: true,
+    // Windows: always on. Elsewhere: always off (embed is Windows-only).
+    desktopMode: forcesDesktopMode(),
     wallpaperPassthrough: asBoolean(raw.wallpaperPassthrough, defaults.wallpaperPassthrough),
     language: resolveLanguage(raw.language),
     selectedGpuId:
@@ -169,7 +170,7 @@ export function validateSettings(raw: unknown): DesktopSettings {
         : undefined,
     windowBounds: validateWindowBounds(raw.windowBounds),
     wallpaper: validateWallpaper(raw.wallpaper),
-  };
+  });
 }
 
 export function validatePersistedState(raw: unknown): PersistedDesktopState {

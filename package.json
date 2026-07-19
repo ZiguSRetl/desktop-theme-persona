@@ -13,7 +13,10 @@
     "check": "tsc --noEmit && npm run lint && npm run test",
     "tauri": "tauri",
     "tauri:build": "npm run check && npm run build && tauri build",
-    "release": "powershell -ExecutionPolicy Bypass -File ./scripts/release.ps1"
+    "tauri:dev:linux": "tauri dev --config src-tauri/tauri.linux.conf.json",
+    "tauri:build:linux": "npm run check && npm run build && tauri build --config src-tauri/tauri.linux.conf.json --bundles deb,appimage",
+    "release": "powershell -ExecutionPolicy Bypass -File ./scripts/release.ps1",
+    "release:linux": "bash ./scripts/release-linux.sh"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

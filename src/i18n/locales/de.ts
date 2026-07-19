@@ -17,7 +17,7 @@ export const de = {
   "sections.titles.scripts": "SKRIPTE",
   "sections.titles.settings": "EINSTELLUNGEN",
   "sections.badges.home": "Schnellzugriff",
-  "sections.badges.apps": "Windows-Katalog",
+  "sections.badges.apps": "Systemkatalog",
   "sections.badges.games": "Unterhaltung",
   "sections.badges.system": "Systemwerkzeuge",
   "sections.badges.scripts": "Interne Skripte",
@@ -36,7 +36,7 @@ export const de = {
   "search.command.hint": "Strg+K · Enter zum Öffnen · Esc zum Schließen",
   "search.command.empty": "Keine Ergebnisse.",
   "search.appPicker.placeholder": "Installierte Anwendungen suchen…",
-  "search.appPicker.placeholderDialog": "Zum Suchen tippen, wie im Startmenü…",
+  "search.appPicker.placeholderDialog": "Tippen, um installierte Anwendungen zu suchen…",
   "search.appPicker.ariaLabel": "Anwendung suchen",
   "search.appPicker.resultsAria": "Gefundene Anwendungen",
   "search.appPicker.minChars": "Gib mindestens 2 Zeichen ein, um zu suchen.",
@@ -58,7 +58,7 @@ export const de = {
 
   "settings.language.label": "Sprache",
   "settings.language.description":
-    "Sprache der Oberfläche. Der Anfangswert folgt der Windows-Sprache.",
+    "Die Schnittstellensprache. Der Anfangswert folgt der Systemsprache.",
   "settings.language.options.es": "Español",
   "settings.language.options.en": "English",
   "settings.language.options.de": "Deutsch",
@@ -122,8 +122,10 @@ export const de = {
   "settings.emergency.label": "Notfallwiederherstellung",
   "settings.emergency.description":
     "Wenn etwas nicht funktioniert: Tray → Windows-Desktop wiederherstellen, oder Strg+Umschalt+Esc für den Task-Manager.",
+  "settings.emergency.descriptionLinux":
+    "Bei Problemen: Tray → Anzeigen/Ausblenden oder App über das Tray beenden.",
   "settings.emergency.hint": "Immer verfügbar",
-  "settings.launchOnStartup.label": "Mit Windows starten",
+  "settings.launchOnStartup.label": "Beim Anmelden starten",
   "settings.launchOnStartup.description":
     "Öffnet Persona5 Explorer automatisch bei der Anmeldung.",
   "settings.closeBehavior.label": "Verhalten beim Schließen",
@@ -208,9 +210,11 @@ export const de = {
   "shortcutDialog.placeholders.name": "Meine Anwendung",
   "shortcutDialog.placeholders.url": "https://beispiel.com",
   "shortcutDialog.placeholders.path": "C:\\pfad\\zum\\programm.exe",
+  "shortcutDialog.placeholders.pathLinux": "/usr/bin/firefox",
   "shortcutDialog.dialogTitles.folder": "Ordner auswählen",
   "shortcutDialog.dialogTitles.application": "Anwendung auswählen",
   "shortcutDialog.filters.executable": "Ausführbare Datei",
+  "shortcutDialog.filters.linuxApps": "Linux-Anwendungen",
   "shortcutDialog.cancel": "Abbrechen",
   "shortcutDialog.save": "Speichern",
   "shortcutDialog.saving": "Wird gespeichert…",

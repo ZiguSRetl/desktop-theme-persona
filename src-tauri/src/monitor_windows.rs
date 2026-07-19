@@ -248,7 +248,7 @@ fn create_satellite(
     let window = WebviewWindowBuilder::new(app, label, WebviewUrl::App("index.html".into()))
         .title("Persona5 Explorer")
         .decorations(false)
-        .transparent(true)
+        .transparent(cfg!(windows))
         .skip_taskbar(true)
         .resizable(false)
         .minimizable(false)
@@ -290,8 +290,28 @@ pub async fn sync_monitor_windows_impl(app: AppHandle) -> Result<(), String> {
     let main = app
         .get_webview_window(MAIN_WINDOW_LABEL)
         .ok_or_else(|| "No se encontró la ventana principal.".to_string())?;
-    let _ = main.set_resizable(false);
-    let _ = main.set_minimizable(false);
+    let _ = main.set_resizable(!desktop_active);
+    let _ = main.set_minimizable(!desktop_active);
+
+    // Satellites are for Windows desktop-shell multi-monitor overlays only.
+    // Creating them outside desktop mode (especially on Linux) leaves opaque
+    // full-monitor black windows that block the desktop.
+    if !desktop_active {
+        let stale: Vec<String> = app
+            .webview_windows()
+            .into_keys()
+            .filter(|label| label.starts_with(SATELLITE_PREFIX))
+            .collect();
+        for label in stale {
+            if let Some(window) = app.get_webview_window(&label) {
+                let _ = window.close();
+            }
+        }
+        if let Ok(mut labels) = state.satellite_labels.lock() {
+            labels.clear();
+        }
+        return Ok(());
+    }
 
     let mut next_labels = Vec::new();
     for index in 1..monitors.len() {
@@ -301,16 +321,12 @@ pub async fn sync_monitor_windows_impl(app: AppHandle) -> Result<(), String> {
         if let Some(existing) = app.get_webview_window(&label) {
             let _ = existing.set_resizable(false);
             let _ = existing.set_minimizable(false);
-            if !desktop_active {
-                place_window_on_monitor(&existing, monitor)?;
-            }
+            // Desktop mode: Win32 overlays own geometry; avoid fighting with place.
         } else {
             let window = create_satellite(&app, &label, monitor)?;
             attach_close_handler(&app, &window);
-            if desktop_active {
-                // New satellite during desktop mode: pin as overlay once.
-                let _ = crate::desktop_mode::refresh_all_desktop_overlays(&app);
-            }
+            // New satellite during desktop mode: pin as overlay once.
+            let _ = crate::desktop_mode::refresh_all_desktop_overlays(&app);
         }
 
         next_labels.push(label);

@@ -9,6 +9,7 @@ import type {
 } from "../../../features/launcher/launcherStore";
 import { fetchFileIcon, supportsFileIcon } from "../../../features/launcher/iconService";
 import { useEffectiveReducedMotion } from "../../../features/settings/useAnimationProfile";
+import { isLinuxHost } from "../../../features/system/platform";
 import {
   AppSearchPicker,
   type AppSearchSelection,
@@ -138,12 +139,26 @@ function ShortcutDialogForm({
           : await open({
               multiple: false,
               title: t("shortcutDialog.dialogTitles.application"),
-              filters: [{ name: t("shortcutDialog.filters.executable"), extensions: ["exe", "lnk"] }],
+              filters: isLinuxHost()
+                ? [
+                    {
+                      name: t("shortcutDialog.filters.linuxApps"),
+                      extensions: ["desktop", "AppImage", "appimage"],
+                    },
+                    { name: t("shortcutDialog.filters.executable"), extensions: ["*"] },
+                  ]
+                : [
+                    {
+                      name: t("shortcutDialog.filters.executable"),
+                      extensions: ["exe", "lnk"],
+                    },
+                  ],
             });
 
       if (typeof selected === "string") {
         const parts = selected.split(/[\\/]/);
-        const derivedName = parts[parts.length - 1]?.replace(/\.(exe|lnk)$/i, "") ?? "";
+        const derivedName =
+          parts[parts.length - 1]?.replace(/\.(exe|lnk|desktop|AppImage|appimage)$/i, "") ?? "";
         const nextName = name.trim() || derivedName;
 
         setTarget(selected);
@@ -315,7 +330,11 @@ function ShortcutDialogForm({
                     placeholder={
                       type === "url"
                         ? t("shortcutDialog.placeholders.url")
-                        : t("shortcutDialog.placeholders.path")
+                        : t(
+                            isLinuxHost()
+                              ? "shortcutDialog.placeholders.pathLinux"
+                              : "shortcutDialog.placeholders.path",
+                          )
                     }
                     autoFocus={!isEdit}
                   />

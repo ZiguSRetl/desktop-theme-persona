@@ -574,7 +574,13 @@ mod tests {
     #[test]
     fn cache_candidates_include_expected_paths() {
         let dirs = cache_directory_candidates();
+        #[cfg(windows)]
         assert!(!dirs.is_empty());
+        #[cfg(not(windows))]
+        {
+            // Windows TEMP/LOCALAPPDATA paths — empty on Linux hosts.
+            let _ = dirs;
+        }
     }
 
     #[test]

@@ -98,17 +98,32 @@ vi.mock("./monitorWindowsService", () => ({
   isPrimaryWindow,
 }));
 
+vi.mock("../system/platform", async () => {
+  const actual = await vi.importActual<typeof import("../system/platform")>(
+    "../system/platform",
+  );
+  return {
+    ...actual,
+    isLinuxHost: vi.fn(() => false),
+  };
+});
+
 import {
   applyWallpaperPassthrough,
   applyWindowMode,
   applyWindowSettings,
   saveWindowPlacement,
 } from "./windowService";
+import { isLinuxHost } from "../system/platform";
 
 const MONITOR = {
   name: "Display 1",
   position: { x: 0, y: 0 },
   size: { width: 1920, height: 1080 },
+  workArea: {
+    position: { x: 0, y: 32 },
+    size: { width: 1920, height: 980 },
+  },
   scaleFactor: 1,
 };
 
@@ -119,6 +134,7 @@ describe("windowService", () => {
     currentMonitor.mockResolvedValue(MONITOR);
     availableMonitors.mockResolvedValue([MONITOR]);
     isPrimaryWindow.mockReturnValue(true);
+    vi.mocked(isLinuxHost).mockReturnValue(false);
   });
 
   it("fullscreen unmaximizes before setFullscreen and does not pre-size", async () => {
@@ -132,6 +148,18 @@ describe("windowService", () => {
     const unmaximizeOrder = unmaximize.mock.invocationCallOrder[0];
     const fullscreenOrder = setFullscreen.mock.invocationCallOrder[0];
     expect(unmaximizeOrder).toBeLessThan(fullscreenOrder);
+  });
+
+  it("Linux fullscreen maximizes via compositor instead of setFullscreen/setSize", async () => {
+    vi.mocked(isLinuxHost).mockReturnValue(true);
+
+    await applyWindowMode("fullscreen");
+
+    expect(setFullscreen).toHaveBeenCalledWith(false);
+    expect(unmaximize).toHaveBeenCalled();
+    expect(maximize).toHaveBeenCalled();
+    expect(setSize).not.toHaveBeenCalled();
+    expect(setPosition).not.toHaveBeenCalled();
   });
 
   it("maximized only maximizes without full-monitor setSize", async () => {

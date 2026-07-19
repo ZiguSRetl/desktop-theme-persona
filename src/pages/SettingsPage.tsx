@@ -30,6 +30,7 @@ import {
 } from "../features/settings/wallpaperService";
 import { wallpaperCropToBackgroundStyle } from "../features/settings/wallpaperUtils";
 import { useGpuDevices } from "../features/system/useGpuDevices";
+import { isWindowsHost } from "../features/system/platform";
 import { useUpdateStore } from "../features/updater/updateStore";
 import { APP_LANGUAGES, useT, type TranslationKey } from "../i18n";
 import { comicEnter, reducedMotionTransition } from "../lib/motionPresets";
@@ -280,6 +281,30 @@ export function SettingsPage() {
       case "display":
         return (
           <>
+            {!settings.desktopMode ? (
+              <ComicSettingRow
+                label={t("settings.windowMode.label")}
+                description={t("settings.windowMode.description")}
+                rotation={-0.8}
+              >
+                <select
+                  value={settings.windowMode}
+                  onChange={(event) =>
+                    void handleUpdate(
+                      "windowMode",
+                      event.target.value as DesktopSettings["windowMode"],
+                      t("settings.toasts.windowModeUpdated"),
+                    )
+                  }
+                >
+                  <option value="window">{t("settings.windowMode.options.window")}</option>
+                  <option value="fullscreen">
+                    {t("settings.windowMode.options.fullscreen")}
+                  </option>
+                </select>
+              </ComicSettingRow>
+            ) : null}
+
             <ComicSettingRow
               label={t("settings.animationIntensity.label")}
               description={t("settings.animationIntensity.description")}
@@ -396,7 +421,11 @@ export function SettingsPage() {
 
             <ComicSettingRow
               label={t("settings.emergency.label")}
-              description={t("settings.emergency.description")}
+              description={t(
+                isWindowsHost()
+                  ? "settings.emergency.description"
+                  : "settings.emergency.descriptionLinux",
+              )}
               rotation={0.5}
             >
               <span className={settingStyles.hint}>{t("settings.emergency.hint")}</span>

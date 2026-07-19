@@ -12,10 +12,11 @@ export type CatalogLayoutMode = "grid" | "list" | "listSplit" | "listRail";
 
 export const CATALOG_LAYOUT_STORAGE_KEY = "p5.appsCatalogLayout";
 
-const MAX_ICON_CONCURRENCY = 3;
-/** Tile-friendly size — faster than 256, sharp enough for catalog tiles. */
-export const CATALOG_ICON_SIZE = 128;
-const MAX_ICON_ATTEMPTS = 2;
+const MAX_ICON_CONCURRENCY = 5;
+/** Tile-friendly size — faster decode/encode on Linux FreeDesktop lookups. */
+export const CATALOG_ICON_SIZE = 64;
+/** One attempt: missing/SVG icons should not be retried (expensive theme walks). */
+const MAX_ICON_ATTEMPTS = 1;
 
 const LAYOUT_MODES: readonly CatalogLayoutMode[] = ["grid", "list", "listSplit", "listRail"];
 
@@ -117,11 +118,21 @@ async function ensureScanSubscription(
 
   scanUnlisten = await subscribeInstalledAppsScan({
     onUpdated: (apps) => {
-      set({
-        apps,
-        loadedOnce: apps.length > 0,
-        error: null,
-        status: "loading",
+      // Avoid thrashing React on every progressive chunk: only adopt larger snapshots
+      // while scanning, then finalize on ready.
+      set((state) => {
+        if (state.status === "ready" && state.apps.length >= apps.length) {
+          return {};
+        }
+        if (apps.length < state.apps.length && state.apps.length > 0) {
+          return {};
+        }
+        return {
+          apps,
+          loadedOnce: apps.length > 0,
+          error: null,
+          status: "loading" as const,
+        };
       });
     },
     onReady: (apps) => {

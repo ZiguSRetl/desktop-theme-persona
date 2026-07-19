@@ -1,12 +1,22 @@
 use serde::Serialize;
 use std::collections::HashSet;
-use std::fs;
-use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, OnceLock};
+use tauri::{AppHandle, Emitter};
 
 #[cfg(windows)]
-use tauri::{AppHandle, Emitter};
+use std::fs;
+#[cfg(windows)]
+use std::path::{Path, PathBuf};
+
+#[cfg(not(windows))]
+#[path = "app_search_linux.rs"]
+mod linux;
+
+#[cfg(not(windows))]
+pub(crate) fn read_desktop_icon_key(path: &std::path::Path) -> Option<String> {
+    linux::read_desktop_icon_key(path)
+}
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -62,7 +72,6 @@ fn current_results() -> Vec<InstalledAppResult> {
         .unwrap_or_default()
 }
 
-#[cfg(windows)]
 fn emit_apps_updated(app: &AppHandle, entries: &[AppEntry]) {
     let payload: Vec<InstalledAppResult> = sorted_snapshot(entries)
         .iter()
@@ -71,7 +80,6 @@ fn emit_apps_updated(app: &AppHandle, entries: &[AppEntry]) {
     let _ = app.emit("installed-apps-updated", payload);
 }
 
-#[cfg(windows)]
 fn emit_apps_ready(app: &AppHandle, entries: &[AppEntry]) {
     let payload: Vec<InstalledAppResult> = sorted_snapshot(entries)
         .iter()
@@ -543,12 +551,10 @@ fn collect_apps_folder(
     }
 }
 
+#[cfg(windows)]
 fn display_name_from_path(path: &Path) -> String {
-    #[cfg(windows)]
-    {
-        if let Some(name) = shell_display_name(path) {
-            return name;
-        }
+    if let Some(name) = shell_display_name(path) {
+        return name;
     }
 
     path.file_stem()
@@ -558,6 +564,7 @@ fn display_name_from_path(path: &Path) -> String {
         .unwrap_or_else(|| path.to_string_lossy().into_owned())
 }
 
+#[cfg(windows)]
 fn walk_shortcuts(
     root: &Path,
     entries: &mut Vec<AppEntry>,
@@ -604,17 +611,15 @@ fn walk_shortcuts(
         let name = display_name_from_path(&path);
         let path_string = path.to_string_lossy().into_owned();
 
-        #[cfg(windows)]
         let dedupe = resolve_shortcut_target(&path)
             .map(|target| target.to_string_lossy().into_owned())
             .unwrap_or_else(|| path_string.clone());
-        #[cfg(not(windows))]
-        let dedupe = path_string.clone();
 
         let _ = push_entry(entries, seen, name, path_string, source, dedupe);
     }
 }
 
+#[cfg(windows)]
 fn known_shortcut_roots() -> Vec<(PathBuf, &'static str)> {
     let mut roots = Vec::new();
 
@@ -649,6 +654,7 @@ fn known_shortcut_roots() -> Vec<(PathBuf, &'static str)> {
     roots
 }
 
+#[cfg(windows)]
 fn build_index_with_progress(mut on_progress: impl FnMut(&[AppEntry])) -> Vec<AppEntry> {
     let mut entries = Vec::new();
     let mut seen = HashSet::new();
@@ -661,17 +667,19 @@ fn build_index_with_progress(mut on_progress: impl FnMut(&[AppEntry])) -> Vec<Ap
         }
     }
 
-    #[cfg(windows)]
-    {
-        collect_apps_folder(&mut entries, &mut seen, |snapshot| {
-            on_progress(snapshot);
-        });
-        if !entries.is_empty() {
-            on_progress(&entries);
-        }
+    collect_apps_folder(&mut entries, &mut seen, |snapshot| {
+        on_progress(snapshot);
+    });
+    if !entries.is_empty() {
+        on_progress(&entries);
     }
 
     sorted_snapshot(&entries)
+}
+
+#[cfg(not(windows))]
+fn build_index_with_progress(on_progress: impl FnMut(&[AppEntry])) -> Vec<AppEntry> {
+    linux::build_linux_index_with_progress(on_progress)
 }
 
 fn score_entry(entry: &AppEntry, tokens: &[&str]) -> i32 {
@@ -711,15 +719,15 @@ fn tokenize(query: &str) -> Vec<String> {
 fn entry_to_result(entry: &AppEntry) -> InstalledAppResult {
     InstalledAppResult {
         name: entry.name.clone(),
+        #[cfg(windows)]
         path: normalize_shell_app_target(&entry.path),
+        #[cfg(not(windows))]
+        path: entry.path.clone(),
         source: entry.source.clone(),
     }
 }
 
-fn run_scan_blocking(
-    #[cfg(windows)] app: Option<&AppHandle>,
-    force: bool,
-) -> Vec<AppEntry> {
+fn run_scan_blocking(app: Option<&AppHandle>, force: bool) -> Vec<AppEntry> {
     if !force {
         if let Ok(guard) = index_lock().lock() {
             if guard.ready && !guard.apps.is_empty() {
@@ -735,7 +743,6 @@ fn run_scan_blocking(
         for _ in 0..200 {
             std::thread::sleep(std::time::Duration::from_millis(50));
             if let Ok(guard) = index_lock().lock() {
-                #[cfg(windows)]
                 if let Some(handle) = app {
                     if !guard.apps.is_empty() {
                         emit_apps_updated(handle, &guard.apps);
@@ -743,7 +750,6 @@ fn run_scan_blocking(
                 }
                 if guard.ready {
                     let apps = guard.apps.clone();
-                    #[cfg(windows)]
                     if let Some(handle) = app {
                         emit_apps_ready(handle, &apps);
                     }
@@ -762,7 +768,6 @@ fn run_scan_blocking(
 
     let apps = build_index_with_progress(|snapshot| {
         publish_snapshot(snapshot, false);
-        #[cfg(windows)]
         if let Some(handle) = app {
             emit_apps_updated(handle, snapshot);
         }
@@ -775,19 +780,15 @@ fn run_scan_blocking(
 
 /// Builds the app index on a background thread so the first search is cheap.
 pub fn warm_installed_apps_index() {
-    #[cfg(windows)]
-    {
-        std::thread::Builder::new()
-            .name("warm-app-search-index".into())
-            .spawn(|| {
-                let _ = run_scan_blocking(None, false);
-            })
-            .ok();
-    }
+    std::thread::Builder::new()
+        .name("warm-app-search-index".into())
+        .spawn(|| {
+            let _ = run_scan_blocking(None, false);
+        })
+        .ok();
 }
 
 /// Progressive scan; emits `installed-apps-updated` and `installed-apps-ready`.
-#[cfg(windows)]
 pub fn start_installed_apps_scan(app: AppHandle, force: bool) {
     std::thread::Builder::new()
         .name("scan-installed-apps".into())
@@ -811,74 +812,59 @@ pub fn start_installed_apps_scan(app: AppHandle, force: bool) {
         .ok();
 }
 
-#[cfg(not(windows))]
-pub fn start_installed_apps_scan(_app: tauri::AppHandle, _force: bool) {}
-
 pub fn list_installed_apps() -> Result<Vec<InstalledAppResult>, String> {
     Ok(current_results())
 }
 
 pub fn search_installed_apps(query: &str, limit: usize) -> Result<Vec<InstalledAppResult>, String> {
-    #[cfg(windows)]
-    {
-        let _ = run_scan_blocking(None, false);
-        let index = index_lock()
-            .lock()
-            .map_err(|_| "No se pudo acceder al índice de aplicaciones.".to_string())?;
+    let _ = run_scan_blocking(None, false);
+    let index = index_lock()
+        .lock()
+        .map_err(|_| "No se pudo acceder al índice de aplicaciones.".to_string())?;
 
-        let tokens = tokenize(query);
+    let tokens = tokenize(query);
 
-        let results: Vec<(i32, &AppEntry)> = if tokens.is_empty() {
-            index
-                .apps
-                .iter()
-                .take(limit)
-                .map(|entry| (0, entry))
-                .collect()
-        } else {
-            let token_refs: Vec<&str> = tokens.iter().map(String::as_str).collect();
-            let mut scored: Vec<(i32, &AppEntry)> = index
-                .apps
-                .iter()
-                .filter_map(|entry| {
-                    let score = score_entry(entry, &token_refs);
-                    if score > i32::MIN {
-                        Some((score, entry))
-                    } else {
-                        None
-                    }
-                })
-                .collect();
+    let results: Vec<(i32, &AppEntry)> = if tokens.is_empty() {
+        index
+            .apps
+            .iter()
+            .take(limit)
+            .map(|entry| (0, entry))
+            .collect()
+    } else {
+        let token_refs: Vec<&str> = tokens.iter().map(String::as_str).collect();
+        let mut scored: Vec<(i32, &AppEntry)> = index
+            .apps
+            .iter()
+            .filter_map(|entry| {
+                let score = score_entry(entry, &token_refs);
+                if score > i32::MIN {
+                    Some((score, entry))
+                } else {
+                    None
+                }
+            })
+            .collect();
 
-            scored.sort_by(|left, right| {
-                right
-                    .0
-                    .cmp(&left.0)
-                    .then_with(|| left.1.sort_key.cmp(&right.1.sort_key))
-            });
+        scored.sort_by(|left, right| {
+            right
+                .0
+                .cmp(&left.0)
+                .then_with(|| left.1.sort_key.cmp(&right.1.sort_key))
+        });
 
-            scored.truncate(limit);
-            scored
-        };
+        scored.truncate(limit);
+        scored
+    };
 
-        Ok(results
-            .into_iter()
-            .map(|(_, entry)| entry_to_result(entry))
-            .collect())
-    }
-    #[cfg(not(windows))]
-    {
-        let _ = (query, limit);
-        Ok(Vec::new())
-    }
+    Ok(results
+        .into_iter()
+        .map(|(_, entry)| entry_to_result(entry))
+        .collect())
 }
 
 pub fn refresh_installed_apps_index() -> Result<usize, String> {
-    let fresh = run_scan_blocking(
-        #[cfg(windows)]
-        None,
-        true,
-    );
+    let fresh = run_scan_blocking(None, true);
     Ok(fresh.len())
 }
 

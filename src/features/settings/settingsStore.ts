@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { DesktopSettings } from "../../types/desktop";
 import { createDefaultSettings, mergeAndSaveState } from "../launcher/persistence";
+import { withPlatformShellSettings } from "../system/platform";
 import { isPrimaryWindow } from "./monitorWindowsService";
 import { applyNativeSettings } from "./nativeSettings";
 import {
@@ -31,22 +32,18 @@ interface SettingsStore {
   resetToDefaults: () => Promise<void>;
 }
 
-function withForcedDesktopMode(settings: DesktopSettings): DesktopSettings {
-  return { ...settings, desktopMode: true };
-}
-
 export const useSettingsStore = create<SettingsStore>((set, get) => ({
   settings: createDefaultSettings(),
   status: "idle",
 
   hydrate: (settings) =>
-    set({ settings: withForcedDesktopMode(settings), status: "ready" }),
+    set({ settings: withPlatformShellSettings(settings), status: "ready" }),
 
   updateSetting: async (key, value) => {
-    // desktopMode is immutable (always on).
+    // desktopMode is not user-toggleable (forced on Windows, forced off elsewhere).
     if (key === "desktopMode") return;
 
-    const next = withForcedDesktopMode({ ...get().settings, [key]: value });
+    const next = withPlatformShellSettings({ ...get().settings, [key]: value });
 
     await mergeAndSaveState({ settings: next });
     set({ settings: next });
@@ -55,7 +52,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       await applyNativeSettings(next);
     }
 
-    // Window mode only applies outside desktop overlay (never while forced on).
+    // Window mode only applies outside desktop overlay.
     if (WINDOW_SETTING_KEYS.has(key) && !next.desktopMode) {
       await applyWindowMode(next.windowMode);
     }

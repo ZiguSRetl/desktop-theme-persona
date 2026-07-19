@@ -17,7 +17,7 @@ export const fr = {
   "sections.titles.scripts": "SCRIPTS",
   "sections.titles.settings": "PARAMÈTRES",
   "sections.badges.home": "Accès rapide",
-  "sections.badges.apps": "Catalogue Windows",
+  "sections.badges.apps": "Catalogue système",
   "sections.badges.games": "Divertissement",
   "sections.badges.system": "Utilitaires système",
   "sections.badges.scripts": "Scripts internes",
@@ -36,7 +36,7 @@ export const fr = {
   "search.command.hint": "Ctrl+K · Entrée pour ouvrir · Échap pour fermer",
   "search.command.empty": "Aucun résultat.",
   "search.appPicker.placeholder": "Rechercher des applications installées…",
-  "search.appPicker.placeholderDialog": "Tapez pour rechercher, comme dans le menu Démarrer…",
+  "search.appPicker.placeholderDialog": "Tapez pour rechercher les applications installées…",
   "search.appPicker.ariaLabel": "Rechercher une application",
   "search.appPicker.resultsAria": "Applications trouvées",
   "search.appPicker.minChars": "Tapez au moins 2 caractères pour rechercher.",
@@ -58,7 +58,7 @@ export const fr = {
 
   "settings.language.label": "Langue",
   "settings.language.description":
-    "Langue de l'interface. La valeur initiale suit la langue de Windows.",
+    "Langue de l’interface. La valeur initiale suit la langue du système.",
   "settings.language.options.es": "Español",
   "settings.language.options.en": "English",
   "settings.language.options.de": "Deutsch",
@@ -123,8 +123,10 @@ export const fr = {
   "settings.emergency.label": "Récupération d'urgence",
   "settings.emergency.description":
     "Si quelque chose échoue : barre d'état → Restaurer le bureau Windows, ou Ctrl+Maj+Échap pour le Gestionnaire des tâches.",
+  "settings.emergency.descriptionLinux":
+    "En cas de problème : barre d’état → Afficher/Masquer, ou quitter depuis le menu.",
   "settings.emergency.hint": "Toujours disponible",
-  "settings.launchOnStartup.label": "Démarrer avec Windows",
+  "settings.launchOnStartup.label": "Lancer à la connexion",
   "settings.launchOnStartup.description":
     "Ouvre Persona5 Explorer automatiquement à la connexion.",
   "settings.closeBehavior.label": "Comportement à la fermeture",
@@ -209,9 +211,11 @@ export const fr = {
   "shortcutDialog.placeholders.name": "Mon application",
   "shortcutDialog.placeholders.url": "https://exemple.com",
   "shortcutDialog.placeholders.path": "C:\\chemin\\vers\\programme.exe",
+  "shortcutDialog.placeholders.pathLinux": "/usr/bin/firefox",
   "shortcutDialog.dialogTitles.folder": "Sélectionner un dossier",
   "shortcutDialog.dialogTitles.application": "Sélectionner une application",
   "shortcutDialog.filters.executable": "Exécutable",
+  "shortcutDialog.filters.linuxApps": "Applications Linux",
   "shortcutDialog.cancel": "Annuler",
   "shortcutDialog.save": "Enregistrer",
   "shortcutDialog.saving": "Enregistrement…",
