@@ -35,6 +35,13 @@ npm install
 npm run tauri dev
 ```
 
+On Linux, use the parallel harness (does not change Windows/NSIS tooling):
+
+```bash
+./scripts/dev-linux.sh
+# see LINUX.md
+```
+
 Useful scripts:
 
 | Command | Description |

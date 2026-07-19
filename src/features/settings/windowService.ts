@@ -9,6 +9,7 @@ import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { invoke } from "@tauri-apps/api/core";
 import type { DesktopSettings, WindowBounds, WindowMode } from "../../types/desktop";
 import { mergeAndSaveState } from "../launcher/persistence";
+import { isLinuxHost } from "../system/platform";
 import { isPrimaryWindow } from "./monitorWindowsService";
 import { centeredLogicalWindowOnMonitor, resolveRestorePosition } from "./windowPlacement";
 
@@ -48,6 +49,20 @@ export async function applyWallpaperPassthrough(enabled: boolean): Promise<void>
   }
 }
 
+/**
+ * Linux/Wayland: avoid Tauri `setFullscreen` (letterboxes / covers the dock).
+ * Ask the compositor to maximize — that respects GNOME struts (top bar + dock).
+ * Manual workArea setSize is unreliable on Ubuntu Dock/Wayland.
+ */
+async function applyLinuxCompositorMaximize(
+  window: ReturnType<typeof getCurrentWindow>,
+): Promise<void> {
+  await window.setFullscreen(false);
+  // Reset then maximize so a previous full-monitor setSize does not stick.
+  await window.unmaximize();
+  await window.maximize();
+}
+
 export async function applyWindowMode(mode: WindowMode): Promise<void> {
   if (!isTauri()) return;
 
@@ -58,6 +73,10 @@ export async function applyWindowMode(mode: WindowMode): Promise<void> {
   if (!monitor) return;
 
   if (mode === "fullscreen") {
+    if (isLinuxHost()) {
+      await applyLinuxCompositorMaximize(window);
+      return;
+    }
     await window.unmaximize();
     await window.setFullscreen(true);
     return;
@@ -66,6 +85,10 @@ export async function applyWindowMode(mode: WindowMode): Promise<void> {
   await window.setFullscreen(false);
 
   if (mode === "maximized") {
+    if (isLinuxHost()) {
+      await applyLinuxCompositorMaximize(window);
+      return;
+    }
     await window.maximize();
     return;
   }

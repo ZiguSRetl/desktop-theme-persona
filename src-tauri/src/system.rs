@@ -90,45 +90,64 @@ pub fn detect_system_language() -> &'static str {
 
     #[cfg(not(windows))]
     {
+        for key in ["LC_ALL", "LC_MESSAGES", "LANG"] {
+            if let Ok(val) = std::env::var(key) {
+                let trimmed = val.trim();
+                if !trimmed.is_empty() && trimmed != "C" && trimmed != "POSIX" {
+                    return resolve_app_language(trimmed);
+                }
+            }
+        }
         "en"
     }
 }
 
 fn tray_labels(language: &str) -> TrayLabels {
+    #[cfg(windows)]
+    let restore = match resolve_app_language(language) {
+        "es" => "Restaurar escritorio de Windows",
+        "de" => "Windows-Desktop wiederherstellen",
+        "fr" => "Restaurer le bureau Windows",
+        "ja" => "Windows のデスクトップを復元",
+        _ => "Restore Windows desktop",
+    };
+    #[cfg(not(windows))]
+    let restore = "";
+
     match resolve_app_language(language) {
         "es" => TrayLabels {
             show: "Mostrar P5 Explorer",
             hide: "Ocultar",
             settings: "Configuración",
-            restore: "Restaurar escritorio de Windows",
+            restore,
             quit: "Salir",
         },
         "de" => TrayLabels {
             show: "P5 Explorer anzeigen",
             hide: "Ausblenden",
             settings: "Einstellungen",
-            restore: "Windows-Desktop wiederherstellen",
+            restore,
             quit: "Beenden",
         },
         "fr" => TrayLabels {
             show: "Afficher P5 Explorer",
             hide: "Masquer",
             settings: "Paramètres",
-            restore: "Restaurer le bureau Windows",
+            restore,
             quit: "Quitter",
         },
         "ja" => TrayLabels {
             show: "P5 Explorer を表示",
             hide: "隠す",
             settings: "設定",
-            restore: "Windows のデスクトップを復元",
+            restore,
             quit: "終了",
         },
         _ => TrayLabels {
             show: "Show P5 Explorer",
             hide: "Hide",
             settings: "Settings",
-            restore: "Restore Windows desktop",
+            restore,
             quit: "Quit",
         },
     }
@@ -136,28 +155,40 @@ fn tray_labels(language: &str) -> TrayLabels {
 
 fn build_tray_menu(app: &AppHandle, language: &str) -> Result<Menu<tauri::Wry>, tauri::Error> {
     let labels = tray_labels(language);
-    let restore_desktop_item = MenuItem::with_id(
-        app,
-        "tray_restore_desktop",
-        labels.restore,
-        true,
-        None::<&str>,
-    )?;
     let show_item = MenuItem::with_id(app, "tray_show", labels.show, true, None::<&str>)?;
     let hide_item = MenuItem::with_id(app, "tray_hide", labels.hide, true, None::<&str>)?;
     let settings_item =
         MenuItem::with_id(app, "tray_settings", labels.settings, true, None::<&str>)?;
     let quit_item = MenuItem::with_id(app, "tray_quit", labels.quit, true, None::<&str>)?;
-    Menu::with_items(
-        app,
-        &[
-            &show_item,
-            &hide_item,
-            &settings_item,
-            &restore_desktop_item,
-            &quit_item,
-        ],
-    )
+
+    #[cfg(windows)]
+    {
+        let restore_desktop_item = MenuItem::with_id(
+            app,
+            "tray_restore_desktop",
+            labels.restore,
+            true,
+            None::<&str>,
+        )?;
+        Menu::with_items(
+            app,
+            &[
+                &show_item,
+                &hide_item,
+                &settings_item,
+                &restore_desktop_item,
+                &quit_item,
+            ],
+        )
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = labels.restore;
+        Menu::with_items(
+            app,
+            &[&show_item, &hide_item, &settings_item, &quit_item],
+        )
+    }
 }
 
 fn apply_tray_language(app: &AppHandle, language: &str) -> Result<(), String> {

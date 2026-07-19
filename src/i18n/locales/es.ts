@@ -16,7 +16,7 @@ export const es = {
   "sections.titles.scripts": "SCRIPTS",
   "sections.titles.settings": "AJUSTES",
   "sections.badges.home": "Acceso rápido",
-  "sections.badges.apps": "Catálogo de Windows",
+  "sections.badges.apps": "Catálogo del sistema",
   "sections.badges.games": "Entretenimiento",
   "sections.badges.system": "Utilidades del sistema",
   "sections.badges.scripts": "Scripts internos",
@@ -35,7 +35,7 @@ export const es = {
   "search.command.hint": "Ctrl+K · Enter para abrir · Esc para cerrar",
   "search.command.empty": "Sin resultados.",
   "search.appPicker.placeholder": "Buscar aplicaciones instaladas…",
-  "search.appPicker.placeholderDialog": "Escribe para buscar, como en el menú Inicio…",
+  "search.appPicker.placeholderDialog": "Escribe para buscar aplicaciones instaladas…",
   "search.appPicker.ariaLabel": "Buscar aplicación",
   "search.appPicker.resultsAria": "Aplicaciones encontradas",
   "search.appPicker.minChars": "Escribe al menos 2 caracteres para buscar.",
@@ -56,7 +56,8 @@ export const es = {
   "installedApps.layout.listRail": "Listado a la izquierda",
 
   "settings.language.label": "Idioma",
-  "settings.language.description": "Idioma de la interfaz. El valor inicial sigue el idioma de Windows.",
+  "settings.language.description":
+    "Idioma de la interfaz. El valor inicial sigue el idioma del sistema.",
   "settings.language.options.es": "Español",
   "settings.language.options.en": "English",
   "settings.language.options.de": "Deutsch",
@@ -119,8 +120,10 @@ export const es = {
   "settings.emergency.label": "Recuperación de emergencia",
   "settings.emergency.description":
     "Si algo falla: bandeja → Restaurar escritorio de Windows, o Ctrl+Shift+Esc para el Administrador de tareas.",
+  "settings.emergency.descriptionLinux":
+    "Si algo falla: bandeja → Mostrar/Ocultar, o cierra la app desde la bandeja.",
   "settings.emergency.hint": "Siempre disponible",
-  "settings.launchOnStartup.label": "Iniciar con Windows",
+  "settings.launchOnStartup.label": "Iniciar al iniciar sesión",
   "settings.launchOnStartup.description":
     "Abre Persona5 Explorer automáticamente al iniciar sesión.",
   "settings.closeBehavior.label": "Comportamiento al cerrar",
@@ -204,9 +207,11 @@ export const es = {
   "shortcutDialog.placeholders.name": "Mi aplicación",
   "shortcutDialog.placeholders.url": "https://ejemplo.com",
   "shortcutDialog.placeholders.path": "C:\\ruta\\al\\programa.exe",
+  "shortcutDialog.placeholders.pathLinux": "/usr/bin/firefox",
   "shortcutDialog.dialogTitles.folder": "Seleccionar carpeta",
   "shortcutDialog.dialogTitles.application": "Seleccionar aplicación",
   "shortcutDialog.filters.executable": "Ejecutable",
+  "shortcutDialog.filters.linuxApps": "Aplicaciones Linux",
   "shortcutDialog.cancel": "Cancelar",
   "shortcutDialog.save": "Guardar",
   "shortcutDialog.saving": "Guardando…",

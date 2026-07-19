@@ -78,6 +78,22 @@ describe("useSettingsStore", () => {
     expect(useSettingsStore.getState().settings.soundEnabled).toBe(false);
   });
 
+  it("hydrates with desktopMode forced off on Linux", async () => {
+    const { setOsFamilyOverrideForTests } = await import("../system/platform");
+    setOsFamilyOverrideForTests("linux");
+    try {
+      useSettingsStore.getState().hydrate({
+        ...DEFAULT_SETTINGS,
+        desktopMode: true,
+        soundEnabled: false,
+      });
+      expect(useSettingsStore.getState().settings.desktopMode).toBe(false);
+      expect(useSettingsStore.getState().settings.soundEnabled).toBe(false);
+    } finally {
+      setOsFamilyOverrideForTests("windows");
+    }
+  });
+
   it("does not apply window mode while desktopMode is active", async () => {
     await useSettingsStore.getState().updateSetting("windowMode", "fullscreen");
 

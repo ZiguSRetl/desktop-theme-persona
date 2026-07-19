@@ -17,7 +17,7 @@ export const en = {
   "sections.titles.scripts": "SCRIPTS",
   "sections.titles.settings": "SETTINGS",
   "sections.badges.home": "Quick access",
-  "sections.badges.apps": "Windows catalog",
+  "sections.badges.apps": "System catalog",
   "sections.badges.games": "Entertainment",
   "sections.badges.system": "System utilities",
   "sections.badges.scripts": "Internal scripts",
@@ -36,7 +36,7 @@ export const en = {
   "search.command.hint": "Ctrl+K · Enter to open · Esc to close",
   "search.command.empty": "No results.",
   "search.appPicker.placeholder": "Search installed applications…",
-  "search.appPicker.placeholderDialog": "Type to search, like in the Start menu…",
+  "search.appPicker.placeholderDialog": "Type to search installed applications…",
   "search.appPicker.ariaLabel": "Search application",
   "search.appPicker.resultsAria": "Applications found",
   "search.appPicker.minChars": "Type at least 2 characters to search.",
@@ -58,7 +58,7 @@ export const en = {
 
   "settings.language.label": "Language",
   "settings.language.description":
-    "Interface language. The initial value follows the Windows language.",
+    "Interface language. The initial value follows the system language.",
   "settings.language.options.es": "Español",
   "settings.language.options.en": "English",
   "settings.language.options.de": "Deutsch",
@@ -122,8 +122,10 @@ export const en = {
   "settings.emergency.label": "Emergency recovery",
   "settings.emergency.description":
     "If something fails: tray → Restore Windows desktop, or Ctrl+Shift+Esc for Task Manager.",
+  "settings.emergency.descriptionLinux":
+    "If something fails: tray → Show/Hide, or quit from the tray menu.",
   "settings.emergency.hint": "Always available",
-  "settings.launchOnStartup.label": "Launch with Windows",
+  "settings.launchOnStartup.label": "Launch at sign-in",
   "settings.launchOnStartup.description":
     "Opens Persona5 Explorer automatically at sign-in.",
   "settings.closeBehavior.label": "Close behavior",
@@ -207,9 +209,11 @@ export const en = {
   "shortcutDialog.placeholders.name": "My application",
   "shortcutDialog.placeholders.url": "https://example.com",
   "shortcutDialog.placeholders.path": "C:\\path\\to\\program.exe",
+  "shortcutDialog.placeholders.pathLinux": "/usr/bin/firefox",
   "shortcutDialog.dialogTitles.folder": "Select folder",
   "shortcutDialog.dialogTitles.application": "Select application",
   "shortcutDialog.filters.executable": "Executable",
+  "shortcutDialog.filters.linuxApps": "Linux applications",
   "shortcutDialog.cancel": "Cancel",
   "shortcutDialog.save": "Save",
   "shortcutDialog.saving": "Saving…",

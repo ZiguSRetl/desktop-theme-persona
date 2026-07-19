@@ -710,8 +710,293 @@ fn icon_quality_score(image: &RgbaImage) -> u64 {
 }
 
 #[cfg(not(windows))]
-pub fn get_file_icon(_path: &str, _size: Option<u32>) -> Result<String, String> {
-    Err("Los iconos de archivo solo están disponibles en Windows.".into())
+pub fn get_file_icon(path: &str, size: Option<u32>) -> Result<String, String> {
+    let trimmed = path.trim();
+    if trimmed.is_empty() {
+        return Err("La ruta está vacía.".into());
+    }
+
+    let target_size = size.unwrap_or(128).clamp(32, 256);
+    let cache_key = format!("{trimmed}\0{target_size}");
+
+    if let Some(cached) = icon_result_cache().lock().ok().and_then(|guard| guard.get(&cache_key).cloned())
+    {
+        return cached;
+    }
+
+    let result = resolve_file_icon(trimmed, target_size);
+    if let Ok(mut guard) = icon_result_cache().lock() {
+        // Bound cache growth in long sessions.
+        if guard.len() > 512 {
+            guard.clear();
+        }
+        guard.insert(cache_key, result.clone());
+    }
+    result
+}
+
+#[cfg(not(windows))]
+fn resolve_file_icon(trimmed: &str, target_size: u32) -> Result<String, String> {
+    let path_buf = std::path::PathBuf::from(trimmed);
+
+    if is_desktop_path(&path_buf) {
+        return icon_from_desktop_file(&path_buf, target_size);
+    }
+
+    if is_raster_image_path(&path_buf) {
+        return load_and_encode_raster(&path_buf, target_size);
+    }
+
+    if is_svg_path(&path_buf) {
+        if let Some(png_sibling) = sibling_png(&path_buf) {
+            return load_and_encode_raster(&png_sibling, target_size);
+        }
+        return Err("Los iconos SVG no están soportados.".into());
+    }
+
+    Err(format!("No se encontró un icono para: {trimmed}"))
+}
+
+#[cfg(not(windows))]
+fn icon_result_cache() -> &'static std::sync::Mutex<std::collections::HashMap<String, Result<String, String>>>
+{
+    use std::collections::HashMap;
+    use std::sync::{Mutex, OnceLock};
+
+    static CACHE: OnceLock<Mutex<HashMap<String, Result<String, String>>>> = OnceLock::new();
+    CACHE.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+#[cfg(not(windows))]
+fn theme_icon_path_cache()
+-> &'static std::sync::Mutex<std::collections::HashMap<String, Option<std::path::PathBuf>>> {
+    use std::collections::HashMap;
+    use std::sync::{Mutex, OnceLock};
+
+    static CACHE: OnceLock<Mutex<HashMap<String, Option<std::path::PathBuf>>>> = OnceLock::new();
+    CACHE.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+#[cfg(not(windows))]
+fn encode_icon_png_base64(image: &image::RgbaImage) -> Result<String, String> {
+    use base64::{engine::general_purpose::STANDARD, Engine as _};
+    use image::codecs::png::PngEncoder;
+    use image::{ExtendedColorType, ImageEncoder};
+    use std::io::Cursor;
+
+    let mut buffer = Cursor::new(Vec::new());
+    PngEncoder::new(&mut buffer)
+        .write_image(
+            image.as_raw(),
+            image.width(),
+            image.height(),
+            ExtendedColorType::Rgba8,
+        )
+        .map_err(|error| format!("No se pudo codificar el icono: {error}"))?;
+
+    Ok(STANDARD.encode(buffer.into_inner()))
+}
+
+#[cfg(not(windows))]
+fn is_desktop_path(path: &std::path::Path) -> bool {
+    path.extension()
+        .and_then(|ext| ext.to_str())
+        .is_some_and(|ext| ext.eq_ignore_ascii_case("desktop"))
+}
+
+#[cfg(not(windows))]
+fn is_raster_image_path(path: &std::path::Path) -> bool {
+    path.extension()
+        .and_then(|ext| ext.to_str())
+        .is_some_and(|ext| {
+            matches!(
+                ext.to_ascii_lowercase().as_str(),
+                "png" | "jpg" | "jpeg"
+            )
+        })
+}
+
+#[cfg(not(windows))]
+fn is_svg_path(path: &std::path::Path) -> bool {
+    path.extension()
+        .and_then(|ext| ext.to_str())
+        .is_some_and(|ext| ext.eq_ignore_ascii_case("svg"))
+}
+
+#[cfg(not(windows))]
+fn sibling_png(path: &std::path::Path) -> Option<std::path::PathBuf> {
+    let png = path.with_extension("png");
+    if png.is_file() {
+        Some(png)
+    } else {
+        None
+    }
+}
+
+#[cfg(not(windows))]
+fn icon_from_desktop_file(path: &std::path::Path, size: u32) -> Result<String, String> {
+    if !path.is_file() {
+        return Err(format!("No se encontró la ruta: {}", path.display()));
+    }
+
+    let icon = crate::app_search::read_desktop_icon_key(path)
+        .ok_or_else(|| format!("No se encontró la clave Icon= en {}", path.display()))?;
+
+    resolve_icon_name_or_path(&icon, size)
+}
+
+#[cfg(not(windows))]
+fn resolve_icon_name_or_path(icon: &str, size: u32) -> Result<String, String> {
+    let icon = icon.trim();
+    if icon.is_empty() {
+        return Err("La clave Icon= está vacía.".into());
+    }
+
+    let as_path = std::path::Path::new(icon);
+    if as_path.is_absolute() {
+        if is_raster_image_path(as_path) {
+            return load_and_encode_raster(as_path, size);
+        }
+        if is_svg_path(as_path) {
+            if let Some(png_sibling) = sibling_png(as_path) {
+                return load_and_encode_raster(&png_sibling, size);
+            }
+            return Err("Los iconos SVG no están soportados.".into());
+        }
+        return Err(format!("Formato de icono no soportado: {icon}"));
+    }
+
+    // Theme icon name — strip optional extension for lookup.
+    let name = std::path::Path::new(icon)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or(icon);
+
+    if let Some(found) = find_theme_icon(name) {
+        return load_and_encode_raster(&found, size);
+    }
+
+    Err(format!("No se encontró el icono de tema: {icon}"))
+}
+
+#[cfg(not(windows))]
+fn icon_search_roots() -> &'static [std::path::PathBuf] {
+    use std::path::PathBuf;
+    use std::sync::OnceLock;
+
+    static ROOTS: OnceLock<Vec<PathBuf>> = OnceLock::new();
+    ROOTS.get_or_init(|| {
+        let mut roots = Vec::new();
+        let mut push = |path: PathBuf| {
+            if path.is_dir() && !roots.iter().any(|existing| existing == &path) {
+                roots.push(path);
+            }
+        };
+
+        if let Some(xdg_data_home) = std::env::var_os("XDG_DATA_HOME") {
+            push(PathBuf::from(xdg_data_home).join("icons"));
+        } else if let Some(home) = std::env::var_os("HOME") {
+            push(PathBuf::from(home).join(".local").join("share").join("icons"));
+        }
+
+        if let Some(home) = std::env::var_os("HOME") {
+            push(PathBuf::from(home).join(".icons"));
+        }
+
+        push(PathBuf::from("/usr/share/icons"));
+        push(PathBuf::from("/usr/local/share/icons"));
+        push(PathBuf::from("/usr/share/pixmaps"));
+        push(PathBuf::from("/usr/local/share/pixmaps"));
+
+        roots
+    })
+}
+
+#[cfg(not(windows))]
+fn find_theme_icon(name: &str) -> Option<std::path::PathBuf> {
+    if let Ok(guard) = theme_icon_path_cache().lock() {
+        if let Some(cached) = guard.get(name) {
+            return cached.clone();
+        }
+    }
+
+    // Prefer catalog-sized PNGs; skip scalable/SVG-heavy theme slots.
+    let relative_candidates = [
+        format!("hicolor/128x128/apps/{name}.png"),
+        format!("hicolor/64x64/apps/{name}.png"),
+        format!("hicolor/48x48/apps/{name}.png"),
+        format!("hicolor/256x256/apps/{name}.png"),
+        format!("hicolor/32x32/apps/{name}.png"),
+        format!("Adwaita/48x48/apps/{name}.png"),
+        format!("{name}.png"),
+    ];
+
+    let mut found = None;
+    for root in icon_search_roots() {
+        for relative in &relative_candidates {
+            let candidate = root.join(relative);
+            if candidate.is_file() {
+                found = Some(candidate);
+                break;
+            }
+        }
+        if found.is_some() {
+            break;
+        }
+
+        if root.ends_with("pixmaps") {
+            let flat = root.join(format!("{name}.png"));
+            if flat.is_file() {
+                found = Some(flat);
+                break;
+            }
+        }
+    }
+
+    if let Ok(mut guard) = theme_icon_path_cache().lock() {
+        if guard.len() > 1024 {
+            guard.clear();
+        }
+        guard.insert(name.to_string(), found.clone());
+    }
+
+    found
+}
+
+#[cfg(not(windows))]
+fn load_and_encode_raster(path: &std::path::Path, size: u32) -> Result<String, String> {
+    if !path.is_file() {
+        return Err(format!("No se encontró la ruta: {}", path.display()));
+    }
+
+    let image = image::open(path)
+        .map_err(|error| format!("No se pudo leer la imagen de icono: {error}"))?
+        .to_rgba8();
+
+    let (width, height) = image.dimensions();
+    let image = if width != size || height != size {
+        use image::imageops::{self, FilterType};
+        // Triangle is much cheaper than Lanczos3 for catalog tiles.
+        let largest = width.max(height).max(1);
+        let scale = size as f32 / largest as f32;
+        let next_width = ((width as f32 * scale).round() as u32).max(1);
+        let next_height = ((height as f32 * scale).round() as u32).max(1);
+        let fitted = imageops::resize(&image, next_width, next_height, FilterType::Triangle);
+        let (fw, fh) = fitted.dimensions();
+        if fw == size && fh == size {
+            fitted
+        } else {
+            let mut canvas = image::RgbaImage::new(size, size);
+            let offset_x = i64::from((size - fw) / 2);
+            let offset_y = i64::from((size - fh) / 2);
+            imageops::overlay(&mut canvas, &fitted, offset_x, offset_y);
+            canvas
+        }
+    } else {
+        image
+    };
+
+    encode_icon_png_base64(&image)
 }
 
 #[cfg(all(test, windows))]

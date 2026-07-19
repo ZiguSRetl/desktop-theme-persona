@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { motion } from "motion/react";
 import {
@@ -14,12 +14,13 @@ import { staggerChildren } from "../../lib/motionPresets";
 import { playUiSound, primeAudioContext } from "../../features/audio/soundService";
 import { useSettingsMenuStore } from "../../features/settings/settingsMenuStore";
 import { useEffectiveReducedMotion } from "../../features/settings/useAnimationProfile";
+import { isLinuxHost } from "../../features/system/platform";
 import { getBrandVersionParts } from "../../features/updater/brandVersion";
 import { useUpdateStore } from "../../features/updater/updateStore";
 import { useT } from "../../i18n";
 import styles from "./Navigation.module.css";
 
-const navItems = [
+const allNavItems = [
   { to: "/", labelKey: "nav.items.home", icon: Home, end: true },
   { to: "/apps", labelKey: "nav.items.apps", icon: LayoutGrid, end: false },
   { to: "/games", labelKey: "nav.items.games", icon: Gamepad2, end: false },
@@ -38,6 +39,10 @@ export function Navigation() {
   const availableVersion = useUpdateStore((state) => state.available?.version);
   const loadCurrentVersion = useUpdateStore((state) => state.loadCurrentVersion);
   const brandVersion = getBrandVersionParts(currentVersion, availableVersion);
+  const navItems = useMemo(
+    () => allNavItems.filter((item) => !(isLinuxHost() && item.to === "/scripts")),
+    [],
+  );
 
   useEffect(() => {
     void loadCurrentVersion();

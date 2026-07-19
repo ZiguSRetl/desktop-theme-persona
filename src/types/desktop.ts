@@ -47,7 +47,10 @@ export interface DesktopSettings {
   animationIntensity: "reduced" | "normal" | "high";
   closeBehavior: "hide" | "exit";
   windowMode: WindowMode;
-  /** Always true — shell runs as desktop overlay (not a toggleable window mode). */
+  /**
+   * Desktop overlay shell. Forced on for Windows; always off on Linux/macOS
+   * (WorkerW embed is Windows-only).
+   */
   desktopMode: boolean;
   /**
    * Transparent window so the OS / Wallpaper Engine desktop shows through.
