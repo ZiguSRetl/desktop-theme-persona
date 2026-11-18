@@ -43,8 +43,7 @@ export const en = {
   "search.appPicker.empty": "No results.",
   "search.appPicker.loading": "Searching…",
 
-  "installedApps.manageShortcuts": "Manage shortcuts",
-  "installedApps.openCatalog": "Open catalog",
+  "installedApps.actionsFor": "Actions for {{name}}",
   "installedApps.loading": "Loading applications…",
   "installedApps.error": "Could not load the application catalog.",
   "installedApps.empty": "No matching applications.",

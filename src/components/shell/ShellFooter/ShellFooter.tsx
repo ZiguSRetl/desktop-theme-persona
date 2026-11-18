@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { SystemMonitor } from "../SystemMonitor";
 import { useSystemStats } from "../../../features/system/useSystemStats";
 import { useT } from "../../../i18n";
@@ -24,11 +23,6 @@ export function ShellFooter({ desktop, expanded }: { desktop: boolean; expanded:
         widget={desktop}
         compact={desktop && !expanded}
       />
-      {expanded ? (
-        <Link className={styles.shortcuts} to="/system/shortcuts">
-          {t("installedApps.manageShortcuts")}
-        </Link>
-      ) : null}
     </footer>
   );
 }

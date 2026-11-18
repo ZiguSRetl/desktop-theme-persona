@@ -23,13 +23,3 @@
 .widget[data-expanded="true"] {
   width: min(24rem, calc(100% - var(--content-padding) * 2));
 }
-
-.shortcuts {
-  display: block;
-  margin-inline: 0.6rem;
-  padding: 0.4rem 0.15rem;
-  border-top: 1px solid #555;
-  font-size: 0.8rem;
-  text-decoration: underline;
-  text-underline-offset: 0.18em;
-}

@@ -42,8 +42,7 @@ export const es = {
   "search.appPicker.empty": "Sin resultados.",
   "search.appPicker.loading": "Buscando…",
 
-  "installedApps.manageShortcuts": "Gestionar accesos",
-  "installedApps.openCatalog": "Abrir catálogo",
+  "installedApps.actionsFor": "Acciones de {{name}}",
   "installedApps.loading": "Cargando aplicaciones…",
   "installedApps.error": "No se pudo cargar el catálogo de aplicaciones.",
   "installedApps.empty": "No hay aplicaciones que coincidan.",

@@ -1,11 +1,13 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { Search, Star } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { Ellipsis, Plus, Search, Star } from "lucide-react";
 import { useT } from "../../i18n";
+import { AddShortcutDialog } from "../../components/comic/AddShortcutDialog";
 import dropdownStyles from "../../components/Navigation/Dropdown.module.css";
 import type { LauncherItem } from "../../types/desktop";
 import {
   filterInstalledApps,
+  findLauncherItemByTarget,
   installedAppToLauncherItem,
   normalizeLauncherTarget,
 } from "./installedAppsSelectors";
@@ -15,7 +17,7 @@ import { LauncherItemIcon } from "./LauncherItemIcon";
 import { launchItem } from "./launchItem";
 import { tileDisplayName } from "./LauncherTile";
 import { filterLauncherItems } from "./searchSelectors";
-import { showLaunchError } from "./toastStore";
+import { showLaunchError, showSuccess } from "./toastStore";
 import styles from "./ApplicationsWidget.module.css";
 
 const RESULT_BATCH = 36;
@@ -37,11 +39,16 @@ export function ApplicationsWidget({ id, reducedMotion, onLaunch }: Applications
   const [query, setQuery] = useState("");
   const [activeKey, setActiveKey] = useState<string>();
   const [visibleCount, setVisibleCount] = useState(RESULT_BATCH);
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const [editor, setEditor] = useState<"create" | LauncherItem | null>(null);
+  const [saving, setSaving] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
   const scrollToActive = useRef(false);
   const titleId = useId();
   const listId = useId();
+  const actionsId = useId();
   const items = useLauncherStore((state) => state.items);
   const launcherError = useLauncherStore((state) => state.error);
   const apps = useInstalledAppsStore((state) => state.apps);
@@ -49,6 +56,7 @@ export function ApplicationsWidget({ id, reducedMotion, onLaunch }: Applications
   const catalogStatus = useInstalledAppsStore((state) => state.status);
   const catalogError = useInstalledAppsStore((state) => state.error);
   const ensureLoaded = useInstalledAppsStore((state) => state.ensureLoaded);
+  const { addItem, updateItem, removeItem, toggleFavorite } = useLauncherStore.getState();
 
   useEffect(() => {
     searchRef.current?.focus();
@@ -56,12 +64,17 @@ export function ApplicationsWidget({ id, reducedMotion, onLaunch }: Applications
   }, [ensureLoaded]);
 
   const results = useMemo(() => {
-    const saved = filterLauncherItems(gamesOnly ? items.filter(isGame) : items, query)
+    const matchingApps = filterInstalledApps(apps, query);
+    const catalogTargets = new Set(matchingApps.map((app) => normalizeLauncherTarget(app.path)));
+    const matchingSaved = new Set(filterLauncherItems(items, query));
+    const saved = items
+      .filter((item) => (!gamesOnly || isGame(item)) &&
+        (matchingSaved.has(item) || catalogTargets.has(normalizeLauncherTarget(item.target))))
       .sort((a, b) => Number(b.favorite) - Number(a.favorite) ||
         (a.favorite ? a.favoriteOrder - b.favoriteOrder : a.order - b.order))
       .map((item) => ({ key: `saved:${item.id}`, item }));
     const targets = new Set(saved.map(({ item }) => normalizeLauncherTarget(item.target)));
-    const catalog = filterInstalledApps(apps, query)
+    const catalog = matchingApps
       .filter((app) => !targets.has(normalizeLauncherTarget(app.path)))
       .map((app) => ({ key: `catalog:${app.path}`, item: installedAppToLauncherItem(app) }))
       .filter(({ item }) => !gamesOnly || isGame(item));
@@ -72,6 +85,15 @@ export function ApplicationsWidget({ id, reducedMotion, onLaunch }: Applications
   const activeOptionId = results.length ? `${listId}-${selectedIndex}` : undefined;
   const displayedCount = Math.max(visibleCount, selectedIndex + 1);
   const loading = catalogStatus === "idle" || catalogStatus === "loading";
+  const selection = results[selectedIndex];
+  const actionsVisible = actionsOpen && selection !== undefined && selection.key === activeKey;
+  const savedSelection = selection?.key.startsWith("saved:")
+    ? selection.item
+    : findLauncherItemByTarget(items, selection?.item.target ?? "");
+
+  useEffect(() => {
+    if (actionsVisible) actionsRef.current?.querySelector("button")?.focus();
+  }, [actionsVisible]);
 
   useEffect(() => {
     if (!scrollToActive.current) return;
@@ -83,8 +105,56 @@ export function ApplicationsWidget({ id, reducedMotion, onLaunch }: Applications
 
   const resetResults = () => {
     setActiveKey(undefined);
+    setActionsOpen(false);
     setVisibleCount(RESULT_BATCH);
     if (listRef.current) listRef.current.scrollTop = 0;
+  };
+
+  const openActionsFor = (key: string) => {
+    setActiveKey(key);
+    setActionsOpen(true);
+  };
+
+  const closeEditor = () => {
+    setEditor(null);
+    setActionsOpen(false);
+    searchRef.current?.focus();
+  };
+
+  const runAction = async (action: () => Promise<void>) => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      await action();
+      setActionsOpen(false);
+      searchRef.current?.focus();
+    } catch (error) {
+      showLaunchError(typeof error === "string" ? new Error(error) : error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const favoriteSelection = () => {
+    if (!selection) return;
+    if (savedSelection) {
+      void runAction(() => toggleFavorite(savedSelection.id));
+    } else {
+      const { name, type, target, category } = selection.item;
+      void runAction(() => addItem({
+        name, type, target, category, favorite: true, icon: iconsByPath[target],
+      }));
+    }
+  };
+
+  const deleteShortcut = (item: LauncherItem) => {
+    const name = tileDisplayName(item.name, item.target);
+    if (window.confirm(t("launcher.confirm.remove", { name, path: item.target }))) {
+      void runAction(async () => {
+        await removeItem(item.id);
+        showSuccess(t("launcher.toasts.removed", { name }));
+      });
+    }
   };
 
   const launch = (item: LauncherItem) => {
@@ -95,10 +165,15 @@ export function ApplicationsWidget({ id, reducedMotion, onLaunch }: Applications
   };
 
   const handleSearchKeys = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.nativeEvent.isComposing || results.length === 0) return;
+    if (event.nativeEvent.isComposing || !selection) return;
+    if (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")) {
+      event.preventDefault();
+      openActionsFor(selection.key);
+      return;
+    }
     if (event.key === "Enter") {
       event.preventDefault();
-      launch(results[selectedIndex].item);
+      launch(selection.item);
       return;
     }
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
@@ -106,6 +181,7 @@ export function ApplicationsWidget({ id, reducedMotion, onLaunch }: Applications
     const offset = event.key === "ArrowDown" ? 1 : -1;
     const next = Math.min(results.length - 1, Math.max(0, selectedIndex + offset));
     if (next !== selectedIndex) {
+      setActionsOpen(false);
       scrollToActive.current = true;
       setActiveKey(results[next].key);
       if (next >= visibleCount) setVisibleCount(next + RESULT_BATCH);
@@ -115,7 +191,7 @@ export function ApplicationsWidget({ id, reducedMotion, onLaunch }: Applications
   return (
     <section
       id={id}
-      className={dropdownStyles.dropdown}
+      className={`${dropdownStyles.dropdown} ${styles.widget}`}
       aria-labelledby={titleId}
       data-reduced-motion={reducedMotion}
     >
@@ -177,8 +253,14 @@ export function ApplicationsWidget({ id, reducedMotion, onLaunch }: Applications
             className={styles.result}
             role="option"
             aria-selected={index === selectedIndex}
-            onMouseDown={(event) => event.preventDefault()}
+            onMouseDown={(event) => {
+              if (event.button === 0) event.preventDefault();
+            }}
             onClick={() => launch(item)}
+            onContextMenu={(event) => {
+              event.preventDefault();
+              openActionsFor(key);
+            }}
           >
             <LauncherItemIcon type={item.type} icon={item.icon ?? iconsByPath[item.target]} />
             <span>{tileDisplayName(item.name, item.target)}</span>
@@ -197,11 +279,69 @@ export function ApplicationsWidget({ id, reducedMotion, onLaunch }: Applications
       ) : null}
 
       <footer className={styles.actions}>
-        <Link to={gamesOnly ? "/apps/shortcuts?filter=games" : "/apps/shortcuts"}>
-          {t("installedApps.manageShortcuts")}
-        </Link>
-        <Link to="/apps/catalog">{t("installedApps.openCatalog")}</Link>
+        <button type="button" disabled={saving} onClick={() => setEditor("create")}>
+          <Plus size={15} aria-hidden="true" />
+          {t("shortcutDialog.title.create")}
+        </button>
+        {selection ? (
+          <button
+            type="button"
+            disabled={saving}
+            aria-expanded={actionsVisible}
+            aria-controls={actionsVisible ? actionsId : undefined}
+            onClick={() => {
+              if (actionsVisible) setActionsOpen(false);
+              else openActionsFor(selection.key);
+            }}
+          >
+            <Ellipsis size={16} aria-hidden="true" />
+            <span>{t("installedApps.actionsFor", {
+              name: tileDisplayName(selection.item.name, selection.item.target),
+            })}</span>
+          </button>
+        ) : null}
+        {actionsVisible ? (
+          <div id={actionsId} ref={actionsRef} className={styles.actionButtons}>
+            <button type="button" disabled={saving} onClick={favoriteSelection}>
+              {t(savedSelection?.favorite ? "launcher.detail.removeFavorite" : "launcher.detail.addFavorite")}
+            </button>
+            {savedSelection ? (
+              <>
+                <button type="button" disabled={saving} onClick={() => setEditor(savedSelection)}>
+                  {t("shortcutDialog.title.edit")}
+                </button>
+                <button type="button" disabled={saving} onClick={() => deleteShortcut(savedSelection)}>
+                  {t("launcher.detail.remove")}
+                </button>
+              </>
+            ) : null}
+          </div>
+        ) : null}
       </footer>
+
+      {editor === "create" ? (
+        <AddShortcutDialog
+          mode="create"
+          open
+          defaultCategory={gamesOnly ? "games" : "apps"}
+          onClose={closeEditor}
+          onSubmit={async (input) => {
+            await addItem(input);
+            showSuccess(t("launcher.toasts.added"));
+          }}
+        />
+      ) : editor ? (
+        <AddShortcutDialog
+          mode="edit"
+          open
+          initialItem={editor}
+          onClose={closeEditor}
+          onSubmit={async (input) => {
+            await updateItem(editor.id, input);
+            showSuccess(t("launcher.toasts.updated"));
+          }}
+        />
+      ) : null}
     </section>
   );
 }

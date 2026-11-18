@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { motion } from "motion/react";
 import { useT } from "../../../i18n";
@@ -92,6 +92,18 @@ function ShortcutDialogForm({
   ...props
 }: AddShortcutDialogProps & { isEdit: boolean; reduceMotion: boolean }) {
   const t = useT();
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    dialog?.showModal();
+    return () => dialog?.close();
+  }, []);
+
+  const closeDialog = () => {
+    dialogRef.current?.close();
+    onClose();
+  };
   const typeOptions = getTypeOptions(t);
   const categoryOptions = getCategoryOptions(t);
   const [name, setName] = useState(() =>
@@ -250,7 +262,7 @@ function ShortcutDialogForm({
         setFavorite(false);
         setType("application");
       }
-      onClose();
+      closeDialog();
     } catch (submitError) {
       setError(
         submitError instanceof Error
@@ -263,21 +275,28 @@ function ShortcutDialogForm({
   };
 
   return (
-    <div className={styles.backdrop} role="presentation" onClick={onClose}>
+    <dialog
+      ref={dialogRef}
+      className={`${styles.dialogWrap} ${showAppSearch ? styles.dialogWrapWide : ""}`}
+      aria-modal="true"
+      aria-labelledby={titleId}
+      onCancel={(event) => {
+        event.preventDefault();
+        if (!isSaving) closeDialog();
+      }}
+      onClick={(event) => {
+        if (event.target === event.currentTarget && !isSaving) closeDialog();
+      }}
+    >
       <motion.div
-        className={`${styles.dialogWrap} ${showAppSearch ? styles.dialogWrapWide : ""}`}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="add-shortcut-title"
         initial={reduceMotion ? false : { scale: 0.92, opacity: 0, rotate: -2 }}
         animate={{ scale: 1, opacity: 1, rotate: 0 }}
         exit={{ scale: 0.95, opacity: 0 }}
         transition={{ duration: 0.2 }}
-        onClick={(event) => event.stopPropagation()}
       >
         <ComicPanel variant="white" shadowColor="black" rotation={-1}>
           <form className={styles.form} onSubmit={handleSubmit}>
-            <h2 id="add-shortcut-title" className={styles.title}>
+            <h2 id={titleId} className={styles.title}>
               {isEdit ? t("shortcutDialog.title.edit") : t("shortcutDialog.title.create")}
             </h2>
 
@@ -390,7 +409,7 @@ function ShortcutDialogForm({
             {error ? <p className={styles.error}>{error}</p> : null}
 
             <div className={styles.actions}>
-              <CutoutButton variant="default" rotation={-1} onClick={onClose} disabled={isSaving}>
+              <CutoutButton variant="default" rotation={-1} onClick={closeDialog} disabled={isSaving}>
                 {t("shortcutDialog.cancel")}
               </CutoutButton>
               <CutoutButton
@@ -405,6 +424,6 @@ function ShortcutDialogForm({
           </form>
         </ComicPanel>
       </motion.div>
-    </div>
+    </dialog>
   );
 }

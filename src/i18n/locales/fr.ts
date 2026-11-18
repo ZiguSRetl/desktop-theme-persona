@@ -43,8 +43,7 @@ export const fr = {
   "search.appPicker.empty": "Aucun résultat.",
   "search.appPicker.loading": "Recherche en cours…",
 
-  "installedApps.manageShortcuts": "Gérer les raccourcis",
-  "installedApps.openCatalog": "Ouvrir le catalogue",
+  "installedApps.actionsFor": "Actions pour {{name}}",
   "installedApps.loading": "Chargement des applications…",
   "installedApps.error": "Impossible de charger le catalogue d'applications.",
   "installedApps.empty": "Aucune application correspondante.",

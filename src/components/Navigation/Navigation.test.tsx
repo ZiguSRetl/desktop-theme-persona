@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { useInstalledAppsStore } from "../../features/launcher/installedAppsStore";
 import { launchItem } from "../../features/launcher/launchItem";
@@ -108,6 +108,51 @@ describe("Navigation", () => {
     fireEvent.change(screen.getByRole("combobox"), { target: { value: "por" } });
     expect(screen.getByRole("option", { name: "Portal" })).toBeInTheDocument();
     expect(screen.queryByRole("option", { name: "Celeste" })).not.toBeInTheDocument();
+  });
+
+  it("adds an installed app to favorites from the keyboard without launching it", async () => {
+    useInstalledAppsStore.setState({
+      apps: [{ name: "Terminal", path: "terminal.exe", source: "registry" }],
+      status: "ready",
+    });
+    render(<MemoryRouter initialEntries={["/apps"]}><Navigation /></MemoryRouter>);
+
+    const search = screen.getByRole("combobox");
+    fireEvent.change(search, { target: { value: "registry" } });
+    fireEvent.keyDown(search, { key: "F10", shiftKey: true });
+    const favorite = screen.getByRole("button", { name: "Añadir a favoritos" });
+    expect(favorite).toHaveFocus();
+    fireEvent.click(favorite);
+    await waitFor(() => expect(search).toHaveFocus());
+
+    expect((await loadFullState())?.items).toMatchObject([{ target: "terminal.exe", favorite: true }]);
+    expect(screen.getAllByRole("option", { name: "Terminal" })).toHaveLength(1);
+    fireEvent.keyDown(search, { key: "F10", shiftKey: true });
+    expect(screen.getByRole("button", { name: "Quitar de favoritos" })).toBeInTheDocument();
+    expect(launchItem).not.toHaveBeenCalled();
+  });
+
+  it("launches a saved System shortcut and respects cancellation before removing it", async () => {
+    const item = makeLauncherItem({ name: "Monitor de recursos", category: "system", arguments: ["-test"] });
+    useLauncherStore.getState().hydrate([item]);
+    render(<MemoryRouter initialEntries={["/apps"]}><Navigation /></MemoryRouter>);
+    const confirm = vi.spyOn(window, "confirm").mockReturnValueOnce(false).mockReturnValueOnce(true);
+    try {
+      const row = screen.getByRole("option", { name: item.name });
+      fireEvent.contextMenu(row);
+      const remove = screen.getByRole("button", { name: "Eliminar acceso" });
+      fireEvent.click(remove);
+      expect(useLauncherStore.getState().items).toEqual([item]);
+      fireEvent.click(remove);
+      await waitFor(() => expect(row).not.toBeInTheDocument());
+      expect((await loadFullState())?.items).toEqual([]);
+
+      act(() => useLauncherStore.getState().hydrate([item]));
+      fireEvent.click(await screen.findByRole("option", { name: item.name }));
+      expect(launchItem).toHaveBeenCalledWith(item);
+    } finally {
+      confirm.mockRestore();
+    }
   });
 
   it("returns to the full settings menu from the quick controls", () => {

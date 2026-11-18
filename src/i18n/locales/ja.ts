@@ -43,8 +43,7 @@ export const ja = {
   "search.appPicker.empty": "結果がありません。",
   "search.appPicker.loading": "検索中…",
 
-  "installedApps.manageShortcuts": "ショートカットを管理",
-  "installedApps.openCatalog": "カタログを開く",
+  "installedApps.actionsFor": "{{name}} の操作",
   "installedApps.loading": "アプリケーションを読み込み中…",
   "installedApps.error": "アプリケーションカタログを読み込めませんでした。",
   "installedApps.empty": "一致するアプリケーションがありません。",

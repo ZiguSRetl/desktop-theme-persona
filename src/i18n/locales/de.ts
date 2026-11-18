@@ -43,8 +43,7 @@ export const de = {
   "search.appPicker.empty": "Keine Ergebnisse.",
   "search.appPicker.loading": "Suche läuft…",
 
-  "installedApps.manageShortcuts": "Verknüpfungen verwalten",
-  "installedApps.openCatalog": "Katalog öffnen",
+  "installedApps.actionsFor": "Aktionen für {{name}}",
   "installedApps.loading": "Anwendungen werden geladen…",
   "installedApps.error": "Der Anwendungskatalog konnte nicht geladen werden.",
   "installedApps.empty": "Keine passenden Anwendungen.",
