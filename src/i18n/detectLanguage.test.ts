@@ -21,7 +21,9 @@ describe("resolveAppLanguage", () => {
 
 describe("t", () => {
   it("interpolates params", () => {
-    expect(t("en", "launcher.pagination.page", { n: 2 })).toBe("Page 2");
+    expect(t("en", "installedApps.actionsFor", { name: "Steam" })).toBe(
+      "Actions for Steam",
+    );
     expect(t("es", "launcher.toasts.removed", { name: "Steam" })).toBe(
       '"Steam" eliminado.',
     );

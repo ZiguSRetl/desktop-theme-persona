@@ -86,29 +86,4 @@ describe("useLauncherStore", () => {
     expect(mergeAndSaveState).toHaveBeenCalledTimes(1);
   });
 
-  it("reorders only the given category", async () => {
-    await useLauncherStore.getState().reorderItems("apps", ["b", "a"]);
-    const apps = useLauncherStore
-      .getState()
-      .items.filter((item) => item.category === "apps")
-      .sort((left, right) => left.order - right.order);
-
-    expect(apps.map((item) => item.id)).toEqual(["b", "a"]);
-    expect(useLauncherStore.getState().items.find((i) => i.id === "g")?.order).toBe(0);
-  });
-
-  it("reorders favorites without changing category order", async () => {
-    await useLauncherStore.getState().toggleFavorite("a");
-    await useLauncherStore.getState().reorderFavorites(["a", "g"]);
-
-    const favorites = useLauncherStore
-      .getState()
-      .items.filter((item) => item.favorite)
-      .sort((left, right) => left.favoriteOrder - right.favoriteOrder);
-
-    expect(favorites.map((item) => item.id)).toEqual(["a", "g"]);
-    expect(favorites.map((item) => item.favoriteOrder)).toEqual([0, 1]);
-    expect(useLauncherStore.getState().items.find((i) => i.id === "a")?.order).toBe(0);
-    expect(useLauncherStore.getState().items.find((i) => i.id === "g")?.order).toBe(0);
-  });
 });

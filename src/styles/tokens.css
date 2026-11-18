@@ -24,7 +24,6 @@
   --content-padding: clamp(0.875rem, 1.5vw + 0.5rem, 2.5rem);
   --content-padding-top: clamp(0.75rem, 1.5vw + 0.25rem, 1.75rem);
   --tile-gap: clamp(0.75rem, 1.2vw, 1.25rem);
-  --tile-min: clamp(7.5rem, 12cqi, 11rem);
   --tile-size: clamp(7rem, 9cqi, 9.5rem);
   --icon-size: clamp(3rem, 4vw, 4.25rem);
   --icon-size-tile: min(4.75rem, calc(var(--tile-size) * 0.58));
@@ -34,7 +33,6 @@
   --font-nav: clamp(0.85rem, 1vw + 0.5rem, 1.05rem);
   --header-clock-space: clamp(9rem, 20vw, 16rem);
   --shell-max-width: min(100%, 2400px);
-  --context-panel-width: clamp(16rem, 28cqi, 22rem);
   --detail-panel-width: clamp(16rem, 28cqi, 22rem);
   --header-height: clamp(4rem, 10vh, 7rem);
   --footer-height: clamp(3.625rem, 6.5vh, 5.75rem);

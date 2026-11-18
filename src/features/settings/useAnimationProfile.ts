@@ -16,13 +16,6 @@ export function useEffectiveReducedMotion(): boolean {
   return useAnimationProfile() === "reduced";
 }
 
-export function useMotionScale(): number {
-  const profile = useAnimationProfile();
-  if (profile === "reduced") return 1;
-  if (profile === "high") return 1.12;
-  return 1;
-}
-
 export function useMotionDurationMultiplier(): number {
   const profile = useAnimationProfile();
   if (profile === "reduced") return 0.5;

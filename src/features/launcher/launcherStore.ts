@@ -34,8 +34,6 @@ interface LauncherStore {
   updateItem: (id: string, patch: UpdateLauncherItemInput) => Promise<void>;
   removeItem: (id: string) => Promise<void>;
   toggleFavorite: (id: string) => Promise<void>;
-  reorderItems: (category: LauncherItem["category"], orderedIds: string[]) => Promise<void>;
-  reorderFavorites: (orderedIds: string[]) => Promise<void>;
 }
 
 function nextFavoriteOrder(items: LauncherItem[]): number {
@@ -121,25 +119,4 @@ export const useLauncherStore = create<LauncherStore>((set, get) => ({
     set({ items, error: null });
   },
 
-  reorderItems: async (category, orderedIds) => {
-    const orderMap = new Map(orderedIds.map((id, index) => [id, index]));
-    const items = get().items.map((item) => {
-      if (item.category !== category) return item;
-      const nextOrder = orderMap.get(item.id);
-      return nextOrder !== undefined ? { ...item, order: nextOrder } : item;
-    });
-    await mergeAndSaveState({ items });
-    set({ items, error: null });
-  },
-
-  reorderFavorites: async (orderedIds) => {
-    const orderMap = new Map(orderedIds.map((id, index) => [id, index]));
-    const items = get().items.map((item) => {
-      if (!item.favorite) return item;
-      const nextOrder = orderMap.get(item.id);
-      return nextOrder !== undefined ? { ...item, favoriteOrder: nextOrder } : item;
-    });
-    await mergeAndSaveState({ items });
-    set({ items, error: null });
-  },
 }));

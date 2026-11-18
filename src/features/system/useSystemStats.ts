@@ -12,8 +12,6 @@ interface UseSystemStatsResult {
   error: string | null;
 }
 
-export type SystemStatsStatus = SystemMonitorStatus | "idle";
-
 export function useSystemStats(): UseSystemStatsResult {
   const t = useT();
   const selectedGpuId = useSetting("selectedGpuId");

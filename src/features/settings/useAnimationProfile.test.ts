@@ -3,7 +3,6 @@ import { renderHook } from "@testing-library/react";
 import {
   useAnimationProfile,
   useMotionDurationMultiplier,
-  useMotionScale,
 } from "./useAnimationProfile";
 import { useSettingsStore } from "./settingsStore";
 import { DEFAULT_SETTINGS } from "../launcher/persistence";
@@ -52,16 +51,6 @@ describe("useAnimationProfile", () => {
 
     const { result } = renderHook(() => useAnimationProfile());
     expect(result.current).toBe("reduced");
-  });
-
-  it("scales motion for high intensity", () => {
-    useSettingsStore.setState({
-      settings: { ...DEFAULT_SETTINGS, animationIntensity: "high" },
-      status: "ready",
-    });
-
-    const { result } = renderHook(() => useMotionScale());
-    expect(result.current).toBe(1.12);
   });
 
   it("shortens duration when reduced", () => {

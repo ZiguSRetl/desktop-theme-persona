@@ -15,7 +15,7 @@ import { useInstalledAppsStore } from "./installedAppsStore";
 import { useLauncherStore } from "./launcherStore";
 import { LauncherItemIcon } from "./LauncherItemIcon";
 import { launchItem } from "./launchItem";
-import { tileDisplayName } from "./LauncherTile";
+import { launcherItemLabel } from "./launcherItemLabel";
 import { filterLauncherItems } from "./searchSelectors";
 import { showLaunchError, showSuccess } from "./toastStore";
 import styles from "./ApplicationsWidget.module.css";
@@ -52,7 +52,6 @@ export function ApplicationsWidget({ id, reducedMotion, onLaunch }: Applications
   const items = useLauncherStore((state) => state.items);
   const launcherError = useLauncherStore((state) => state.error);
   const apps = useInstalledAppsStore((state) => state.apps);
-  const iconsByPath = useInstalledAppsStore((state) => state.iconsByPath);
   const catalogStatus = useInstalledAppsStore((state) => state.status);
   const catalogError = useInstalledAppsStore((state) => state.error);
   const ensureLoaded = useInstalledAppsStore((state) => state.ensureLoaded);
@@ -142,13 +141,13 @@ export function ApplicationsWidget({ id, reducedMotion, onLaunch }: Applications
     } else {
       const { name, type, target, category } = selection.item;
       void runAction(() => addItem({
-        name, type, target, category, favorite: true, icon: iconsByPath[target],
+        name, type, target, category, favorite: true,
       }));
     }
   };
 
   const deleteShortcut = (item: LauncherItem) => {
-    const name = tileDisplayName(item.name, item.target);
+    const name = launcherItemLabel(item.name, item.target);
     if (window.confirm(t("launcher.confirm.remove", { name, path: item.target }))) {
       void runAction(async () => {
         await removeItem(item.id);
@@ -262,8 +261,8 @@ export function ApplicationsWidget({ id, reducedMotion, onLaunch }: Applications
               openActionsFor(key);
             }}
           >
-            <LauncherItemIcon type={item.type} icon={item.icon ?? iconsByPath[item.target]} />
-            <span>{tileDisplayName(item.name, item.target)}</span>
+            <LauncherItemIcon type={item.type} icon={item.icon} />
+            <span>{launcherItemLabel(item.name, item.target)}</span>
             {item.favorite ? <Star className={styles.star} size={15} aria-hidden="true" /> : null}
           </li>
         ))}
@@ -296,7 +295,7 @@ export function ApplicationsWidget({ id, reducedMotion, onLaunch }: Applications
           >
             <Ellipsis size={16} aria-hidden="true" />
             <span>{t("installedApps.actionsFor", {
-              name: tileDisplayName(selection.item.name, selection.item.target),
+              name: launcherItemLabel(selection.item.name, selection.item.target),
             })}</span>
           </button>
         ) : null}

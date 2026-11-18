@@ -212,11 +212,6 @@ export function createInitialState(
   };
 }
 
-/** @deprecated Use createInitialState or mergeAndSaveState */
-export function createPersistedState(items: LauncherItem[]): PersistedDesktopState {
-  return createInitialState(items);
-}
-
 export async function loadFullState(): Promise<PersistedDesktopState | null> {
   if (!isTauri()) {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -280,9 +275,3 @@ export function mergeAndSaveState(
   pendingStateMerge = operation.catch(() => undefined);
   return operation;
 }
-
-/** @deprecated Use loadFullState */
-export const loadPersistedState = loadFullState;
-
-/** @deprecated Use saveFullState */
-export const savePersistedState = saveFullState;

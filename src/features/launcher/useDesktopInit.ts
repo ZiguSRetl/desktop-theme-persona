@@ -85,6 +85,3 @@ export function useDesktopInit() {
     })();
   }, []);
 }
-
-/** @deprecated Use useDesktopInit */
-export const useLauncherInit = useDesktopInit;
