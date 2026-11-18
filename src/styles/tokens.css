@@ -6,6 +6,11 @@
   --color-surface-elevated: #161616;
   --color-white: #f5f1e8;
   --color-muted: #999999;
+  --widget-ink: #100e12;
+  --widget-face: #211d23;
+  --widget-edge: rgb(245 241 232 / 72%);
+  --widget-shadow: 5px 5px 0 rgb(0 0 0 / 68%);
+  --color-accent-text: #ff8188;
 
   --font-anton: "Anton", "Arial Black", sans-serif;
   --font-bebas: "Bebas Neue", "Arial Narrow", sans-serif;
@@ -62,26 +67,4 @@
   --z-nav-active: 11;
   --z-clock: 20;
   --z-overlay: 50;
-
-  --section-accent: var(--color-red);
-}
-
-.desktop-shell[data-section="home"] {
-  --section-accent: #e60012;
-}
-
-.desktop-shell[data-section="apps"] {
-  --section-accent: #ff4d4d;
-}
-
-.desktop-shell[data-section="games"] {
-  --section-accent: #c40010;
-}
-
-.desktop-shell[data-section="system"] {
-  --section-accent: #8f0010;
-}
-
-.desktop-shell[data-section="settings"] {
-  --section-accent: #a60012;
 }

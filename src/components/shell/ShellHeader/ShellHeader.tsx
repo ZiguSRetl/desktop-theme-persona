@@ -19,7 +19,9 @@ export function ShellHeader() {
         <span className={styles.titleUnderline} aria-hidden="true" />
       </div>
 
-      <HeaderSearch ref={searchRef} />
+      <div className={styles.searchSlot}>
+        <HeaderSearch ref={searchRef} />
+      </div>
 
       <div className={styles.clockSlot}>
         <ComicClock />

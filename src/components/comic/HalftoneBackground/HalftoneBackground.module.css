@@ -6,91 +6,62 @@
   pointer-events: none;
 }
 
-.base {
+.wallpaper,
+.composition {
   position: absolute;
   inset: 0;
-  background: var(--color-black);
 }
 
 .wallpaper {
-  position: absolute;
-  inset: 0;
   background-color: var(--color-black);
 }
 
-.shape {
+.composition {
+  background:
+    repeating-linear-gradient(133deg, transparent 0 5px, rgb(245 241 232 / 2%) 5px 6px),
+    linear-gradient(136deg, #1f1b20 0%, #141215 45%, #09080b 82%);
+}
+
+.scarlet {
   position: absolute;
-  animation: backgroundDrift 32s ease-in-out infinite;
+  inset: 0 auto auto 0;
+  width: min(66vw, 85rem);
+  height: min(64dvh, 49rem);
+  background:
+    radial-gradient(circle, rgb(25 5 12 / 28%) 1px, transparent 1.4px) 0 0 / 5px 5px,
+    linear-gradient(150deg, #e52533 4%, #bc071d 58%, #810e24 100%);
+  clip-path: polygon(0 0, 100% 0, 76% 22%, 81% 22%, 63% 47%, 70% 41%, 0 100%);
 }
 
-.shapeOne {
-  top: -8%;
-  right: -3%;
-  width: 52%;
-  height: 65%;
-  background: var(--color-red);
-  clip-path: polygon(20% 0, 100% 0, 80% 100%, 0 100%);
-  opacity: 0.85;
-}
-
-.shapeTwo {
-  bottom: -12%;
-  left: 18%;
-  width: 38%;
-  height: 45%;
-  background: var(--color-red-dark);
-  clip-path: polygon(0 0, 100% 15%, 90% 100%, 0 85%);
-  opacity: 0.7;
-  animation-delay: -10s;
-}
-
-.fragment {
+.paper {
   position: absolute;
+  inset: 0 auto auto 0;
+  width: min(30vw, 37rem);
+  height: min(27dvh, 20rem);
+  background:
+    radial-gradient(circle, rgb(24 20 23 / 32%) 0.75px, transparent 1.1px) 0 0 / 4px 4px,
+    var(--color-white);
+  clip-path: polygon(0 0, 100% 0, 50% 26%, 64% 29%, 0 74%);
 }
 
-.fragmentWhite {
-  top: 35%;
-  right: 28%;
-  width: 80px;
-  height: 24px;
-  background: var(--color-white);
-  clip-path: polygon(0 0, 100% 20%, 95% 100%, 5% 80%);
-  opacity: 0.12;
-}
-
-.halftone {
+.hatching {
   position: absolute;
-  inset: 0;
-  opacity: 0.35;
-  animation: halftoneShift 8s ease-in-out infinite;
+  inset: auto 0 0 auto;
+  width: min(44vw, 69rem);
+  height: min(40dvh, 30rem);
+  background: repeating-linear-gradient(143deg, #753040 0 1px, transparent 1px 7px);
+  opacity: 0.34;
+  clip-path: polygon(100% 0, 100% 100%, 4% 100%, 50% 58%, 44% 79%);
 }
 
-.halftoneDark {
-  position: absolute;
-  top: 10%;
-  left: 5%;
-  width: 40%;
-  height: 50%;
-  background-image: radial-gradient(circle, rgba(5, 5, 5, 0.4) 1.5px, transparent 1.5px);
-  background-size: 8px 8px;
-  opacity: 0.5;
-}
-
-.speedLinesWrap {
-  position: absolute;
-  bottom: 20%;
-  right: 10%;
-  width: 200px;
-  height: 100px;
-  opacity: 0.15;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .shape {
-    animation: none;
+@media (max-width: 600px) {
+  .scarlet {
+    width: 68vw;
+    height: 62dvh;
   }
 
-  .halftone {
-    animation: none;
+  .paper {
+    width: 36vw;
+    height: 24dvh;
   }
 }

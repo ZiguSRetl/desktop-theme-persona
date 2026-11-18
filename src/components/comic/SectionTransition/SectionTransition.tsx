@@ -9,6 +9,7 @@ export function SectionTransition({ desktopContent }: { desktopContent?: ReactNo
   const outlet = useOutlet();
   const animationProfile = useAnimationProfile();
   const previousPath = useRef(location.pathname);
+  const viewKey = desktopContent ? "/" : location.pathname;
 
   useEffect(() => {
     if (previousPath.current !== location.pathname) {
@@ -19,12 +20,12 @@ export function SectionTransition({ desktopContent }: { desktopContent?: ReactNo
 
   return (
     <div className={styles.wrapper} data-animation-intensity={animationProfile}>
-      <div key={desktopContent ? "/" : location.pathname} className={styles.page}>
+      <div key={viewKey} className={styles.page}>
         {desktopContent ?? outlet}
-        {animationProfile !== "reduced" ? (
-          <div className={styles.cut} aria-hidden="true" />
-        ) : null}
       </div>
+      {animationProfile !== "reduced" ? (
+        <div key={`cut:${viewKey}`} className={styles.cut} aria-hidden="true" />
+      ) : null}
     </div>
   );
 }

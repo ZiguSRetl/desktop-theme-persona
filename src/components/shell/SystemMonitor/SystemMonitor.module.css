@@ -312,7 +312,7 @@
   grid-column: span 2;
   justify-content: start;
   padding: 0.35rem 0.4rem;
-  background: #242124;
+  background: var(--widget-face);
 }
 
 .widget .metric[data-metric="gpu"],
@@ -321,7 +321,7 @@
 }
 
 .widget .metricLabel {
-  color: #ff7373;
+  color: var(--color-accent-text);
 }
 
 .widget .metric[data-tone="warn"] .metricLabel {
@@ -358,6 +358,10 @@
   gap: 0.25rem 0.5rem;
 }
 
+.widget .networkArrow {
+  color: var(--color-accent-text);
+}
+
 .widget .networkRate,
 .widget .gpuStatValue,
 .widget .metricPrimary {
@@ -378,7 +382,12 @@
   animation: none;
 }
 
-:global([data-animation-intensity="reduced"]) .widget .barFill {
+:global([data-animation-intensity="reduced"]) .monitor,
+:global([data-animation-intensity="reduced"]) .barFillLoading {
+  animation: none;
+}
+
+:global([data-animation-intensity="reduced"]) .barFill {
   transition: none;
 }
 

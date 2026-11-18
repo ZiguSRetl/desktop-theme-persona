@@ -28,7 +28,7 @@ export function DesktopLayout() {
 
   return (
     <div className="desktop-shell" data-animation-intensity={animationProfile} data-section={section}>
-      <HalftoneBackground section={section} />
+      <HalftoneBackground />
       <Navigation />
       <ComicToast />
       <UpdateAvailableDialog />

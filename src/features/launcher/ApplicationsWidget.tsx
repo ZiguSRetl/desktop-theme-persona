@@ -195,7 +195,7 @@ export function ApplicationsWidget({ id, reducedMotion, onLaunch }: Applications
       data-reduced-motion={reducedMotion}
     >
       <header className={styles.heading}>
-        <h2 id={titleId}>{t("nav.items.apps")}</h2>
+        <h2 id={titleId} className={dropdownStyles.title}>{t("nav.items.apps")}</h2>
         <button
           type="button"
           className={styles.filter}

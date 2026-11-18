@@ -14,10 +14,10 @@
   max-height: calc(100% - 1rem);
   overflow: auto;
   overscroll-behavior: contain;
-  background: var(--color-black);
-  border: 1px solid rgb(245 241 232 / 72%);
+  background: var(--widget-ink);
+  border: 1px solid var(--widget-edge);
   border-inline-start: 4px solid var(--color-red);
-  box-shadow: 4px 4px 0 rgb(0 0 0 / 65%);
+  box-shadow: var(--widget-shadow);
 }
 
 .widget[data-expanded="true"] {

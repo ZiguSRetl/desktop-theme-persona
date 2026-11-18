@@ -169,16 +169,6 @@ html[data-wallpaper-passthrough="true"] .desktop-shell {
   width: auto;
 }
 
-[data-paused="true"] .halftone-pattern,
-[data-paused="true"] .halftone-pattern-light {
-  animation-play-state: paused !important;
-}
-
-[data-animation-intensity="reduced"] .halftone-pattern,
-[data-animation-intensity="reduced"] .halftone-pattern-light {
-  animation: none !important;
-}
-
 [data-animation-intensity="high"] {
   --duration-fast: 150ms;
   --duration-normal: 240ms;

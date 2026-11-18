@@ -31,7 +31,7 @@
   font-size: clamp(0.75rem, 0.9vw + 0.35rem, 0.9rem);
   letter-spacing: 0.12em;
   color: var(--color-white);
-  background: var(--color-red);
+  background: var(--color-red-dark);
   border: 2px solid var(--color-black);
   transform: rotate(2deg);
 }
@@ -88,9 +88,9 @@
 
 .clock[data-desktop] .timeRow {
   padding: 0.43rem 0.9rem 0.5rem 1.2rem;
-  background: var(--color-black);
+  background: var(--widget-ink);
   clip-path: polygon(0.75rem 0, 100% 0, calc(100% - 0.42rem) 100%, 0 100%);
-  border-block-start: 2px solid var(--color-white);
+  border-block-start: 3px solid var(--color-white);
   gap: 0.25rem;
 }
 
@@ -129,6 +129,20 @@
 @media (max-height: 760px) {
   .burst {
     display: none;
+  }
+}
+
+@media (max-width: 600px) and (max-height: 420px) {
+  .clock[data-desktop] {
+    padding-block: 0.1rem 0.25rem;
+  }
+
+  .clock[data-desktop] .timeRow {
+    padding-block: 0.3rem 0.4rem;
+  }
+
+  .clock[data-desktop] .dateBand {
+    transform: rotate(-1deg);
   }
 }
 

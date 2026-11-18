@@ -1,137 +1,56 @@
-import { useEffect, useMemo, useState } from "react";
-import { motion } from "motion/react";
-import { useLayerParallax } from "../../../hooks/useParallax";
-import { useEffectiveReducedMotion } from "../../../features/settings/useAnimationProfile";
+import { useEffect, useState } from "react";
 import {
   isWallpaperConfigured,
   loadWallpaperDataUrl,
 } from "../../../features/settings/wallpaperService";
 import { wallpaperCropToBackgroundStyle } from "../../../features/settings/wallpaperUtils";
 import { useSetting } from "../../../features/settings/settingsStore";
-import { SpeedLines } from "../SpeedLines";
 import styles from "./HalftoneBackground.module.css";
 
 export type AppSection = "home" | "apps" | "games" | "system" | "scripts" | "settings";
 
-interface HalftoneBackgroundProps {
-  section: AppSection;
-}
-
-const sectionOffsets: Record<AppSection, { shape1: number; shape2: number }> = {
-  home: { shape1: 0, shape2: 0 },
-  apps: { shape1: 15, shape2: -10 },
-  games: { shape1: -12, shape2: 18 },
-  system: { shape1: 8, shape2: -15 },
-  scripts: { shape1: 12, shape2: 8 },
-  settings: { shape1: -8, shape2: 10 },
-};
-
-export function HalftoneBackground({ section }: HalftoneBackgroundProps) {
+export function HalftoneBackground() {
   const wallpaper = useSetting("wallpaper");
   const desktopMode = useSetting("desktopMode");
   const wallpaperPassthrough = useSetting("wallpaperPassthrough") && desktopMode;
-  const reduceMotion = useEffectiveReducedMotion();
-  const [isVisible, setIsVisible] = useState(
-    () => typeof document !== "undefined" && document.visibilityState === "visible",
-  );
-  const [wallpaperUrl, setWallpaperUrl] = useState("");
-  const layer0 = useLayerParallax(0, 3, 8);
-  const layer1 = useLayerParallax(1, 3, 10);
-  const layer2 = useLayerParallax(2, 3, 12);
-  const offsets = sectionOffsets[section];
+  const path = isWallpaperConfigured(wallpaper) ? wallpaper.path : null;
+  const [loaded, setLoaded] = useState<{ path: string; url: string }>();
 
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      setIsVisible(document.visibilityState === "visible");
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, []);
-
-  useEffect(() => {
-    if (wallpaperPassthrough || !isWallpaperConfigured(wallpaper)) {
-      queueMicrotask(() => setWallpaperUrl(""));
-      return;
-    }
-
-    const path = wallpaper.path;
+    if (wallpaperPassthrough || !path) return;
     let cancelled = false;
 
     void loadWallpaperDataUrl(path)
       .then((url) => {
-        if (!cancelled) setWallpaperUrl(url);
+        if (!cancelled) setLoaded({ path, url });
       })
       .catch(() => {
-        if (!cancelled) setWallpaperUrl("");
+        if (!cancelled) setLoaded(undefined);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [wallpaper, wallpaperPassthrough]);
-
-  const wallpaperStyle = useMemo(() => {
-    if (!wallpaperUrl || !isWallpaperConfigured(wallpaper)) return undefined;
-    return wallpaperCropToBackgroundStyle(wallpaperUrl, wallpaper.crop);
-  }, [wallpaper, wallpaperUrl]);
-
-  const paused = reduceMotion || !isVisible;
-  const hasWallpaper = Boolean(wallpaperStyle);
+  }, [path, wallpaper, wallpaperPassthrough]);
 
   if (wallpaperPassthrough) {
     return <div className={styles.background} aria-hidden="true" data-passthrough="true" />;
   }
 
+  const wallpaperStyle = loaded?.path === path && loaded.url && isWallpaperConfigured(wallpaper)
+    ? wallpaperCropToBackgroundStyle(loaded.url, wallpaper.crop)
+    : undefined;
+
   return (
-    <div className={styles.background} aria-hidden="true" data-paused={paused}>
-      {hasWallpaper ? (
+    <div className={styles.background} aria-hidden="true">
+      {wallpaperStyle ? (
         <div className={styles.wallpaper} style={wallpaperStyle} />
       ) : (
-        <>
-          <div className={`${styles.base} paper-texture`} />
-
-          <motion.div
-            className={`${styles.shape} ${styles.shapeOne}`}
-            animate={
-              paused
-                ? {}
-                : {
-                    rotate: offsets.shape1,
-                    x: layer0.x,
-                    y: layer0.y,
-                  }
-            }
-            transition={{ duration: 0.3, ease: "easeOut" }}
-          />
-
-          <motion.div
-            className={`${styles.shape} ${styles.shapeTwo}`}
-            animate={
-              paused
-                ? {}
-                : {
-                    rotate: -8 + offsets.shape2,
-                    x: layer1.x,
-                    y: layer1.y,
-                  }
-            }
-            transition={{ duration: 0.3, ease: "easeOut" }}
-          />
-
-          <motion.div
-            className={`${styles.fragment} ${styles.fragmentWhite}`}
-            animate={paused ? {} : { x: layer2.x * 0.5, y: layer2.y * 0.5 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-          />
-
-          <div className={`${styles.halftone} halftone-pattern-light`} />
-          <div className={styles.halftoneDark} />
-
-          <div className={styles.speedLinesWrap}>
-            <SpeedLines visible direction="diagonal-left" intensity="low" />
-          </div>
-        </>
+        <div className={styles.composition}>
+          <div className={styles.scarlet} />
+          <div className={styles.paper} />
+          <div className={styles.hatching} />
+        </div>
       )}
     </div>
   );

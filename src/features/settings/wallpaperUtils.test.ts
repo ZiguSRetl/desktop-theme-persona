@@ -52,6 +52,17 @@ describe("wallpaperCropToBackgroundStyle", () => {
     expect(style.backgroundSize).toBe("100% 100%");
     expect(style.backgroundPosition).toBe("0% 0%");
   });
+
+  it("positions an off-center crop without exposing the canvas at the edges", () => {
+    const style = wallpaperCropToBackgroundStyle("file://wallpaper.jpg", {
+      x: 0.125,
+      y: 0.25,
+      width: 0.75,
+      height: 0.75,
+    });
+
+    expect(style.backgroundPosition).toBe("50% 100%");
+  });
 });
 
 describe("fitImageInBox", () => {

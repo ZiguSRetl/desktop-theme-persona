@@ -42,11 +42,15 @@ export function wallpaperCropToBackgroundStyle(
   imageUrl: string,
   crop: WallpaperCrop,
 ): CSSProperties {
+  // CSS positions the image over the excess between its size and the viewport.
+  const x = crop.width < 1 ? Math.min(crop.x / (1 - crop.width), 1) * 100 : 0;
+  const y = crop.height < 1 ? Math.min(crop.y / (1 - crop.height), 1) * 100 : 0;
+
   return {
     backgroundImage: `url("${imageUrl}")`,
     backgroundRepeat: "no-repeat",
     backgroundSize: `${100 / crop.width}% ${100 / crop.height}%`,
-    backgroundPosition: `${(-crop.x / crop.width) * 100}% ${(-crop.y / crop.height) * 100}%`,
+    backgroundPosition: `${x}% ${y}%`,
   };
 }
 
