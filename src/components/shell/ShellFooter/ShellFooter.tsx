@@ -21,7 +21,6 @@ export function ShellFooter({ desktop, expanded }: { desktop: boolean; expanded:
         status={status}
         error={error}
         widget={desktop}
-        compact={desktop && !expanded}
       />
     </footer>
   );

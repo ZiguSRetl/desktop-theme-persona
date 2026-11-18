@@ -48,7 +48,7 @@ it("shares a polling request and the last sample between widget sizes", async ()
 
   const toggle = screen.getByRole("button", { name: "Sistema" });
   const monitor = screen.getByRole("region", { name: "Monitor del sistema" });
-  expect(within(monitor).getAllByText("—")).toHaveLength(2);
+  expect(within(monitor).getAllByText("—")).toHaveLength(5);
   await act(async () => {});
   expect(fetchMetrics).toHaveBeenCalledTimes(1);
 
@@ -56,12 +56,15 @@ it("shares a polling request and the last sample between widget sizes", async ()
   expect(toggle).toHaveAttribute("aria-expanded", "true");
   expect(within(monitor).getAllByText("—")).toHaveLength(5);
   fireEvent.click(toggle);
-  expect(within(monitor).getAllByText("—")).toHaveLength(2);
+  expect(within(monitor).getAllByText("—")).toHaveLength(5);
   await act(() => vi.advanceTimersByTimeAsync(2000));
   expect(fetchMetrics).toHaveBeenCalledTimes(1);
 
   await act(async () => resolveFirst({ ...MOCK_SYSTEM_METRICS, gpu: null }));
-  expect(within(monitor).getByLabelText("CPU: 25%")).toBeInTheDocument();
+  expect(within(monitor).getByLabelText(/CPU: 25% · 58 °C/)).toBeInTheDocument();
+  expect(within(monitor).getByLabelText(/DISCO: 62%/)).toBeInTheDocument();
+  expect(within(monitor).getByLabelText(/GPU: no disponible/)).toBeInTheDocument();
+  expect(within(monitor).getByLabelText(/Red: Descarga/)).toBeInTheDocument();
   await act(() => vi.advanceTimersByTimeAsync(2000));
   expect(fetchMetrics).toHaveBeenCalledTimes(2);
 
@@ -76,6 +79,6 @@ it("shares a polling request and the last sample between widget sizes", async ()
   expect(fetchMetrics).toHaveBeenCalledTimes(2);
 
   await act(async () => rejectSecond(new Error("Sensor timeout")));
-  expect(within(monitor).getByLabelText("CPU: 25%")).toBeInTheDocument();
+  expect(within(monitor).getByLabelText(/CPU: 25% · 58 °C/)).toBeInTheDocument();
   expect(within(monitor).getByRole("status")).toBeInTheDocument();
 });

@@ -42,7 +42,7 @@ export function NetworkMetric({
   const metricError = error ?? t("system.aria.metricError");
 
   return (
-    <div className={styles.metric} aria-label={ariaLabel}>
+    <div className={styles.metric} data-metric="network" aria-label={ariaLabel}>
       <div className={styles.metricHead}>
         <span className={styles.metricLabel}>{t("system.metrics.network")}</span>
         {status === "error" ? (

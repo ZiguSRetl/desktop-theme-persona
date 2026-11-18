@@ -292,10 +292,10 @@
 }
 
 .widget {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.45rem;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.25rem;
   min-height: 0;
-  padding: 0.5rem;
+  padding: 0.35rem;
   background: transparent;
   border: 0;
   clip-path: none;
@@ -309,22 +309,68 @@
 }
 
 .widget .metric {
-  padding: 0.35rem;
+  grid-column: span 2;
+  justify-content: start;
+  padding: 0.35rem 0.4rem;
   background: #242124;
+}
+
+.widget .metric[data-metric="gpu"],
+.widget .metric[data-metric="network"] {
+  grid-column: span 3;
+}
+
+.widget .metricLabel {
+  color: #ff7373;
+}
+
+.widget .metric[data-tone="warn"] .metricLabel {
+  color: #f0d38a;
+}
+
+.widget .metric[data-tone="critical"] .metricLabel {
+  color: #ff4d4d;
 }
 
 .widget .metricSecondary {
   display: block;
   max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .widget .metricValues {
+  align-items: start;
   max-width: 100%;
+}
+
+.widget .metricPrimary {
+  white-space: normal;
 }
 
 .widget .metricBody {
   grid-template-columns: minmax(0, 1fr);
   gap: 0.25rem;
+}
+
+.widget .networkBody,
+.widget .gpuBody {
+  gap: 0.25rem 0.5rem;
+}
+
+.widget .networkRate,
+.widget .gpuStatValue,
+.widget .metricPrimary {
+  font-variant-numeric: tabular-nums;
+}
+
+:global([data-expanded="true"]) > .widget {
+  gap: 0.45rem;
+  padding: 0.5rem;
+}
+
+:global([data-expanded="true"]) > .widget .metric {
+  padding: 0.5rem 0.65rem;
 }
 
 .widget .barFillLoading {
@@ -334,6 +380,16 @@
 
 :global([data-animation-intensity="reduced"]) .widget .barFill {
   transition: none;
+}
+
+@media (max-width: 360px) {
+  .widget .metric {
+    padding-inline: 0.25rem;
+  }
+
+  :global([data-expanded="true"]) > .widget .metric {
+    padding-inline: 0.35rem;
+  }
 }
 
 .refreshError {

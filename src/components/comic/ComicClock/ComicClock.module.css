@@ -38,8 +38,10 @@
 
 .timeRow {
   display: flex;
-  align-items: flex-end;
+  align-items: baseline;
   gap: clamp(0.15rem, 0.4vw, 0.25rem);
+  max-width: 100%;
+  font-variant-numeric: tabular-nums;
 }
 
 .timeMain {
@@ -52,10 +54,54 @@
 }
 
 .timeSeconds {
+  display: inline-grid;
+  min-inline-size: 2.5ch;
+  text-align: center;
   font-family: var(--font-bebas);
   font-size: clamp(0.95rem, 1.15vw + 0.4rem, 1.25rem);
-  color: var(--color-muted);
-  padding-bottom: clamp(0.15rem, 0.4vh, 0.25rem);
+  color: var(--color-white);
+}
+
+.timeSuffix {
+  font-family: var(--font-bebas);
+  font-size: 0.9rem;
+}
+
+.tick {
+  display: block;
+  animation: clock-tick 160ms var(--ease-sharp) both;
+}
+
+@keyframes clock-tick {
+  from { opacity: 0.62; transform: translateY(-0.18em); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.clock[data-reduced-motion="true"] .tick {
+  animation: none;
+}
+
+.clock[data-desktop] {
+  padding: 0.25rem 0.4rem 0.45rem;
+  gap: 0;
+}
+
+.clock[data-desktop] .timeRow {
+  padding: 0.43rem 0.9rem 0.5rem 1.2rem;
+  background: var(--color-black);
+  clip-path: polygon(0.75rem 0, 100% 0, calc(100% - 0.42rem) 100%, 0 100%);
+  border-block-start: 2px solid var(--color-white);
+  gap: 0.25rem;
+}
+
+.clock[data-desktop] .timeMain {
+  font-size: clamp(2.15rem, 4vw, 3.7rem);
+}
+
+.clock[data-desktop] .timeSeconds {
+  padding: 0.06em 0.2em;
+  background: var(--color-red-dark);
+  transform: skewX(-8deg);
 }
 
 .dateBand {
@@ -87,7 +133,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .clock {
-    transform: none;
+  .tick {
+    animation: none;
   }
 }

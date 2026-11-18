@@ -12,10 +12,21 @@
   overflow: hidden;
   color: var(--color-white);
   background: #151316;
-  border: 2px solid var(--color-white);
-  border-top: 4px solid var(--color-red);
-  box-shadow: 5px 5px 0 var(--color-black);
-  animation: widget-in 170ms ease-out both;
+  border: 1px solid rgb(245 241 232 / 72%);
+  border-block-start: 3px solid var(--color-red);
+  box-shadow: 5px 5px 0 rgb(0 0 0 / 65%);
+  animation: widget-in 170ms var(--ease-sharp) both;
+}
+
+.dropdown::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto auto;
+  width: 3.5rem;
+  height: 0.24rem;
+  background: var(--color-white);
+  clip-path: polygon(0.6rem 0, 100% 0, 100% 100%, 0 100%);
+  pointer-events: none;
 }
 
 .dropdown[data-reduced-motion="true"] {

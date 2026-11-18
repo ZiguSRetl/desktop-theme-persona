@@ -10,16 +10,17 @@
   inset-inline-start: var(--content-padding);
   bottom: 0.5rem;
   z-index: 1;
-  width: min(13rem, calc(100% - var(--content-padding) * 2));
+  width: min(23rem, calc(100% - var(--content-padding) * 2));
   max-height: calc(100% - 1rem);
   overflow: auto;
   overscroll-behavior: contain;
-  background: #151316;
-  border: 2px solid var(--color-white);
-  border-top: 3px solid var(--color-red);
-  box-shadow: 3px 3px 0 var(--color-black);
+  background: var(--color-black);
+  border: 1px solid rgb(245 241 232 / 72%);
+  border-inline-start: 4px solid var(--color-red);
+  box-shadow: 4px 4px 0 rgb(0 0 0 / 65%);
 }
 
 .widget[data-expanded="true"] {
-  width: min(24rem, calc(100% - var(--content-padding) * 2));
+  width: min(33rem, calc(100% - var(--content-padding) * 2));
+  border-inline-start-color: var(--color-white);
 }

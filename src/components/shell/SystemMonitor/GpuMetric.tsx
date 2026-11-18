@@ -90,7 +90,7 @@ export function GpuMetric({
   const metricError = error ?? t("system.aria.metricError");
 
   return (
-    <div className={styles.metric} data-tone={tone} aria-label={ariaLabel}>
+    <div className={styles.metric} data-metric="gpu" data-tone={tone} aria-label={ariaLabel}>
       <div className={styles.metricHead}>
         <span className={styles.metricLabel}>{gpuLabel}</span>
         {status === "error" ? (

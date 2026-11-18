@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { useEffectiveReducedMotion } from "../../../features/settings/useAnimationProfile";
 import { useSettingsStore } from "../../../features/settings/settingsStore";
@@ -6,17 +6,6 @@ import { getLocaleTag, useT } from "../../../i18n";
 import { DecorativeBurst } from "../DecorativeBurst";
 import { comicEnter } from "../../../lib/motionPresets";
 import styles from "./ComicClock.module.css";
-
-function formatHoursMinutes(date: Date, locale: string): string {
-  return date.toLocaleTimeString(locale, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function formatSeconds(date: Date, locale: string): string {
-  return date.toLocaleTimeString(locale, { second: "2-digit" }).slice(-2);
-}
 
 function formatWeekday(date: Date, locale: string): string {
   return date.toLocaleDateString(locale, { weekday: "long" }).toUpperCase();
@@ -36,28 +25,43 @@ export function ComicClock({ desktop = false }: { desktop?: boolean }) {
   const t = useT();
   const language = useSettingsStore((state) => state.settings.language);
   const locale = getLocaleTag(language);
+  const timeFormat = useMemo(() => new Intl.DateTimeFormat(locale, {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }), [locale]);
 
   useEffect(() => {
-    if (desktop) {
-      let timer: number;
-      const scheduleMinute = () => {
-        timer = window.setTimeout(() => {
-          setNow(new Date());
-          scheduleMinute();
-        }, 60_000 - Date.now() % 60_000);
-      };
-      scheduleMinute();
-      return () => window.clearTimeout(timer);
-    }
+    let timer: number;
+    const tick = () => {
+      const current = new Date();
+      setNow(current);
+      timer = window.setTimeout(tick, 1000 - current.getMilliseconds());
+    };
+    const syncVisibility = () => {
+      window.clearTimeout(timer);
+      if (!document.hidden) tick();
+    };
+    syncVisibility();
+    document.addEventListener("visibilitychange", syncVisibility);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", syncVisibility);
+    };
+  }, []);
 
-    const intervalId = window.setInterval(() => setNow(new Date()), 1000);
-    return () => window.clearInterval(intervalId);
-  }, [desktop]);
+  const parts = timeFormat.formatToParts(now);
+  const secondsIndex = parts.findIndex(({ type }) => type === "second");
+  const timeMain = parts.slice(0, secondsIndex - 1).map(({ value }) => value).join("");
+  const separator = parts[secondsIndex - 1]?.value;
+  const seconds = parts[secondsIndex]?.value;
+  const timeSuffix = parts.slice(secondsIndex + 1).map(({ value }) => value).join("").trim();
 
   return (
     <motion.section
       className={styles.clock}
       data-desktop={desktop ? "" : undefined}
+      data-reduced-motion={reduceMotion}
       aria-label={t("clock.ariaLabel")}
       initial={reduceMotion ? false : { opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -73,28 +77,13 @@ export function ComicClock({ desktop = false }: { desktop?: boolean }) {
 
       <span className={styles.weekday}>{formatWeekday(now, locale)}</span>
 
-      <div className={styles.timeRow}>
-        <motion.span
-          className={styles.timeMain}
-          key={formatHoursMinutes(now, locale)}
-          initial={reduceMotion ? false : { scale: 1 }}
-          animate={{ scale: [1, 1.02, 1] }}
-          transition={{ duration: 0.15 }}
-        >
-          {formatHoursMinutes(now, locale)}
-        </motion.span>
-        {desktop ? null : (
-          <motion.span
-            className={styles.timeSeconds}
-            key={formatSeconds(now, locale)}
-            initial={reduceMotion ? false : { y: -4, opacity: 0.5 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.12 }}
-          >
-            {formatSeconds(now, locale)}
-          </motion.span>
-        )}
-      </div>
+      <time className={styles.timeRow} dateTime={now.toISOString()} aria-label={timeFormat.format(now)}>
+        <span className={styles.timeMain} aria-hidden="true">{timeMain}</span>
+        <span className={styles.timeSeconds} aria-hidden="true">
+          <span key={seconds} className={styles.tick}>{separator}{seconds}</span>
+        </span>
+        {timeSuffix ? <span className={styles.timeSuffix} aria-hidden="true">{timeSuffix}</span> : null}
+      </time>
 
       <div className={styles.dateBand}>
         <span className={styles.date}>{formatDateShort(now, locale)}</span>
