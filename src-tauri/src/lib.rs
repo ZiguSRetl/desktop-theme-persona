@@ -155,6 +155,12 @@ fn save_launcher_state(app: AppHandle, state: PersistedDesktopState) -> Result<(
 
 #[tauri::command]
 fn hide_launcher_windows(app: AppHandle) -> Result<(), String> {
+    if app.tray_by_id("main-tray").is_none() {
+        return Err(
+            "No se puede ocultar el lanzador porque la bandeja del sistema no está disponible."
+                .into(),
+        );
+    }
     hide_all_launcher_windows(&app)
 }
 
@@ -176,13 +182,11 @@ pub fn run() {
         .manage(SystemStatsState::default())
         .setup(|app| {
             #[cfg(desktop)]
-            system::setup_tray(app.handle())?;
+            if let Err(error) = system::setup_tray(app.handle()) {
+                eprintln!("No se pudo iniciar la bandeja del sistema: {error}");
+            }
             system::setup_window_close_handler(app.handle());
             monitor_windows::start_monitor_layout_watcher(app.handle().clone());
-            let handle = app.handle().clone();
-            tauri::async_runtime::spawn(async move {
-                let _ = system::apply_persisted_desktop_mode(&handle).await;
-            });
             app_search::warm_installed_apps_index();
             Ok(())
         })

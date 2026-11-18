@@ -49,28 +49,42 @@ pub async fn enable_desktop_mode_impl(
     apply_autostart(app, true)?;
     prepare_monitor_windows(app).await?;
 
-    for window in launcher_windows(app) {
-        window
-            .set_resizable(false)
-            .map_err(|e| format!("No se pudo bloquear el redimensionado: {e}"))?;
-        window
-            .set_skip_taskbar(true)
-            .map_err(|e| format!("No se pudo ocultar de la barra de tareas: {e}"))?;
-        window
-            .set_decorations(false)
-            .map_err(|e| format!("No se pudo quitar decoraciones: {e}"))?;
-        // Avoid Tauri fullscreen: it fights Win32 SetWindowPos overlays and causes flicker.
-        window
-            .set_fullscreen(false)
-            .map_err(|e| format!("No se pudo preparar la ventana: {e}"))?;
-        window
-            .show()
-            .map_err(|e| format!("No se pudo mostrar la ventana: {e}"))?;
-        embed_as_desktop(&window, state)?;
-    }
+    let windows = launcher_windows(app);
+    let result: Result<(), String> = (|| {
+        for window in &windows {
+            window
+                .set_resizable(false)
+                .map_err(|e| format!("No se pudo bloquear el redimensionado: {e}"))?;
+            window
+                .set_skip_taskbar(true)
+                .map_err(|e| format!("No se pudo ocultar de la barra de tareas: {e}"))?;
+            window
+                .set_decorations(false)
+                .map_err(|e| format!("No se pudo quitar decoraciones: {e}"))?;
+            // Avoid Tauri fullscreen: it fights Win32 SetWindowPos overlays and causes flicker.
+            window
+                .set_fullscreen(false)
+                .map_err(|e| format!("No se pudo preparar la ventana: {e}"))?;
+            window
+                .show()
+                .map_err(|e| format!("No se pudo mostrar la ventana: {e}"))?;
+            embed_as_desktop(window, state)?;
+        }
 
-    hide_desktop_icons()?;
-    refresh_all_desktop_overlays(app)?;
+        hide_desktop_icons()?;
+        refresh_all_desktop_overlays(app)
+    })();
+
+    if let Err(error) = result {
+        for window in &windows {
+            let _ = detach_from_desktop(window, state);
+            let _ = window.set_skip_taskbar(false);
+            let _ = window.set_resizable(true);
+            let _ = window.set_minimizable(true);
+        }
+        let _ = show_desktop_icons();
+        return Err(error);
+    }
 
     if let Ok(mut active) = state.active.lock() {
         *active = true;

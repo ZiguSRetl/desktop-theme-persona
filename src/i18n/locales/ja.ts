@@ -350,6 +350,8 @@ export const ja = {
   "services.wallpaper.filterImages": "画像",
   "services.launch.desktopOnly": "起動はデスクトップアプリでのみ利用できます。",
   "services.reveal.desktopOnly": "場所を開く機能はデスクトップアプリでのみ利用できます。",
+  "services.desktopInit.windowFailed": "ランチャーのウィンドウを設定できませんでした。",
+  "services.desktopInit.monitorsFailed": "モニターを同期できませんでした。",
   "services.desktopInit.loadFailed": "デスクトップを読み込めませんでした。",
 
   "toast.closeAria": "閉じる",

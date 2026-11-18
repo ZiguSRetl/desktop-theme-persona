@@ -192,12 +192,13 @@ fn build_tray_menu(app: &AppHandle, language: &str) -> Result<Menu<tauri::Wry>, 
 }
 
 fn apply_tray_language(app: &AppHandle, language: &str) -> Result<(), String> {
-    let menu = build_tray_menu(app, language).map_err(|e| e.to_string())?;
-    if let Some(tray) = app.tray_by_id("main-tray") {
-        tray.set_menu(Some(menu))
-            .map_err(|e| format!("Failed to update tray menu: {e}"))?;
-    }
-    Ok(())
+    let tray = app
+        .tray_by_id("main-tray")
+        .ok_or_else(|| "La bandeja del sistema no está disponible.".to_string())?;
+    let menu = build_tray_menu(app, language)
+        .map_err(|e| format!("No se pudo preparar el menú de la bandeja: {e}"))?;
+    tray.set_menu(Some(menu))
+        .map_err(|e| format!("No se pudo actualizar el menú de la bandeja: {e}"))
 }
 
 pub fn main_window(app: &AppHandle) -> Result<tauri::WebviewWindow, String> {
@@ -318,42 +319,25 @@ pub async fn sync_native_settings_impl(
     settings: DesktopSettingsPayload,
 ) -> Result<(), String> {
     apply_close_behavior(native_state, &settings.close_behavior);
-    apply_global_shortcut(app, &settings.global_shortcut)?;
+    let desktop_mode = settings.desktop_mode && app.tray_by_id("main-tray").is_some();
+    let should_autostart = settings.launch_on_startup || desktop_mode;
+    let errors: Vec<String> = [
+        apply_global_shortcut(app, &settings.global_shortcut),
+        apply_autostart(app, should_autostart),
+        apply_desktop_mode_setting(app, desktop_state, desktop_mode)
+            .await
+            .map_err(|error| format!("No se pudo aplicar el modo escritorio: {error}")),
+        apply_tray_language(app, &settings.language),
+    ]
+    .into_iter()
+    .filter_map(Result::err)
+    .collect();
 
-    let should_autostart = settings.launch_on_startup || settings.desktop_mode;
-    apply_autostart(app, should_autostart)?;
-    apply_desktop_mode_setting(app, desktop_state, settings.desktop_mode).await?;
-    apply_tray_language(app, &settings.language)?;
-    Ok(())
-}
-
-pub async fn apply_persisted_desktop_mode(app: &AppHandle) -> Result<(), String> {
-    let state = app.state::<DesktopModeState>();
-    let path = crate::state_path(app)?;
-
-    if !path.exists() {
-        return Ok(());
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(errors.join("\n"))
     }
-
-    let contents = std::fs::read_to_string(&path)
-        .map_err(|e| format!("No se pudo leer el estado guardado: {e}"))?;
-
-    let parsed: serde_json::Value = serde_json::from_str(&contents)
-        .map_err(|e| format!("El estado guardado es inválido: {e}"))?;
-
-    let desktop_mode = parsed
-        .get("settings")
-        .and_then(|settings| settings.get("desktopMode"))
-        .and_then(|value| value.as_bool())
-        .unwrap_or(false);
-
-    let _ = crate::monitor_windows::sync_monitor_windows_impl(app.clone()).await;
-
-    if desktop_mode {
-        apply_desktop_mode_setting(app, &state, true).await?;
-    }
-
-    Ok(())
 }
 
 pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
@@ -418,7 +402,9 @@ pub fn attach_launcher_window_events(app: &AppHandle, window: &tauri::WebviewWin
         match event {
             WindowEvent::CloseRequested { api, .. } => {
                 let state = app_handle.state::<NativeSettingsState>();
-                if current_close_behavior(&state) == "hide" {
+                if current_close_behavior(&state) == "hide"
+                    && app_handle.tray_by_id("main-tray").is_some()
+                {
                     api.prevent_close();
                     let _ = hide_all_launcher_windows(&app_handle);
                 } else if label != MAIN_WINDOW_LABEL {
@@ -510,7 +496,7 @@ pub fn on_run_event(app: &AppHandle, event: RunEvent) {
             .map(|value| value.clone())
             .unwrap_or_else(|_| "hide".to_string());
 
-        if behavior == "hide" {
+        if behavior == "hide" && app.tray_by_id("main-tray").is_some() {
             api.prevent_exit();
             let _ = hide_main_window(app);
         }

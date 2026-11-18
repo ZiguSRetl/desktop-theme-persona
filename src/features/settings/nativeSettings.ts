@@ -12,7 +12,7 @@ export async function applyNativeSettings(settings: DesktopSettings): Promise<vo
   try {
     await invoke("sync_native_settings", { settings });
   } catch (error) {
-    showLaunchError(error);
+    showLaunchError(typeof error === "string" ? new Error(error) : error);
   }
 }
 

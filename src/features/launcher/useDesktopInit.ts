@@ -1,16 +1,18 @@
 import { useEffect, useRef } from "react";
 import { tSystem } from "../../i18n";
 import { useLauncherStore } from "../launcher/launcherStore";
-import {
-  createInitialState,
-  loadFullState,
-  saveFullState,
-} from "../launcher/persistence";
+import { createInitialState, loadFullState } from "../launcher/persistence";
 import { useIconBackfill } from "../launcher/useIconBackfill";
 import { applyNativeSettings } from "../settings/nativeSettings";
 import { isPrimaryWindow, syncMonitorWindows } from "../settings/monitorWindowsService";
 import { applyWindowSettings } from "../settings/windowService";
 import { useSettingsStore } from "../settings/settingsStore";
+import { showLaunchError } from "./toastStore";
+
+function reportStartupError(error: unknown, fallback: string) {
+  const detail = typeof error === "string" ? error : error instanceof Error ? error.message : "";
+  showLaunchError(new Error(detail ? `${fallback} ${detail}` : fallback));
+}
 
 export function useDesktopInit() {
   const started = useRef(false);
@@ -29,39 +31,40 @@ export function useDesktopInit() {
 
       launcher.setStatus("loading");
 
+      let persisted: Awaited<ReturnType<typeof loadFullState>>;
       try {
-        if (primary) {
-          await syncMonitorWindows();
-        }
-
-        const persisted = await loadFullState();
-
-        if (persisted?.items?.length) {
-          launcher.hydrate(persisted.items);
-          settings.hydrate(persisted.settings);
-          if (primary) {
-            await applyNativeSettings(persisted.settings);
-          }
-          await applyWindowSettings(persisted.settings);
-          return;
-        }
-
-        const initial = createInitialState();
-        if (primary) {
-          await saveFullState(initial);
-        }
-        launcher.hydrate(initial.items);
-        settings.hydrate(initial.settings);
-        if (primary) {
-          await applyNativeSettings(initial.settings);
-        }
-        await applyWindowSettings(initial.settings);
+        persisted = await loadFullState();
       } catch (error) {
         launcher.setStatus(
           "error",
-          error instanceof Error ? error.message : tSystem("services.desktopInit.loadFailed"),
+          typeof error === "string"
+            ? error
+            : error instanceof Error ? error.message : tSystem("services.desktopInit.loadFailed"),
         );
         settings.hydrate(useSettingsStore.getState().settings);
+        return;
+      }
+
+      const state = persisted ?? createInitialState();
+      launcher.hydrate(state.items);
+      settings.hydrate(state.settings);
+
+      try {
+        // Give the main window usable geometry before attempting to embed it.
+        await applyWindowSettings(
+          primary ? { ...state.settings, desktopMode: false } : state.settings,
+        );
+      } catch (error) {
+        reportStartupError(error, tSystem("services.desktopInit.windowFailed"));
+      }
+
+      if (primary) {
+        await applyNativeSettings(useSettingsStore.getState().settings);
+        try {
+          await syncMonitorWindows();
+        } catch (error) {
+          reportStartupError(error, tSystem("services.desktopInit.monitorsFailed"));
+        }
       }
     })();
   }, []);

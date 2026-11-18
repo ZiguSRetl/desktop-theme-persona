@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { showLaunchError } from "../features/launcher/toastStore";
 import { hideMainWindow } from "../features/settings/windowService";
 
 function isTauri(): boolean {
@@ -22,7 +23,9 @@ export function useEscapeToHide() {
       if (isTypingField) return;
 
       event.preventDefault();
-      void hideMainWindow();
+      void hideMainWindow().catch((error: unknown) =>
+        showLaunchError(typeof error === "string" ? new Error(error) : error),
+      );
     };
 
     window.addEventListener("keydown", handleKeyDown);

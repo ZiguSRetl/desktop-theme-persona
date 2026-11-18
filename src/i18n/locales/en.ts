@@ -362,6 +362,8 @@ export const en = {
   "services.launch.desktopOnly": "Launching is only available in the desktop app.",
   "services.reveal.desktopOnly":
     "Opening location is only available in the desktop app.",
+  "services.desktopInit.windowFailed": "Could not configure the launcher window.",
+  "services.desktopInit.monitorsFailed": "Could not synchronize the monitors.",
   "services.desktopInit.loadFailed": "Could not load the desktop.",
 
   "toast.closeAria": "Close",

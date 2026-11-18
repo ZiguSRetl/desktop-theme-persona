@@ -365,6 +365,8 @@ export const fr = {
   "services.launch.desktopOnly": "Le lancement n'est disponible que dans l'application de bureau.",
   "services.reveal.desktopOnly":
     "L'ouverture de l'emplacement n'est disponible que dans l'application de bureau.",
+  "services.desktopInit.windowFailed": "Impossible de configurer la fenêtre du lanceur.",
+  "services.desktopInit.monitorsFailed": "Impossible de synchroniser les écrans.",
   "services.desktopInit.loadFailed": "Impossible de charger le bureau.",
 
   "toast.closeAria": "Fermer",

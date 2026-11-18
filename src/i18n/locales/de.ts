@@ -363,6 +363,8 @@ export const de = {
   "services.launch.desktopOnly": "Das Starten ist nur in der Desktop-App verfügbar.",
   "services.reveal.desktopOnly":
     "Speicherort öffnen ist nur in der Desktop-App verfügbar.",
+  "services.desktopInit.windowFailed": "Das Fenster konnte nicht eingerichtet werden.",
+  "services.desktopInit.monitorsFailed": "Die Monitore konnten nicht synchronisiert werden.",
   "services.desktopInit.loadFailed": "Der Desktop konnte nicht geladen werden.",
 
   "toast.closeAria": "Schließen",

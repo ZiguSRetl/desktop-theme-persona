@@ -360,6 +360,8 @@ export const es = {
   "services.launch.desktopOnly": "El lanzamiento solo está disponible en la app de escritorio.",
   "services.reveal.desktopOnly":
     "Abrir ubicación solo está disponible en la app de escritorio.",
+  "services.desktopInit.windowFailed": "No se pudo configurar la ventana del lanzador.",
+  "services.desktopInit.monitorsFailed": "No se pudieron sincronizar los monitores.",
   "services.desktopInit.loadFailed": "No se pudo cargar el escritorio.",
 
   "toast.closeAria": "Cerrar",
