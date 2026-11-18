@@ -35,7 +35,7 @@ import { useUpdateStore } from "../features/updater/updateStore";
 import { APP_LANGUAGES, useT, type TranslationKey } from "../i18n";
 import { comicEnter, reducedMotionTransition } from "../lib/motionPresets";
 import settingStyles from "../components/comic/ComicSettingRow/ComicSettingRow.module.css";
-import type { DesktopSettings, WallpaperCrop } from "../types/desktop";
+import type { DesktopSettings, WallpaperCrop, WallpaperSettings } from "../types/desktop";
 import styles from "./SettingsPage.module.css";
 
 const CATEGORY_LABEL_KEYS: Record<SettingsCategoryId, TranslationKey> = {
@@ -77,13 +77,13 @@ export function SettingsPage() {
   const settings = useSettingsStore((state) => state.settings);
   const updateSetting = useSettingsStore((state) => state.updateSetting);
   const resetToDefaults = useSettingsStore((state) => state.resetToDefaults);
-  const { devices: gpuDevices, status: gpuListStatus } = useGpuDevices();
   const checkingUpdate = useUpdateStore((state) => state.checking);
   const installingUpdate = useUpdateStore((state) => state.installing);
   const checkForUpdates = useUpdateStore((state) => state.checkForUpdates);
   const reduceMotion = useEffectiveReducedMotion();
   const durationMultiplier = useMotionDurationMultiplier();
   const activeCategory = useSettingsMenuStore((state) => state.activeCategory);
+  const { devices: gpuDevices, status: gpuListStatus } = useGpuDevices(activeCategory === "system");
   const openCategory = useSettingsMenuStore((state) => state.openCategory);
   const goBackToRoot = useSettingsMenuStore((state) => state.goBackToRoot);
   const [cropEditorOpen, setCropEditorOpen] = useState(false);
@@ -91,34 +91,35 @@ export function SettingsPage() {
   const [cropEditorImagePath, setCropEditorImagePath] = useState("");
   const [cropEditorIsNew, setCropEditorIsNew] = useState(false);
   const [cropEditorInitialCrop, setCropEditorInitialCrop] = useState<WallpaperCrop | undefined>();
-  const [wallpaperPreviewUrl, setWallpaperPreviewUrl] = useState("");
+  const [wallpaperPreview, setWallpaperPreview] = useState<{
+    wallpaper: WallpaperSettings;
+    url: string;
+  }>();
+  const previewWallpaper = activeCategory === "display" && !settings.wallpaperPassthrough
+    ? settings.wallpaper
+    : undefined;
 
   useEffect(() => {
-    if (!isWallpaperConfigured(settings.wallpaper)) {
-      queueMicrotask(() => setWallpaperPreviewUrl(""));
-      return;
-    }
-
-    const path = settings.wallpaper.path;
+    if (!isWallpaperConfigured(previewWallpaper)) return;
     let cancelled = false;
 
-    void loadWallpaperDataUrl(path)
+    void loadWallpaperDataUrl(previewWallpaper.path)
       .then((url) => {
-        if (!cancelled) setWallpaperPreviewUrl(url);
+        if (!cancelled) setWallpaperPreview({ wallpaper: previewWallpaper, url });
       })
       .catch(() => {
-        if (!cancelled) setWallpaperPreviewUrl("");
+        if (!cancelled) setWallpaperPreview(undefined);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [settings.wallpaper]);
+  }, [previewWallpaper]);
 
   const wallpaperPreviewStyle = useMemo(() => {
-    if (!wallpaperPreviewUrl || !isWallpaperConfigured(settings.wallpaper)) return undefined;
-    return wallpaperCropToBackgroundStyle(wallpaperPreviewUrl, settings.wallpaper.crop);
-  }, [settings.wallpaper, wallpaperPreviewUrl]);
+    if (!wallpaperPreview?.url || wallpaperPreview.wallpaper !== previewWallpaper) return undefined;
+    return wallpaperCropToBackgroundStyle(wallpaperPreview.url, previewWallpaper.crop);
+  }, [previewWallpaper, wallpaperPreview]);
 
   const handleUpdate = async <K extends keyof DesktopSettings>(
     key: K,
@@ -476,12 +477,13 @@ export function SettingsPage() {
                   );
                 }}
                 aria-label={t("settings.gpu.ariaLabel")}
+                aria-busy={gpuListStatus === "loading"}
               >
                 <option value="">{t("settings.gpu.automatic")}</option>
                 {settings.selectedGpuId &&
                 !gpuDevices.some((gpu) => gpu.id === settings.selectedGpuId) ? (
                   <option value={settings.selectedGpuId}>
-                    {t("settings.gpu.savedUnavailable")}
+                    {t(gpuListStatus === "loading" ? "sections.loading" : "settings.gpu.savedUnavailable")}
                   </option>
                 ) : null}
                 {gpuDevices.map((gpu) => (

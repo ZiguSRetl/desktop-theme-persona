@@ -4,6 +4,7 @@ use std::process::{Command, Output};
 use std::sync::Mutex;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use sysinfo::{Components, Disks, Networks, System};
+use tauri::{AppHandle, Manager};
 
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
@@ -719,13 +720,27 @@ fn compute_network_rate(
 }
 
 #[tauri::command]
-pub fn list_gpus() -> Result<Vec<GpuDeviceDto>, String> {
-    Ok(build_gpu_device_list())
+pub async fn list_gpus() -> Result<Vec<GpuDeviceDto>, String> {
+    tauri::async_runtime::spawn_blocking(build_gpu_device_list)
+        .await
+        .map_err(|e| format!("No se pudieron consultar las GPU: {e}"))
 }
 
 #[tauri::command]
-pub fn get_system_stats(
-    state: tauri::State<'_, SystemStatsState>,
+pub async fn get_system_stats(
+    app: AppHandle,
+    gpu_id: Option<String>,
+) -> Result<SystemStatsDto, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<SystemStatsState>();
+        read_system_stats(&state, gpu_id)
+    })
+    .await
+    .map_err(|e| format!("No se pudieron consultar las métricas: {e}"))?
+}
+
+fn read_system_stats(
+    state: &SystemStatsState,
     gpu_id: Option<String>,
 ) -> Result<SystemStatsDto, String> {
     let mut inner = state

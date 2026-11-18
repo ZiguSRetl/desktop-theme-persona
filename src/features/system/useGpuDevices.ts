@@ -9,13 +9,14 @@ interface UseGpuDevicesResult {
   error: string | null;
 }
 
-export function useGpuDevices(): UseGpuDevicesResult {
+export function useGpuDevices(enabled: boolean): UseGpuDevicesResult {
   const t = useT();
   const [devices, setDevices] = useState<GpuDevice[]>([]);
   const [status, setStatus] = useState<UseGpuDevicesResult["status"]>("loading");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!enabled) return;
     let cancelled = false;
 
     void (async () => {
@@ -36,7 +37,7 @@ export function useGpuDevices(): UseGpuDevicesResult {
     return () => {
       cancelled = true;
     };
-  }, [t]);
+  }, [enabled, t]);
 
   return { devices, status, error };
 }

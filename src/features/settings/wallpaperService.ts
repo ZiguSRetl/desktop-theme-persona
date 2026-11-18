@@ -7,7 +7,7 @@ function isTauri(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 
-const dataUrlCache = new Map<string, string>();
+const dataUrlCache = new Map<string, Promise<string>>();
 
 export async function pickWallpaperImagePath(): Promise<string | null> {
   if (!isTauri()) {
@@ -56,9 +56,12 @@ export async function loadWallpaperDataUrl(path: string): Promise<string> {
     throw new Error(tt("services.wallpaper.desktopOnly"));
   }
 
-  const dataUrl = await invoke<string>("load_image_data_url", { path });
-  dataUrlCache.set(path, dataUrl);
-  return dataUrl;
+  const request = invoke<string>("load_image_data_url", { path }).catch((error: unknown) => {
+    if (dataUrlCache.get(path) === request) dataUrlCache.delete(path);
+    throw error;
+  });
+  dataUrlCache.set(path, request);
+  return request;
 }
 
 export function clearWallpaperDataUrlCache(path?: string): void {

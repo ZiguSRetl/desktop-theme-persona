@@ -105,7 +105,13 @@ fn mime_for_image(path: &Path) -> &'static str {
 /// Reads a local image into a data URL so the webview can display it
 /// without relying on the asset protocol scope.
 #[tauri::command]
-pub fn load_image_data_url(path: String) -> Result<String, String> {
+pub async fn load_image_data_url(path: String) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || read_image_data_url(path))
+        .await
+        .map_err(|e| format!("No se pudo cargar la imagen: {e}"))?
+}
+
+fn read_image_data_url(path: String) -> Result<String, String> {
     let trimmed = path.trim();
     if trimmed.is_empty() {
         return Err("La ruta de la imagen está vacía.".into());

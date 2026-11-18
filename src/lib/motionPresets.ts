@@ -14,11 +14,6 @@ export const comicExit = {
   ease: [0.55, 0, 1, 0.45] as [number, number, number, number],
 };
 
-export const pageTransition = {
-  duration: 0.28,
-  ease: [0.34, 1.56, 0.64, 1] as [number, number, number, number],
-};
-
 export const staggerChildren = 0.04;
 
 export const reducedMotionTransition = {
