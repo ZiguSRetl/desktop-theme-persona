@@ -18,8 +18,10 @@ export const router = createBrowserRouter([
       { path: "games", element: <Navigate to="/apps?filter=games" replace /> },
       { path: "system", element: null },
       { path: "system/shortcuts", element: <SystemPage /> },
-      { path: "scripts", element: <ScriptsPage /> },
-      { path: "settings", element: <SettingsPage /> },
+      { path: "scripts", element: null },
+      { path: "scripts/details", element: <ScriptsPage /> },
+      { path: "settings", element: null },
+      { path: "settings/details", element: <SettingsPage /> },
     ],
   },
 ]);

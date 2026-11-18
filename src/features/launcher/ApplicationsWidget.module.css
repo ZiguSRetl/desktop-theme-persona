@@ -1,23 +1,3 @@
-.widget {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 0.65rem);
-  translate: -50% 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  width: min(25rem, calc(100vw - 1.25rem));
-  max-height: calc(100dvh - 5.15rem);
-  padding: 0.65rem;
-  overflow: hidden;
-  color: var(--color-white);
-  background: #151316;
-  border: 2px solid var(--color-white);
-  border-top: 4px solid var(--color-red);
-  box-shadow: 5px 5px 0 var(--color-black);
-  animation: widget-in 170ms ease-out both;
-}
-
 .heading,
 .search,
 .actions {
@@ -134,19 +114,4 @@
   color: var(--color-white);
   text-decoration: underline;
   text-underline-offset: 0.18em;
-}
-
-.widget[data-reduced-motion="true"] {
-  animation: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .widget {
-    animation: none;
-  }
-}
-
-@keyframes widget-in {
-  from { opacity: 0.7; transform: translateY(0.35rem); }
-  to { opacity: 1; transform: translateY(0); }
 }

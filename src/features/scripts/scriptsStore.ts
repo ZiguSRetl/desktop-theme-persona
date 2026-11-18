@@ -16,15 +16,18 @@ export const useScriptsStore = create<ScriptsState>((set, get) => ({
   error: null,
 
   confirmScript: (scriptId) => {
-    if (!getScriptById(scriptId as ScriptId)) return;
+    if (get().status === "running" || !getScriptById(scriptId as ScriptId)) return;
     set({ status: "confirming", activeScriptId: scriptId, error: null });
   },
 
   cancelConfirm: () => {
+    if (get().status !== "confirming") return;
     set({ status: "idle", activeScriptId: null, error: null });
   },
 
   runScript: async (scriptId) => {
+    const { status, activeScriptId } = get();
+    if (status !== "confirming" || activeScriptId !== scriptId) return;
     const script = getScriptById(scriptId as ScriptId);
     if (!script) {
       set({ status: "error", error: tt("scripts.errors.notFound") });

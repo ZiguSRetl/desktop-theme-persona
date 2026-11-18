@@ -1,5 +1,6 @@
-import { useLocation, useMatch } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { Navigation } from "../components/Navigation";
+import { desktopWidget } from "../components/Navigation/widgetRoutes";
 import { ComicToast, HalftoneBackground, pathnameToSection, SectionTransition } from "../components/comic";
 import { ShellFooter, ShellHeader } from "../components/shell";
 import { useDesktopInit } from "../features/launcher/useDesktopInit";
@@ -14,9 +15,8 @@ import { HomePage } from "../pages/HomePage";
 
 export function DesktopLayout() {
   const location = useLocation();
-  const applicationsOpen = useMatch("/apps") !== null;
-  const systemOpen = useMatch("/system") !== null;
-  const isDesktop = location.pathname === "/" || applicationsOpen || systemOpen;
+  const widget = desktopWidget(location.pathname);
+  const isDesktop = location.pathname === "/" || widget !== null;
   const section = isDesktop ? "home" : pathnameToSection(location.pathname);
   const animationProfile = useAnimationProfile();
   useDesktopInit();
@@ -38,7 +38,7 @@ export function DesktopLayout() {
         <div className="desktop-shell__content">
           <SectionTransition desktopContent={isDesktop ? <HomePage /> : undefined} />
         </div>
-        <ShellFooter desktop={isDesktop} expanded={systemOpen} />
+        <ShellFooter desktop={isDesktop} expanded={widget === "system"} />
       </main>
     </div>
   );

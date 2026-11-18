@@ -11,14 +11,15 @@ export function useEscapeToHide() {
     if (!isTauri()) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
+      if (event.key !== "Escape" || event.defaultPrevented || event.isComposing) return;
 
-      const target = event.target as HTMLElement | null;
+      const target = event.target instanceof HTMLElement ? event.target : null;
       const isTypingField =
         target?.tagName === "INPUT" ||
         target?.tagName === "TEXTAREA" ||
         target?.tagName === "SELECT" ||
-        target?.isContentEditable;
+        target?.isContentEditable ||
+        target?.closest("dialog[open]");
 
       if (isTypingField) return;
 

@@ -1,128 +1,110 @@
 import { useCallback, useEffect, useId, useRef } from "react";
-import { NavLink, useLocation, useMatch, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Home, LayoutGrid, MonitorCog, Settings, Terminal } from "lucide-react";
 import { playUiSound, primeAudioContext } from "../../features/audio/soundService";
 import { ApplicationsWidget } from "../../features/launcher/ApplicationsWidget";
-import { useSettingsMenuStore } from "../../features/settings/settingsMenuStore";
+import { ScriptsWidget } from "../../features/scripts/ScriptsWidget";
+import { SettingsWidget } from "../../features/settings/SettingsWidget";
 import { useAnimationProfile } from "../../features/settings/useAnimationProfile";
 import { useT } from "../../i18n";
 import { SYSTEM_WIDGET_ID } from "../shell/ShellFooter/ShellFooter";
+import { desktopWidget } from "./widgetRoutes";
 import styles from "./Navigation.module.css";
 
 const navItems = [
-  { to: "/", label: "nav.items.home", icon: Home },
-  { to: "/apps", label: "nav.items.apps", icon: LayoutGrid },
-  { to: "/system", label: "nav.items.system", icon: MonitorCog },
-  { to: "/scripts", label: "nav.items.scripts", icon: Terminal },
-  { to: "/settings", label: "nav.items.settings", icon: Settings },
+  { widget: "apps", label: "nav.items.apps", icon: LayoutGrid },
+  { widget: "system", label: "nav.items.system", icon: MonitorCog },
+  { widget: "scripts", label: "nav.items.scripts", icon: Terminal },
+  { widget: "settings", label: "nav.items.settings", icon: Settings },
 ] as const;
+
+const dropdowns = {
+  apps: ApplicationsWidget,
+  scripts: ScriptsWidget,
+  settings: SettingsWidget,
+};
+
+function itemClass(active: boolean) {
+  return `${styles.link}${active ? ` ${styles.active}` : ""}`;
+}
+
+function handleHover() {
+  primeAudioContext();
+  playUiSound("hover");
+}
 
 export function Navigation() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const t = useT();
-  const animationProfile = useAnimationProfile();
-  const goBackToRoot = useSettingsMenuStore((state) => state.goBackToRoot);
-  const activeCategory = useSettingsMenuStore((state) => state.activeCategory);
-  const applicationsButton = useRef<HTMLButtonElement>(null);
-  const systemButton = useRef<HTMLButtonElement>(null);
-  const widgetId = useId();
-  const applicationsOpen = useMatch("/apps") !== null;
-  const systemOpen = useMatch("/system") !== null;
+  const reducedMotion = useAnimationProfile() === "reduced";
+  const activeButton = useRef<HTMLButtonElement>(null);
+  const dropdownId = useId();
+  const activeWidget = desktopWidget(pathname);
 
-  const closeWidget = useCallback((trigger: HTMLButtonElement | null) => {
+  const closeWidget = useCallback(() => {
+    activeButton.current?.focus();
     void navigate("/", { replace: true });
-    trigger?.focus();
   }, [navigate]);
 
   useEffect(() => {
-    if (!applicationsOpen && !systemOpen) return;
+    if (!activeWidget) return;
 
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" || event.defaultPrevented || event.isComposing) return;
+      if (event.key !== "Escape" || event.defaultPrevented || event.isComposing ||
+          (event.target instanceof Element && event.target.closest("dialog[open]"))) return;
       event.preventDefault();
       event.stopPropagation();
-      closeWidget(systemOpen ? systemButton.current : applicationsButton.current);
+      closeWidget();
     };
 
     window.addEventListener("keydown", closeOnEscape, true);
     return () => window.removeEventListener("keydown", closeOnEscape, true);
-  }, [applicationsOpen, systemOpen, closeWidget]);
-
-  const itemClass = (active: boolean) => `${styles.link}${active ? ` ${styles.active}` : ""}`;
-
-  const handleHover = () => {
-    primeAudioContext();
-    playUiSound("hover");
-  };
+  }, [activeWidget, closeWidget]);
 
   return (
     <nav className={styles.nav} aria-label={t("nav.ariaLabel")}>
       <ul className={styles.list}>
-        {navItems.map(({ to, label, icon: Icon }) => (
-          <li key={to} className={styles.item}>
-            {to === "/apps" ? (
-              <>
-                <button
-                  ref={applicationsButton}
-                  type="button"
-                  className={itemClass(pathname.startsWith("/apps"))}
-                  aria-expanded={applicationsOpen}
-                  aria-controls={applicationsOpen ? widgetId : undefined}
-                  title={t(label)}
-                  onMouseEnter={handleHover}
-                  onClick={() => {
-                    if (applicationsOpen) closeWidget(applicationsButton.current);
-                    else void navigate("/apps");
-                  }}
-                >
-                  <Icon size={18} aria-hidden="true" />
-                  <span>{t(label)}</span>
-                </button>
-                {applicationsOpen ? (
-                  <ApplicationsWidget
-                    id={widgetId}
-                    reducedMotion={animationProfile === "reduced"}
-                    onLaunch={() => closeWidget(applicationsButton.current)}
-                  />
-                ) : null}
-              </>
-            ) : to === "/system" ? (
+        <li className={styles.item}>
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) => itemClass(isActive)}
+            title={t("nav.items.home")}
+            onMouseEnter={handleHover}
+          >
+            <Home size={18} aria-hidden="true" />
+            <span>{t("nav.items.home")}</span>
+          </NavLink>
+        </li>
+        {navItems.map(({ widget, label, icon: Icon }) => {
+          const path = `/${widget}`;
+          const expanded = activeWidget === widget;
+          const Dropdown = widget !== "system" ? dropdowns[widget] : null;
+          return (
+            <li key={widget} className={styles.item}>
               <button
-                ref={systemButton}
+                ref={expanded ? activeButton : undefined}
                 type="button"
-                className={itemClass(pathname.startsWith("/system"))}
-                aria-expanded={systemOpen}
-                aria-controls={SYSTEM_WIDGET_ID}
+                className={itemClass(expanded || pathname.startsWith(`${path}/`))}
+                aria-expanded={expanded}
+                aria-controls={widget === "system" ? SYSTEM_WIDGET_ID : expanded ? dropdownId : undefined}
                 title={t(label)}
                 onMouseEnter={handleHover}
                 onClick={() => {
-                  if (systemOpen) closeWidget(systemButton.current);
-                  else void navigate("/system");
+                  if (expanded) closeWidget();
+                  else void navigate(path);
                 }}
               >
                 <Icon size={18} aria-hidden="true" />
                 <span>{t(label)}</span>
               </button>
-            ) : (
-              <NavLink
-                to={to}
-                end={to === "/"}
-                className={({ isActive }) => itemClass(isActive)}
-                title={t(label)}
-                onMouseEnter={handleHover}
-                onClick={() => {
-                  if (to === "/settings" && pathname === "/settings" && activeCategory !== null) {
-                    goBackToRoot();
-                  }
-                }}
-              >
-                <Icon size={18} aria-hidden="true" />
-                <span>{t(label)}</span>
-              </NavLink>
-            )}
-          </li>
-        ))}
+              {expanded && Dropdown ? (
+                <Dropdown id={dropdownId} reducedMotion={reducedMotion} onLaunch={closeWidget} />
+              ) : null}
+            </li>
+          );
+        })}
       </ul>
     </nav>
   );

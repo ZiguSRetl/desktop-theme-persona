@@ -68,6 +68,7 @@ export const es = {
   "settings.language.updated": "Idioma actualizado.",
 
   "settings.menu.back": "Volver",
+  "settings.quick.all": "Todos los ajustes",
   "settings.categories.general": "General",
   "settings.categories.display": "Pantalla",
   "settings.categories.shortcuts": "Atajos",

@@ -69,6 +69,7 @@ export const fr = {
   "settings.language.updated": "Langue mise à jour.",
 
   "settings.menu.back": "Retour",
+  "settings.quick.all": "Tous les paramètres",
   "settings.categories.general": "Général",
   "settings.categories.display": "Affichage",
   "settings.categories.shortcuts": "Raccourcis",

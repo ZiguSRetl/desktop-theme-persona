@@ -69,6 +69,7 @@ export const de = {
   "settings.language.updated": "Sprache aktualisiert.",
 
   "settings.menu.back": "Zurück",
+  "settings.quick.all": "Alle Einstellungen",
   "settings.categories.general": "Allgemein",
   "settings.categories.display": "Anzeige",
   "settings.categories.shortcuts": "Tastenkürzel",

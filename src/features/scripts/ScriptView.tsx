@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useT } from "../../i18n";
 import { SectionBadge } from "../launcher/SectionBadge";
 import { SCRIPTS } from "./scriptRegistry";
@@ -18,6 +18,8 @@ export function ScriptView() {
   const confirmScript = useScriptsStore((state) => state.confirmScript);
   const cancelConfirm = useScriptsStore((state) => state.cancelConfirm);
   const runScript = useScriptsStore((state) => state.runScript);
+
+  useEffect(() => () => cancelConfirm(), [cancelConfirm]);
 
   const selectedScript = useMemo(() => {
     const match = selectedId ? SCRIPTS.find((script) => script.id === selectedId) : undefined;

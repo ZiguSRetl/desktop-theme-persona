@@ -43,9 +43,19 @@ describe("useScriptsStore", () => {
   it("stores error on failure", async () => {
     runCleanScript.mockRejectedValueOnce(new Error("UAC cancelado"));
 
+    useScriptsStore.getState().confirmScript("clean");
     await useScriptsStore.getState().runScript("clean");
 
     expect(useScriptsStore.getState().status).toBe("error");
     expect(useScriptsStore.getState().error).toBe("UAC cancelado");
+  });
+
+  it("cannot run a script after canceling its confirmation", async () => {
+    const store = useScriptsStore.getState();
+    store.confirmScript("clean");
+    store.cancelConfirm();
+    await store.runScript("clean");
+    expect(runCleanScript).not.toHaveBeenCalled();
+    expect(useScriptsStore.getState().status).toBe("idle");
   });
 });

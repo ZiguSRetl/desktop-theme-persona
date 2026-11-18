@@ -1,15 +1,16 @@
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-overlay);
-  display: grid;
-  place-items: center;
-  padding: 1rem;
+.dialogWrap::backdrop {
   background: rgba(5, 5, 5, 0.72);
 }
 
 .dialogWrap {
-  width: min(100%, 520px);
+  inset: 0;
+  width: min(calc(100% - 1.25rem), 520px);
+  max-height: calc(100dvh - 1.25rem);
+  margin: auto;
+  padding: 0;
+  border: 0;
+  overflow: auto;
+  background: var(--color-white);
 }
 
 .content {
@@ -30,7 +31,7 @@
   font-family: var(--font-body);
   font-size: 0.9rem;
   line-height: 1.5;
-  color: var(--color-muted);
+  color: #353035;
   margin: 0;
 }
 
@@ -51,6 +52,7 @@
 .list {
   margin: 0;
   padding-left: 1.1rem;
+  list-style: disc;
   font-family: var(--font-body);
   font-size: 0.85rem;
   color: var(--color-black);

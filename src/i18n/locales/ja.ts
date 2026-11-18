@@ -69,6 +69,7 @@ export const ja = {
   "settings.language.updated": "言語を更新しました。",
 
   "settings.menu.back": "戻る",
+  "settings.quick.all": "すべての設定",
   "settings.categories.general": "一般",
   "settings.categories.display": "画面",
   "settings.categories.shortcuts": "ショートカット",

@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { useInstalledAppsStore } from "../../features/launcher/installedAppsStore";
 import { launchItem } from "../../features/launcher/launchItem";
 import { useLauncherStore } from "../../features/launcher/launcherStore";
+import { createInitialState, loadFullState, saveFullState } from "../../features/launcher/persistence";
 import { useSettingsMenuStore } from "../../features/settings/settingsMenuStore";
 import { useSettingsStore } from "../../features/settings/settingsStore";
 import { makeLauncherItem } from "../../test/factories";
@@ -14,8 +15,10 @@ vi.mock("../../features/launcher/launchItem", () => ({ launchItem: vi.fn(async (
 describe("Navigation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
     useSettingsStore.setState((state) => ({
-      settings: { ...state.settings, language: "es" },
+      settings: { ...state.settings, language: "es", soundEnabled: true },
+      status: "ready",
     }));
     useSettingsMenuStore.setState({ activeCategory: null, menuDirection: 1 });
     useLauncherStore.getState().hydrate([]);
@@ -36,7 +39,7 @@ describe("Navigation", () => {
 
     expect(screen.getByRole("link", { name: /Inicio/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Aplicaciones/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Scripts/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Scripts/i })).toBeInTheDocument();
     expect(within(screen.getByRole("navigation")).getAllByRole("listitem")).toHaveLength(5);
     expect(screen.queryByRole("link", { name: /Juegos/i })).not.toBeInTheDocument();
   });
@@ -107,7 +110,7 @@ describe("Navigation", () => {
     expect(screen.queryByRole("option", { name: "Celeste" })).not.toBeInTheDocument();
   });
 
-  it("returns settings menu to root when Ajustes is clicked while nested", () => {
+  it("returns to the full settings menu from the quick controls", () => {
     useSettingsMenuStore.setState({ activeCategory: "display", menuDirection: 1 });
 
     render(
@@ -116,9 +119,47 @@ describe("Navigation", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole("link", { name: /Ajustes/i }));
+    fireEvent.click(screen.getByRole("link", { name: "Todos los ajustes" }));
 
     expect(useSettingsMenuStore.getState().activeCategory).toBeNull();
     expect(useSettingsMenuStore.getState().menuDirection).toBe(-1);
+  });
+
+  it.each(["Scripts", "Ajustes"])("opens only %s and restores focus on Escape", (name) => {
+    render(
+      <MemoryRouter initialEntries={["/apps"]}>
+        <Navigation />
+      </MemoryRouter>,
+    );
+    const button = screen.getByRole("button", { name });
+    fireEvent.click(button);
+    expect(screen.queryByRole("region", { name: "Aplicaciones" })).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name })).toBeInTheDocument();
+    fireEvent.keyDown(button, { key: "Escape" });
+    expect(screen.queryByRole("region", { name })).not.toBeInTheDocument();
+    expect(button).toHaveFocus();
+  });
+
+  it("saves quick settings alongside existing shortcuts and preferences", async () => {
+    const saved = createInitialState(
+      [makeLauncherItem({ name: "Acceso guardado" })],
+      { ...useSettingsStore.getState().settings, animationIntensity: "high" },
+    );
+    await saveFullState(saved);
+    useSettingsStore.getState().hydrate(saved.settings);
+    render(
+      <MemoryRouter initialEntries={["/settings"]}>
+        <Navigation />
+      </MemoryRouter>,
+    );
+
+    const sound = screen.getByRole("checkbox", { name: "Sonidos de interfaz" });
+    expect(sound).toBeChecked();
+    fireEvent.click(sound);
+    await waitFor(() => expect(sound).not.toBeChecked());
+    expect(await loadFullState()).toMatchObject({
+      items: saved.items,
+      settings: { soundEnabled: false, animationIntensity: "high" },
+    });
   });
 });

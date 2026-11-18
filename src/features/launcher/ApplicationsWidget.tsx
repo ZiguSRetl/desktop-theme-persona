@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 
 import { Link, useSearchParams } from "react-router-dom";
 import { Search, Star } from "lucide-react";
 import { useT } from "../../i18n";
+import dropdownStyles from "../../components/Navigation/Dropdown.module.css";
 import type { LauncherItem } from "../../types/desktop";
 import {
   filterInstalledApps,
@@ -114,7 +115,7 @@ export function ApplicationsWidget({ id, reducedMotion, onLaunch }: Applications
   return (
     <section
       id={id}
-      className={styles.widget}
+      className={dropdownStyles.dropdown}
       aria-labelledby={titleId}
       data-reduced-motion={reducedMotion}
     >
