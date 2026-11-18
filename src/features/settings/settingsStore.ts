@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { DesktopSettings } from "../../types/desktop";
 import { createDefaultSettings, mergeAndSaveState } from "../launcher/persistence";
-import { withPlatformShellSettings } from "../system/platform";
+import { isWindowsHost, withDesktopMode, withPlatformDesktopMode } from "../system/platform";
 import { isPrimaryWindow } from "./monitorWindowsService";
 import { applyNativeSettings } from "./nativeSettings";
 import {
@@ -15,7 +15,6 @@ const NATIVE_SETTING_KEYS = new Set<keyof DesktopSettings>([
   "globalShortcut",
   "launchOnStartup",
   "closeBehavior",
-  "desktopMode",
   "language",
 ]);
 
@@ -37,16 +36,33 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   status: "idle",
 
   hydrate: (settings) =>
-    set({ settings: withPlatformShellSettings(settings), status: "ready" }),
+    set({ settings: withPlatformDesktopMode(settings), status: "ready" }),
 
   updateSetting: async (key, value) => {
-    // desktopMode is not user-toggleable (forced on Windows, forced off elsewhere).
-    if (key === "desktopMode") return;
+    const previous = get().settings;
+    if (key === "desktopMode") {
+      if (!isWindowsHost() || !isPrimaryWindow() || previous.desktopMode === value) return;
+      const next = withDesktopMode(previous, Boolean(value));
+      const actual = await applyNativeSettings(next);
+      const resolved = withDesktopMode(get().settings, actual ?? next.desktopMode);
+      try {
+        await mergeAndSaveState({
+          settings: { desktopMode: resolved.desktopMode, desktopModeOptIn: resolved.desktopModeOptIn },
+        });
+      } catch (error) {
+        await applyNativeSettings(previous);
+        await applyWindowSettings(previous);
+        throw error;
+      }
+      set({ settings: withDesktopMode(get().settings, resolved.desktopMode) });
+      await applyWindowSettings(get().settings);
+      return;
+    }
 
-    const next = withPlatformShellSettings({ ...get().settings, [key]: value });
+    const next = withPlatformDesktopMode({ ...previous, [key]: value });
 
-    await mergeAndSaveState({ settings: next });
-    set({ settings: next });
+    await mergeAndSaveState({ settings: { [key]: value } });
+    set({ settings: withPlatformDesktopMode({ ...get().settings, [key]: value }) });
 
     if (NATIVE_SETTING_KEYS.has(key) && isPrimaryWindow()) {
       await applyNativeSettings(next);
@@ -54,11 +70,12 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
 
     // Window mode only applies outside desktop overlay.
     if (WINDOW_SETTING_KEYS.has(key) && !next.desktopMode) {
-      await applyWindowMode(next.windowMode);
+      if (next.windowMode === "window") await applyWindowSettings(next);
+      else await applyWindowMode(next.windowMode);
     }
 
     if (key === "wallpaperPassthrough") {
-      await applyWallpaperPassthrough(Boolean(value));
+      await applyWallpaperPassthrough(next.desktopMode && Boolean(value));
     }
   },
 

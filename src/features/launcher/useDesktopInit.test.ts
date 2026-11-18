@@ -1,8 +1,9 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useSettingsStore } from "../settings/settingsStore";
+import { applyNativeSettings } from "../settings/nativeSettings";
 import { useLauncherStore } from "./launcherStore";
-import { createInitialState, loadFullState, saveFullState } from "./persistence";
+import { createInitialState, loadFullState, mergeAndSaveState, saveFullState } from "./persistence";
 import { useDesktopInit } from "./useDesktopInit";
 
 const { syncMonitorWindows, applyWindowSettings, showLaunchError } = vi.hoisted(() => ({
@@ -14,6 +15,7 @@ const { syncMonitorWindows, applyWindowSettings, showLaunchError } = vi.hoisted(
 vi.mock("./persistence", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./persistence")>()),
   loadFullState: vi.fn(),
+  mergeAndSaveState: vi.fn(),
   saveFullState: vi.fn(),
 }));
 vi.mock("./useIconBackfill", () => ({ useIconBackfill: vi.fn() }));
@@ -28,6 +30,8 @@ vi.mock("../settings/windowService", () => ({ applyWindowSettings }));
 describe("useDesktopInit", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    applyWindowSettings.mockResolvedValue(undefined);
+    vi.mocked(mergeAndSaveState).mockResolvedValue(createInitialState());
     useLauncherStore.setState(useLauncherStore.getInitialState());
     useSettingsStore.setState(useSettingsStore.getInitialState());
   });
@@ -56,5 +60,22 @@ describe("useDesktopInit", () => {
     expect(showLaunchError.mock.calls[0]?.[0].message).toContain("monitor enumeration failed");
     expect(useLauncherStore.getState().status).toBe("ready");
     expect(useSettingsStore.getState().status).toBe("ready");
+  });
+
+  it("recovers in a normal window when a saved desktop mode cannot be enabled", async () => {
+    const saved = createInitialState();
+    saved.settings.desktopMode = true;
+    saved.settings.desktopModeOptIn = true;
+    vi.mocked(loadFullState).mockResolvedValue(saved);
+    vi.mocked(applyNativeSettings).mockResolvedValue(false);
+
+    renderHook(() => useDesktopInit());
+
+    await waitFor(() => expect(syncMonitorWindows).toHaveBeenCalledOnce());
+    expect(useSettingsStore.getState().settings.desktopMode).toBe(false);
+    expect(mergeAndSaveState).toHaveBeenCalledWith({
+      settings: { desktopMode: false, desktopModeOptIn: undefined },
+    });
+    expect(applyWindowSettings).toHaveBeenLastCalledWith(expect.objectContaining({ desktopMode: false }));
   });
 });

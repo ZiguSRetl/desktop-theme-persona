@@ -131,6 +131,7 @@ describe("importConfig", () => {
         soundEnabled: false,
         windowMode: "fullscreen",
         desktopMode: true,
+        desktopModeOptIn: true,
       },
     };
     readTextFile.mockResolvedValue(JSON.stringify(importedPayload));

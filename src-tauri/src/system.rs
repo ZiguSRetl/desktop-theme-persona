@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use tauri::{
     menu::{Menu, MenuItem},
@@ -7,10 +7,10 @@ use tauri::{
 };
 
 use crate::desktop_mode::{
-    apply_desktop_mode_setting, detach_before_exit, restore_windows_desktop,
+    apply_desktop_mode_setting, detach_before_exit, is_desktop_mode_active, restore_windows_desktop,
 };
 use crate::monitor_windows::{
-    any_launcher_window_visible, focus_launcher_under_cursor, hide_all_launcher_windows,
+    any_launcher_window_visible, hide_all_launcher_windows,
     is_launcher_window_label, show_all_launcher_windows, MAIN_WINDOW_LABEL,
 };
 use crate::DesktopModeState;
@@ -29,7 +29,7 @@ pub struct NativeSettingsState {
 impl Default for NativeSettingsState {
     fn default() -> Self {
         Self {
-            close_behavior: Mutex::new("hide".to_string()),
+            close_behavior: Mutex::new("exit".to_string()),
         }
     }
 }
@@ -43,6 +43,13 @@ pub struct DesktopSettingsPayload {
     pub desktop_mode: bool,
     #[serde(default = "default_language_field")]
     pub language: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NativeSettingsResult {
+    desktop_mode: bool,
+    errors: Vec<String>,
 }
 
 fn default_language_field() -> String {
@@ -281,6 +288,9 @@ fn apply_global_shortcut(_app: &AppHandle, _shortcut_str: &str) -> Result<(), St
 #[cfg(desktop)]
 pub(crate) fn apply_autostart(app: &AppHandle, enabled: bool) -> Result<(), String> {
     let autostart = app.autolaunch();
+    if autostart.is_enabled().ok() == Some(enabled) {
+        return Ok(());
+    }
     if enabled {
         autostart
             .enable()
@@ -317,14 +327,12 @@ pub async fn sync_native_settings_impl(
     native_state: &NativeSettingsState,
     desktop_state: &DesktopModeState,
     settings: DesktopSettingsPayload,
-) -> Result<(), String> {
+) -> NativeSettingsResult {
     apply_close_behavior(native_state, &settings.close_behavior);
-    let desktop_mode = settings.desktop_mode && app.tray_by_id("main-tray").is_some();
-    let should_autostart = settings.launch_on_startup || desktop_mode;
     let errors: Vec<String> = [
         apply_global_shortcut(app, &settings.global_shortcut),
-        apply_autostart(app, should_autostart),
-        apply_desktop_mode_setting(app, desktop_state, desktop_mode)
+        apply_autostart(app, settings.launch_on_startup),
+        apply_desktop_mode_setting(app, desktop_state, settings.desktop_mode)
             .await
             .map_err(|error| format!("No se pudo aplicar el modo escritorio: {error}")),
         apply_tray_language(app, &settings.language),
@@ -333,10 +341,9 @@ pub async fn sync_native_settings_impl(
     .filter_map(Result::err)
     .collect();
 
-    if errors.is_empty() {
-        Ok(())
-    } else {
-        Err(errors.join("\n"))
+    NativeSettingsResult {
+        desktop_mode: is_desktop_mode_active(desktop_state),
+        errors,
     }
 }
 
@@ -369,7 +376,9 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
                 let handle = app.clone();
                 tauri::async_runtime::spawn(async move {
                     let state = handle.state::<DesktopModeState>();
-                    let _ = restore_windows_desktop(&handle, &state).await;
+                    if let Err(error) = restore_windows_desktop(&handle, &state).await {
+                        eprintln!("No se pudo restaurar por completo la ventana: {error}");
+                    }
                     let _ = handle.emit("desktop-mode-changed", false);
                 });
             }
@@ -413,22 +422,11 @@ pub fn attach_launcher_window_events(app: &AppHandle, window: &tauri::WebviewWin
                     if let Some(window) = app_handle.get_webview_window(&label) {
                         let _ = window.hide();
                     }
-                }
-            }
-            WindowEvent::Focused(focused) => {
-                if *focused && label == MAIN_WINDOW_LABEL {
+                } else {
+                    api.prevent_close();
                     let desktop_state = app_handle.state::<DesktopModeState>();
-                    let desktop_active = desktop_state
-                        .active
-                        .lock()
-                        .map(|value| *value)
-                        .unwrap_or(false);
-                    // In desktop mode the z-order loop keeps us behind other apps — do not
-                    // re-pin on focus (that fought Windows and flickered other windows).
-                    if !desktop_active {
-                        // Taskbar activation: focus the launcher under the cursor, not always main.
-                        let _ = focus_launcher_under_cursor(&app_handle);
-                    }
+                    detach_before_exit(&app_handle, &desktop_state);
+                    app_handle.exit(0);
                 }
             }
             WindowEvent::Resized(_) | WindowEvent::Moved(_) => {
@@ -444,18 +442,6 @@ pub fn attach_launcher_window_events(app: &AppHandle, window: &tauri::WebviewWin
                     let _ = crate::desktop_mode::snap_overlays_if_drifted(&app_handle);
                 }
 
-                // Taskbar click on an already-focused main minimizes it; undo and refocus.
-                if label != MAIN_WINDOW_LABEL {
-                    return;
-                }
-                if let Some(window) = app_handle.get_webview_window(&label) {
-                    if window.is_minimized().unwrap_or(false) {
-                        let _ = window.unminimize();
-                        if !desktop_active {
-                            let _ = focus_launcher_under_cursor(&app_handle);
-                        }
-                    }
-                }
             }
             _ => {}
         }
@@ -488,7 +474,7 @@ pub fn setup_plugins(builder: tauri::Builder<tauri::Wry>) -> tauri::Builder<taur
 }
 
 pub fn on_run_event(app: &AppHandle, event: RunEvent) {
-    if let RunEvent::ExitRequested { api, .. } = event {
+    if let RunEvent::ExitRequested { api, code, .. } = event {
         let state = app.state::<NativeSettingsState>();
         let behavior = state
             .close_behavior
@@ -496,9 +482,12 @@ pub fn on_run_event(app: &AppHandle, event: RunEvent) {
             .map(|value| value.clone())
             .unwrap_or_else(|_| "hide".to_string());
 
-        if behavior == "hide" && app.tray_by_id("main-tray").is_some() {
+        if code.is_none() && behavior == "hide" && app.tray_by_id("main-tray").is_some() {
             api.prevent_exit();
             let _ = hide_main_window(app);
+        } else {
+            let desktop_state = app.state::<DesktopModeState>();
+            detach_before_exit(app, &desktop_state);
         }
     }
 }
@@ -515,6 +504,6 @@ pub async fn sync_native_settings(
     native_state: tauri::State<'_, NativeSettingsState>,
     desktop_state: tauri::State<'_, DesktopModeState>,
     settings: DesktopSettingsPayload,
-) -> Result<(), String> {
-    sync_native_settings_impl(&app, &native_state, &desktop_state, settings).await
+) -> Result<NativeSettingsResult, String> {
+    Ok(sync_native_settings_impl(&app, &native_state, &desktop_state, settings).await)
 }

@@ -47,11 +47,10 @@ export interface DesktopSettings {
   animationIntensity: "reduced" | "normal" | "high";
   closeBehavior: "hide" | "exit";
   windowMode: WindowMode;
-  /**
-   * Desktop overlay shell. Forced on for Windows; always off on Linux/macOS
-   * (WorkerW embed is Windows-only).
-   */
+  /** Optional Windows desktop overlay. */
   desktopMode: boolean;
+  /** Distinguishes explicit consent from older settings that forced the overlay. */
+  desktopModeOptIn?: true;
   /**
    * Transparent window so the OS / Wallpaper Engine desktop shows through.
    * Disables in-app comic/custom wallpaper.

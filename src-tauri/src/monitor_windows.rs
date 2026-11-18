@@ -12,7 +12,6 @@ pub const SATELLITE_PREFIX: &str = "monitor-";
 
 static WATCHER_RUNNING: AtomicBool = AtomicBool::new(false);
 static SYNC_IN_FLIGHT: AtomicBool = AtomicBool::new(false);
-static FOCUS_REDIRECT_IN_FLIGHT: AtomicBool = AtomicBool::new(false);
 
 pub struct MonitorWindowsState {
     pub satellite_labels: Mutex<Vec<String>>,
@@ -99,84 +98,6 @@ pub fn launcher_windows(app: &AppHandle) -> Vec<WebviewWindow> {
     satellites.sort_by(|(a, _), (b, _)| a.cmp(b));
     windows.extend(satellites.into_iter().map(|(_, window)| window));
     windows
-}
-
-/// Physical rect hit-test for a monitor (exclusive right/bottom edges).
-pub fn monitor_contains_point(monitor: &Monitor, x: i32, y: i32) -> bool {
-    let pos = monitor.position();
-    let size = monitor.size();
-    let right = pos.x.saturating_add(size.width as i32);
-    let bottom = pos.y.saturating_add(size.height as i32);
-    x >= pos.x && x < right && y >= pos.y && y < bottom
-}
-
-#[cfg(windows)]
-fn cursor_physical_position() -> Option<(i32, i32)> {
-    use windows::Win32::Foundation::POINT;
-    use windows::Win32::UI::WindowsAndMessaging::GetCursorPos;
-
-    let mut point = POINT::default();
-    // SAFETY: GetCursorPos writes into a valid POINT; no handles involved.
-    unsafe {
-        if GetCursorPos(&mut point).is_ok() {
-            Some((point.x, point.y))
-        } else {
-            None
-        }
-    }
-}
-
-#[cfg(not(windows))]
-fn cursor_physical_position() -> Option<(i32, i32)> {
-    None
-}
-
-pub fn launcher_window_for_point(app: &AppHandle, x: i32, y: i32) -> Option<WebviewWindow> {
-    let monitors = ordered_monitors(app).ok()?;
-    let windows = launcher_windows(app);
-    let index = monitors
-        .iter()
-        .position(|monitor| monitor_contains_point(monitor, x, y))?;
-    windows.get(index).cloned()
-}
-
-/// Focus the launcher window on the monitor under the cursor.
-/// No-op if that window is already focused. Used for taskbar activation.
-pub fn focus_launcher_under_cursor(app: &AppHandle) -> Result<(), String> {
-    if FOCUS_REDIRECT_IN_FLIGHT.swap(true, Ordering::SeqCst) {
-        return Ok(());
-    }
-    let _guard = FocusRedirectGuard;
-
-    let Some((x, y)) = cursor_physical_position() else {
-        return Ok(());
-    };
-
-    let Some(window) =
-        launcher_window_for_point(app, x, y).or_else(|| app.get_webview_window(MAIN_WINDOW_LABEL))
-    else {
-        return Ok(());
-    };
-
-    if window.is_focused().unwrap_or(false) {
-        return Ok(());
-    }
-
-    window
-        .show()
-        .map_err(|e| format!("No se pudo mostrar la ventana: {e}"))?;
-    window
-        .set_focus()
-        .map_err(|e| format!("No se pudo enfocar la ventana: {e}"))?;
-    Ok(())
-}
-
-struct FocusRedirectGuard;
-
-impl Drop for FocusRedirectGuard {
-    fn drop(&mut self) {
-        FOCUS_REDIRECT_IN_FLIGHT.store(false, Ordering::SeqCst);
-    }
 }
 
 pub fn window_matches_monitor(window: &WebviewWindow, monitor: &Monitor) -> bool {
@@ -280,7 +201,6 @@ pub async fn sync_monitor_windows_impl(app: AppHandle) -> Result<(), String> {
     }
     let _guard = SyncGuard;
 
-    let monitors = ordered_monitors(&app)?;
     let state = app.state::<MonitorWindowsState>();
     let desktop_active = desktop_mode_active(&app);
 
@@ -304,7 +224,7 @@ pub async fn sync_monitor_windows_impl(app: AppHandle) -> Result<(), String> {
             .collect();
         for label in stale {
             if let Some(window) = app.get_webview_window(&label) {
-                let _ = window.close();
+                let _ = window.destroy();
             }
         }
         if let Ok(mut labels) = state.satellite_labels.lock() {
@@ -313,6 +233,7 @@ pub async fn sync_monitor_windows_impl(app: AppHandle) -> Result<(), String> {
         return Ok(());
     }
 
+    let monitors = ordered_monitors(&app)?;
     let mut next_labels = Vec::new();
     for index in 1..monitors.len() {
         let label = satellite_label(index);
@@ -353,7 +274,7 @@ pub async fn sync_monitor_windows_impl(app: AppHandle) -> Result<(), String> {
 
     for label in stale {
         if let Some(window) = app.get_webview_window(&label) {
-            let _ = window.close();
+                let _ = window.destroy();
         }
     }
 
@@ -425,6 +346,8 @@ pub fn show_all_launcher_windows(app: &AppHandle) -> Result<(), String> {
             .map_err(|e| format!("No se pudo mostrar la ventana: {e}"))?;
     }
     if let Some(main) = app.get_webview_window(MAIN_WINDOW_LABEL) {
+        main.unminimize()
+            .map_err(|e| format!("No se pudo restaurar la ventana: {e}"))?;
         main.set_focus()
             .map_err(|e| format!("No se pudo enfocar la ventana: {e}"))?;
     }
@@ -445,6 +368,7 @@ pub fn any_launcher_window_visible(app: &AppHandle) -> Result<bool, String> {
         if window
             .is_visible()
             .map_err(|e| format!("No se pudo comprobar visibilidad: {e}"))?
+            && !window.is_minimized().unwrap_or(false)
         {
             return Ok(true);
         }

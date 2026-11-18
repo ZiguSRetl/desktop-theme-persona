@@ -17,6 +17,7 @@ import {
   type SettingsCategoryId,
 } from "../features/settings/settingsMenuStore";
 import { useSettingsStore } from "../features/settings/settingsStore";
+import { isPrimaryWindow } from "../features/settings/monitorWindowsService";
 import {
   useEffectiveReducedMotion,
   useMotionDurationMultiplier,
@@ -30,7 +31,7 @@ import {
 } from "../features/settings/wallpaperService";
 import { wallpaperCropToBackgroundStyle } from "../features/settings/wallpaperUtils";
 import { useGpuDevices } from "../features/system/useGpuDevices";
-import { isWindowsHost } from "../features/system/platform";
+import { isLinuxHost, isWindowsHost } from "../features/system/platform";
 import { useUpdateStore } from "../features/updater/updateStore";
 import { getBrandVersionParts } from "../features/updater/brandVersion";
 import { APP_LANGUAGES, useT, type TranslationKey } from "../i18n";
@@ -54,10 +55,12 @@ function SettingToggle({
   checked,
   onChange,
   label,
+  disabled = false,
 }: {
   checked: boolean;
   onChange: (value: boolean) => void;
   label: string;
+  disabled?: boolean;
 }) {
   return (
     <button
@@ -65,6 +68,7 @@ function SettingToggle({
       role="switch"
       aria-checked={checked}
       aria-label={label}
+      disabled={disabled}
       className={`${settingStyles.toggle} ${checked ? settingStyles.toggleOn : ""}`}
       onClick={() => onChange(!checked)}
     >
@@ -76,6 +80,8 @@ function SettingToggle({
 export function SettingsPage() {
   const t = useT();
   const settings = useSettingsStore((state) => state.settings);
+  const wallpaperPassthrough = settings.desktopMode && settings.wallpaperPassthrough;
+  const [changingDesktopMode, setChangingDesktopMode] = useState(false);
   const updateSetting = useSettingsStore((state) => state.updateSetting);
   const resetToDefaults = useSettingsStore((state) => state.resetToDefaults);
   const checkingUpdate = useUpdateStore((state) => state.checking);
@@ -100,7 +106,7 @@ export function SettingsPage() {
     wallpaper: WallpaperSettings;
     url: string;
   }>();
-  const previewWallpaper = activeCategory === "display" && !settings.wallpaperPassthrough
+  const previewWallpaper = activeCategory === "display" && !wallpaperPassthrough
     ? settings.wallpaper
     : undefined;
 
@@ -137,6 +143,17 @@ export function SettingsPage() {
   ) => {
     await updateSetting(key, value);
     showSuccess(message);
+  };
+
+  const handleDesktopMode = async (enabled: boolean) => {
+    setChangingDesktopMode(true);
+    try {
+      await updateSetting("desktopMode", enabled);
+    } catch (error) {
+      showLaunchError(typeof error === "string" ? new Error(error) : error);
+    } finally {
+      setChangingDesktopMode(false);
+    }
   };
 
   const handleShortcutChange = async (value: string) => {
@@ -182,7 +199,7 @@ export function SettingsPage() {
   };
 
   const handlePickWallpaper = async () => {
-    if (settings.wallpaperPassthrough) return;
+    if (wallpaperPassthrough) return;
     try {
       const sourcePath = await pickWallpaperImagePath();
       if (!sourcePath) return;
@@ -194,7 +211,7 @@ export function SettingsPage() {
   };
 
   const handleRecropWallpaper = () => {
-    if (settings.wallpaperPassthrough) return;
+    if (wallpaperPassthrough) return;
     if (!isWallpaperConfigured(settings.wallpaper)) return;
     void openCropEditor(settings.wallpaper.path, {
       initialCrop: settings.wallpaper.crop,
@@ -308,9 +325,10 @@ export function SettingsPage() {
                   }
                 >
                   <option value="window">{t("settings.windowMode.options.window")}</option>
-                  <option value="fullscreen">
+                  <option value="maximized">{t("settings.windowMode.options.maximized")}</option>
+                  {!isLinuxHost() || settings.windowMode === "fullscreen" ? <option value="fullscreen">
                     {t("settings.windowMode.options.fullscreen")}
-                  </option>
+                  </option> : null}
                 </select>
               </ComicSettingRow>
             ) : null}
@@ -336,14 +354,14 @@ export function SettingsPage() {
               </select>
             </ComicSettingRow>
 
-            <ComicSettingRow
+            {settings.desktopMode ? <ComicSettingRow
               label={t("settings.wallpaperPassthrough.label")}
               description={t("settings.wallpaperPassthrough.description")}
               rotation={-0.4}
             >
               <SettingToggle
                 label={t("settings.wallpaperPassthrough.label")}
-                checked={settings.wallpaperPassthrough}
+                checked={wallpaperPassthrough}
                 onChange={(value) =>
                   void handleUpdate(
                     "wallpaperPassthrough",
@@ -354,7 +372,7 @@ export function SettingsPage() {
                   )
                 }
               />
-            </ComicSettingRow>
+            </ComicSettingRow> : null}
 
             <ComicSettingRow
               label={t("settings.wallpaper.label")}
@@ -362,7 +380,7 @@ export function SettingsPage() {
               rotation={0.5}
             >
               <div className={styles.wallpaperControls}>
-                {wallpaperPreviewStyle && !settings.wallpaperPassthrough ? (
+                {wallpaperPreviewStyle && !wallpaperPassthrough ? (
                   <div
                     className={styles.wallpaperPreview}
                     style={wallpaperPreviewStyle}
@@ -373,7 +391,7 @@ export function SettingsPage() {
                   <CutoutButton
                     variant="default"
                     rotation={-1}
-                    disabled={settings.wallpaperPassthrough}
+                    disabled={wallpaperPassthrough}
                     onClick={() => void handlePickWallpaper()}
                   >
                     {t("settings.wallpaper.pick")}
@@ -383,7 +401,7 @@ export function SettingsPage() {
                       <CutoutButton
                         variant="default"
                         rotation={0.5}
-                        disabled={settings.wallpaperPassthrough}
+                        disabled={wallpaperPassthrough}
                         onClick={handleRecropWallpaper}
                       >
                         {t("settings.wallpaper.recrop")}
@@ -391,7 +409,7 @@ export function SettingsPage() {
                       <CutoutButton
                         variant="default"
                         rotation={1}
-                        disabled={settings.wallpaperPassthrough}
+                        disabled={wallpaperPassthrough}
                         onClick={() => void handleRemoveWallpaper()}
                       >
                         {t("settings.wallpaper.remove")}
@@ -402,13 +420,15 @@ export function SettingsPage() {
               </div>
             </ComicSettingRow>
 
-            <ComicSettingRow
-              label={t("settings.multiMonitor.label")}
-              description={t("settings.multiMonitor.description")}
-              rotation={0.4}
-            >
-              <span className={settingStyles.hint}>{t("settings.multiMonitor.hint")}</span>
-            </ComicSettingRow>
+            {settings.desktopMode ? (
+              <ComicSettingRow
+                label={t("settings.multiMonitor.label")}
+                description={t("settings.multiMonitor.description")}
+                rotation={0.4}
+              >
+                <span className={settingStyles.hint}>{t("settings.multiMonitor.hint")}</span>
+              </ComicSettingRow>
+            ) : null}
           </>
         );
 
@@ -446,6 +466,20 @@ export function SettingsPage() {
       case "desktop":
         return (
           <>
+            {isWindowsHost() && isPrimaryWindow() ? (
+              <ComicSettingRow
+                label={t("settings.desktopMode.label")}
+                description={t("settings.desktopMode.description")}
+                rotation={-0.5}
+              >
+                <SettingToggle
+                  label={t("settings.desktopMode.label")}
+                  checked={settings.desktopMode}
+                  disabled={changingDesktopMode}
+                  onChange={(enabled) => void handleDesktopMode(enabled)}
+                />
+              </ComicSettingRow>
+            ) : null}
             <ComicSettingRow
               label={t("settings.launchOnStartup.label")}
               description={t("settings.launchOnStartup.description")}

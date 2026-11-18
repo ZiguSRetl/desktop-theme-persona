@@ -35,12 +35,14 @@ static SUBCLASSED_PROCS: Mutex<Option<HashMap<isize, isize>>> = Mutex::new(None)
 
 pub struct DesktopModeState {
     pub active: Mutex<bool>,
+    original_hide_icons: Mutex<Option<u32>>,
 }
 
 impl Default for DesktopModeState {
     fn default() -> Self {
         Self {
             active: Mutex::new(false),
+            original_hide_icons: Mutex::new(None),
         }
     }
 }
@@ -263,11 +265,13 @@ fn remove_zorder_subclass(hwnd: HWND) {
     }
 }
 
-fn position_hwnd_as_desktop_overlay(hwnd: HWND, x: i32, y: i32, width: i32, height: i32) {
+fn position_hwnd_as_desktop_overlay(
+    hwnd: HWND, x: i32, y: i32, width: i32, height: i32,
+) -> Result<(), String> {
     lock_geometry(hwnd, x, y, width, height);
     let _guard = AllowGeometryGuard::enter();
     unsafe {
-        let _ = SetWindowPos(
+        SetWindowPos(
             hwnd,
             Some(desktop_zorder_anchor()),
             x,
@@ -275,7 +279,8 @@ fn position_hwnd_as_desktop_overlay(hwnd: HWND, x: i32, y: i32, width: i32, heig
             width,
             height,
             SWP_NOACTIVATE,
-        );
+        )
+        .map_err(|error| format!("No se pudo colocar el modo escritorio: {error}"))
     }
 }
 
@@ -301,22 +306,15 @@ pub fn position_window_as_desktop_overlay(
     height: i32,
 ) -> Result<(), String> {
     let hwnd = window_hwnd(window)?;
-    position_hwnd_as_desktop_overlay(hwnd, x, y, width, height);
-    Ok(())
+    position_hwnd_as_desktop_overlay(hwnd, x, y, width, height)
 }
 
-fn set_registry_hide_icons(hide: bool) -> Result<(), String> {
+fn desktop_icons_registry() -> Result<RegKey, String> {
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-    let (key, _) = hkcu
+    hkcu
         .create_subkey(HIDE_ICONS_KEY)
-        .map_err(|e| format!("No se pudo abrir el registro: {e}"))?;
-
-    let value: u32 = if hide { 1 } else { 0 };
-    key.set_value("HideIcons", &value)
-        .map_err(|e| format!("No se pudo escribir HideIcons: {e}"))?;
-
-    refresh_shell();
-    Ok(())
+        .map(|(key, _)| key)
+        .map_err(|e| format!("No se pudo abrir el registro: {e}"))
 }
 
 fn refresh_shell() {
@@ -325,12 +323,30 @@ fn refresh_shell() {
     }
 }
 
-pub fn hide_desktop_icons() -> Result<(), String> {
-    set_registry_hide_icons(true)
+pub fn hide_desktop_icons(state: &DesktopModeState) -> Result<(), String> {
+    let mut previous = state.original_hide_icons.lock().map_err(|e| e.to_string())?;
+    let key = desktop_icons_registry()?;
+    let value = match key.get_value::<u32, _>("HideIcons") {
+        Ok(value) => value,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => 0,
+        Err(error) => return Err(error.to_string()),
+    };
+    if previous.is_none() {
+        *previous = Some(value);
+    }
+    key.set_value("HideIcons", &1_u32).map_err(|e| e.to_string())?;
+    refresh_shell();
+    Ok(())
 }
 
-pub fn show_desktop_icons() -> Result<(), String> {
-    set_registry_hide_icons(false)
+pub fn restore_desktop_icons(state: &DesktopModeState) -> Result<(), String> {
+    let mut previous = state.original_hide_icons.lock().map_err(|e| e.to_string())?;
+    if let Some(value) = *previous {
+        desktop_icons_registry()?.set_value("HideIcons", &value).map_err(|e| e.to_string())?;
+        *previous = None;
+        refresh_shell();
+    }
+    Ok(())
 }
 
 pub fn embed_as_desktop(window: &WebviewWindow, _state: &DesktopModeState) -> Result<(), String> {

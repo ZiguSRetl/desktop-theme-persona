@@ -11,7 +11,7 @@ const {
   isPrimaryWindow,
 } = vi.hoisted(() => ({
   mergeAndSaveState: vi.fn(async () => undefined),
-  applyNativeSettings: vi.fn(async () => undefined),
+  applyNativeSettings: vi.fn<() => Promise<boolean | undefined>>(async () => undefined),
   applyWindowMode: vi.fn(async () => undefined),
   applyWindowSettings: vi.fn(async () => undefined),
   applyWallpaperPassthrough: vi.fn(async () => undefined),
@@ -59,22 +59,31 @@ describe("useSettingsStore", () => {
     });
   });
 
-  it("ignores attempts to change desktopMode", async () => {
-    await useSettingsStore.getState().updateSetting("desktopMode", false);
+  it("persists explicit desktop mode activation on Windows", async () => {
+    applyNativeSettings.mockResolvedValueOnce(true);
+    await useSettingsStore.getState().updateSetting("desktopMode", true);
 
     expect(useSettingsStore.getState().settings.desktopMode).toBe(true);
-    expect(mergeAndSaveState).not.toHaveBeenCalled();
-    expect(applyNativeSettings).not.toHaveBeenCalled();
+    expect(mergeAndSaveState).toHaveBeenCalledWith({
+      settings: { desktopMode: true, desktopModeOptIn: true },
+    });
   });
 
-  it("hydrates with desktopMode forced on", () => {
+  it("keeps the regular window if desktop mode activation fails", async () => {
+    applyNativeSettings.mockResolvedValueOnce(false);
+    await useSettingsStore.getState().updateSetting("desktopMode", true);
+    expect(useSettingsStore.getState().settings.desktopMode).toBe(false);
+    expect(applyWindowSettings).toHaveBeenCalledWith(expect.objectContaining({ desktopMode: false }));
+  });
+
+  it("hydrates with desktop mode off", () => {
     useSettingsStore.getState().hydrate({
       ...DEFAULT_SETTINGS,
       desktopMode: false,
       soundEnabled: false,
     });
 
-    expect(useSettingsStore.getState().settings.desktopMode).toBe(true);
+    expect(useSettingsStore.getState().settings.desktopMode).toBe(false);
     expect(useSettingsStore.getState().settings.soundEnabled).toBe(false);
   });
 
@@ -95,6 +104,7 @@ describe("useSettingsStore", () => {
   });
 
   it("does not apply window mode while desktopMode is active", async () => {
+    useSettingsStore.getState().hydrate({ ...DEFAULT_SETTINGS, desktopMode: true, desktopModeOptIn: true });
     await useSettingsStore.getState().updateSetting("windowMode", "fullscreen");
 
     expect(useSettingsStore.getState().settings.windowMode).toBe("fullscreen");
@@ -111,6 +121,7 @@ describe("useSettingsStore", () => {
   });
 
   it("applies wallpaper passthrough when toggled", async () => {
+    useSettingsStore.getState().hydrate({ ...DEFAULT_SETTINGS, desktopMode: true, desktopModeOptIn: true });
     await useSettingsStore.getState().updateSetting("wallpaperPassthrough", true);
 
     expect(useSettingsStore.getState().settings.wallpaperPassthrough).toBe(true);
@@ -123,7 +134,7 @@ describe("useSettingsStore", () => {
 
     expect(useSettingsStore.getState().settings.language).toBe("de");
     expect(applyNativeSettings).toHaveBeenCalledWith(
-      expect.objectContaining({ language: "de", desktopMode: true }),
+      expect.objectContaining({ language: "de", desktopMode: false }),
     );
   });
 
@@ -148,7 +159,7 @@ describe("useSettingsStore", () => {
 
     expect(deleteStoredWallpaper).toHaveBeenCalledTimes(1);
     expect(useSettingsStore.getState().settings).toEqual(DEFAULT_SETTINGS);
-    expect(DEFAULT_SETTINGS.desktopMode).toBe(true);
+    expect(DEFAULT_SETTINGS.desktopMode).toBe(false);
     expect(applyNativeSettings).toHaveBeenCalledWith(DEFAULT_SETTINGS);
     expect(applyWindowSettings).toHaveBeenCalledWith(DEFAULT_SETTINGS);
   });

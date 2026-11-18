@@ -28,7 +28,8 @@ const sectionOffsets: Record<AppSection, { shape1: number; shape2: number }> = {
 
 export function HalftoneBackground({ section }: HalftoneBackgroundProps) {
   const wallpaper = useSetting("wallpaper");
-  const wallpaperPassthrough = useSetting("wallpaperPassthrough");
+  const desktopMode = useSetting("desktopMode");
+  const wallpaperPassthrough = useSetting("wallpaperPassthrough") && desktopMode;
   const reduceMotion = useEffectiveReducedMotion();
   const [isVisible, setIsVisible] = useState(
     () => typeof document !== "undefined" && document.visibilityState === "visible",

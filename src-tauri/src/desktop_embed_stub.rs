@@ -14,11 +14,11 @@ impl Default for DesktopModeState {
     }
 }
 
-pub fn hide_desktop_icons() -> Result<(), String> {
+pub fn hide_desktop_icons(_state: &DesktopModeState) -> Result<(), String> {
     Err("El modo escritorio solo está disponible en Windows.".into())
 }
 
-pub fn show_desktop_icons() -> Result<(), String> {
+pub fn restore_desktop_icons(_state: &DesktopModeState) -> Result<(), String> {
     Ok(())
 }
 

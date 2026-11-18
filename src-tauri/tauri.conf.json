@@ -16,11 +16,12 @@
         "title": "Persona5 Explorer",
         "width": 1280,
         "height": 720,
-        "decorations": false,
-        "transparent": true,
+        "decorations": true,
+        "transparent": false,
         "fullscreen": false,
-        "resizable": false,
-        "minimizable": false
+        "center": true,
+        "resizable": true,
+        "minimizable": true
       }
     ],
     "security": {

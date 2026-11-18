@@ -23,7 +23,7 @@ describe("validatePersistedState", () => {
       settings: { windowMode: "invalid" },
     });
 
-    expect(state.settings.windowMode).toBe("maximized");
+    expect(state.settings.windowMode).toBe("window");
     expect(state.items).toHaveLength(0);
   });
 
@@ -39,7 +39,7 @@ describe("validatePersistedState", () => {
     const state = validatePersistedState({
       schemaVersion: 1,
       items: [item],
-      settings: { soundEnabled: false, desktopMode: true },
+      settings: { soundEnabled: false, desktopMode: true, desktopModeOptIn: true },
     });
 
     expect(state.items).toHaveLength(1);
@@ -53,24 +53,25 @@ describe("validatePersistedState", () => {
     expect(state.settings.desktopMode).toBe(true);
   });
 
-  it("coerces legacy desktopMode false to true", () => {
+  it("does not re-enable desktop mode forced by previous versions", () => {
     const state = validatePersistedState({
       schemaVersion: 1,
       items: [],
-      settings: { desktopMode: false },
+      settings: { desktopMode: true, windowMode: "maximized" },
     });
 
-    expect(state.settings.desktopMode).toBe(true);
+    expect(state.settings.desktopMode).toBe(false);
+    expect(state.settings.windowMode).toBe("window");
   });
 
-  it("defaults desktopMode to true when missing", () => {
+  it("defaults desktopMode to false when missing", () => {
     const state = validatePersistedState({
       schemaVersion: 1,
       items: [],
       settings: {},
     });
 
-    expect(state.settings.desktopMode).toBe(true);
+    expect(state.settings.desktopMode).toBe(false);
   });
 
   it("keeps valid wallpaper settings", () => {

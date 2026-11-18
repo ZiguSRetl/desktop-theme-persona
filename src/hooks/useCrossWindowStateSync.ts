@@ -28,10 +28,11 @@ export async function hydrateFromRemotePersist(): Promise<void> {
   useLauncherStore.getState().hydrate(persisted.items);
   useSettingsStore.getState().hydrate(persisted.settings);
 
-  await applyWallpaperPassthrough(persisted.settings.wallpaperPassthrough);
+  await applyWallpaperPassthrough(persisted.settings.desktopMode && persisted.settings.wallpaperPassthrough);
 
   if (
     !persisted.settings.desktopMode &&
+    getWindowLabel() === "main" &&
     persisted.settings.windowMode !== previousWindowMode
   ) {
     await applyWindowMode(persisted.settings.windowMode);

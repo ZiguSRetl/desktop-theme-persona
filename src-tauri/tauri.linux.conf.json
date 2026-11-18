@@ -7,7 +7,7 @@
         "title": "Persona5 Explorer",
         "width": 1280,
         "height": 720,
-        "decorations": false,
+        "decorations": true,
         "transparent": false,
         "fullscreen": false,
         "resizable": true,

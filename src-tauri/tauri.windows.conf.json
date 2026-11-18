@@ -1,0 +1,18 @@
+{
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Persona5 Explorer",
+        "width": 1280,
+        "height": 720,
+        "decorations": true,
+        "transparent": true,
+        "fullscreen": false,
+        "center": true,
+        "resizable": true,
+        "minimizable": true
+      }
+    ]
+  }
+}

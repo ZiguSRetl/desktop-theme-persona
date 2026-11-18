@@ -13,6 +13,7 @@ import { useSettingsStore } from "../settings/settingsStore";
 import { applyNativeSettings } from "../settings/nativeSettings";
 import { isPrimaryWindow } from "../settings/monitorWindowsService";
 import { applyWindowSettings } from "../settings/windowService";
+import { withDesktopMode } from "../system/platform";
 
 function isTauri(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
@@ -63,14 +64,18 @@ export async function importConfig(): Promise<PersistedDesktopState | null> {
 
   const raw = await readTextFile(path);
   const parsed = validatePersistedState(JSON.parse(raw));
-
-  await saveFullState(parsed);
+  const primary = isPrimaryWindow();
+  const actual = primary ? await applyNativeSettings(parsed.settings) : undefined;
+  parsed.settings = withDesktopMode(parsed.settings, actual ?? parsed.settings.desktopMode);
+  try {
+    await saveFullState(parsed);
+  } catch (error) {
+    if (primary) await applyNativeSettings(current.settings);
+    await applyWindowSettings(current.settings);
+    throw error;
+  }
   useLauncherStore.getState().hydrate(parsed.items);
   useSettingsStore.getState().hydrate(parsed.settings);
-
-  if (isPrimaryWindow()) {
-    await applyNativeSettings(parsed.settings);
-  }
   await applyWindowSettings(parsed.settings);
 
   return parsed;

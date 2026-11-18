@@ -11,7 +11,7 @@ const {
   setBackgroundColor,
   setWebviewBackgroundColor,
   outerPosition,
-  outerSize,
+  innerSize,
   currentMonitor,
   availableMonitors,
   mergeAndSaveState,
@@ -46,7 +46,7 @@ const {
     setBackgroundColor: vi.fn(async () => undefined),
     setWebviewBackgroundColor: vi.fn(async () => undefined),
     outerPosition: vi.fn(async () => ({ x: 100, y: 80 })),
-    outerSize: vi.fn(async () => ({ width: 1280, height: 720 })),
+    innerSize: vi.fn(async () => ({ width: 1280, height: 720 })),
     currentMonitor: vi.fn(),
     availableMonitors: vi.fn(),
     mergeAndSaveState: vi.fn(async () => undefined),
@@ -65,7 +65,11 @@ vi.mock("@tauri-apps/api/window", () => ({
     setSize,
     setPosition,
     outerPosition,
-    outerSize,
+    innerSize,
+    isDecorated: async () => true,
+    isMinimized: async () => false,
+    isMaximized: async () => false,
+    isFullscreen: async () => false,
     setBackgroundColor,
   }),
   currentMonitor,
@@ -113,6 +117,7 @@ import {
   applyWindowMode,
   applyWindowSettings,
   saveWindowPlacement,
+  restoreWindowPlacement,
 } from "./windowService";
 import { isLinuxHost } from "../system/platform";
 
@@ -140,7 +145,7 @@ describe("windowService", () => {
   it("fullscreen unmaximizes before setFullscreen and does not pre-size", async () => {
     await applyWindowMode("fullscreen");
 
-    expect(setDecorations).toHaveBeenCalledWith(false);
+    expect(setDecorations).toHaveBeenCalledWith(true);
     expect(unmaximize).toHaveBeenCalled();
     expect(setFullscreen).toHaveBeenCalledWith(true);
     expect(setSize).not.toHaveBeenCalled();
@@ -180,7 +185,7 @@ describe("windowService", () => {
     expect(setPosition).toHaveBeenCalledWith(
       expect.objectContaining({
         x: Math.floor((1920 - 1280) / 2),
-        y: Math.floor((1080 - 720) / 2),
+        y: 32 + Math.floor((980 - 720) / 2),
       }),
     );
   });
@@ -244,5 +249,23 @@ describe("windowService", () => {
       }),
     });
     expect(next.windowBounds).toEqual({ x: 100, y: 80, width: 1280, height: 720 });
+  });
+
+  it("restores a resized window inside the remaining work area after a display is disconnected", async () => {
+    await restoreWindowPlacement(makeSettings({
+      windowBounds: { x: 2500, y: 400, width: 900, height: 600 },
+    }));
+    expect(setDecorations).toHaveBeenCalledWith(true);
+    expect(setSize).toHaveBeenCalledWith(expect.objectContaining({ width: 900, height: 600 }));
+    expect(setPosition).toHaveBeenCalledWith(expect.objectContaining({ x: 510, y: 222 }));
+  });
+
+  it("lets the Linux compositor choose the restored position", async () => {
+    vi.mocked(isLinuxHost).mockReturnValue(true);
+    await restoreWindowPlacement(makeSettings({
+      windowBounds: { x: 100, y: 80, width: 900, height: 600 },
+    }));
+    expect(setSize).toHaveBeenCalledWith(expect.objectContaining({ width: 900, height: 600 }));
+    expect(setPosition).not.toHaveBeenCalled();
   });
 });

@@ -40,34 +40,14 @@ export function isLinuxHost(): boolean {
   return detectHostOsFamily() === "linux";
 }
 
-/** Desktop overlay shell is Windows-only; other hosts run as a normal window. */
-export function forcesDesktopMode(): boolean {
-  return isWindowsHost();
-}
-
-/** Windows shell defaults to maximized; Linux/macOS use a floating window (avoids GNOME dock clash). */
 export function defaultWindowMode(): WindowMode {
-  return forcesDesktopMode() ? "maximized" : "window";
+  return "window";
 }
 
 export function withPlatformDesktopMode<T extends { desktopMode: boolean }>(settings: T): T {
-  if (forcesDesktopMode()) {
-    return { ...settings, desktopMode: true };
-  }
-  return { ...settings, desktopMode: false };
+  return isWindowsHost() ? settings : { ...settings, desktopMode: false, desktopModeOptIn: undefined };
 }
 
-/**
- * Apply platform shell rules: desktopMode force, and on non-Windows remap
- * frameless-maximized → window (work-area maximize leaves a gap above the dock).
- * Fullscreen remains available for immersive use.
- */
-export function withPlatformShellSettings<
-  T extends { desktopMode: boolean; windowMode: WindowMode },
->(settings: T): T {
-  const next = withPlatformDesktopMode(settings);
-  if (!forcesDesktopMode() && next.windowMode === "maximized") {
-    return { ...next, windowMode: "window" };
-  }
-  return next;
+export function withDesktopMode<T extends { desktopMode: boolean }>(settings: T, enabled: boolean): T {
+  return withPlatformDesktopMode({ ...settings, desktopMode: enabled, desktopModeOptIn: enabled ? true : undefined });
 }

@@ -8,7 +8,7 @@ Windows desktop launcher with a Persona 5–inspired comic UI (red and black). L
 - **Launcher tiles:** apps, games, folders, and URLs with native icons, drag-and-drop reorder, and favorites
 - **System monitor:** CPU, RAM, disk, network, and GPU with alert tones in the shell footer
 - **Clean script:** high-performance power plan, close heavy apps, purge standby RAM, clear caches/shaders, optional NVIDIA GPU reset
-- **Desktop mode:** fullscreen behind windows on all monitors, hide Windows desktop icons, force launch on startup
+- **Window:** resizable with native controls by default. In Windows, opt in under Settings → Desktop to display the launcher behind other windows and hide the desktop icons.
 - **Multi-monitor:** one launcher window per monitor with shared state
 - **Tray & settings:** show / settings / hide / exit; wallpaper + crop; UI sounds; global shortcut; close-to-hide; autostart; JSON config import/export
 

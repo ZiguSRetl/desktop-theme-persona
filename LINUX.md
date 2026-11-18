@@ -46,7 +46,7 @@ npm run tauri:build:linux
 
 Artifacts land under `src-tauri/target/release/bundle/`.
 
-On Linux/macOS the launcher opens as a **floating window** by default. **Pantalla completa** asks the compositor to maximize (respects GNOME top bar + dock). It does not use exclusive Wayland fullscreen.
+The launcher opens as a **resizable window with native controls**. On Linux, the compositor positions and maximizes the window. A previously saved **Pantalla completa** setting uses compositor maximize and respects the GNOME top bar and dock.
 
 Multi-monitor satellite windows are **Windows desktop-mode only**; they are not created on Linux.
 
@@ -57,7 +57,7 @@ Multi-monitor satellite windows are **Windows desktop-mode only**; they are not 
 | Launch apps / folders / URLs | Supported (xdg-open / spawn) |
 | Installed apps catalog | `.desktop` scan |
 | Native icons | FreeDesktop themes |
-| Scripts / Clean | Hidden on Linux |
+| Scripts / Clean | The Scripts widget shows that Clean requires Windows |
 | Release updater channel | Windows `latest.json` unchanged; Linux assets published separately |
 
 ## Windows release (unchanged)

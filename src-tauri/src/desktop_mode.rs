@@ -3,19 +3,21 @@ use tauri::{AppHandle, State};
 #[cfg(windows)]
 use crate::desktop_embed::{
     detach_from_desktop, embed_as_desktop, hide_desktop_icons, pin_desktop_overlays_zorder,
-    refresh_desktop_overlays_for_app, show_desktop_icons, snap_desktop_overlays_if_drifted,
+    refresh_desktop_overlays_for_app, restore_desktop_icons, snap_desktop_overlays_if_drifted,
     start_desktop_overlay_watcher, stop_desktop_overlay_watcher, DesktopModeState,
 };
 
 #[cfg(not(windows))]
 use crate::desktop_embed_stub::{
     detach_from_desktop, embed_as_desktop, hide_desktop_icons, pin_desktop_overlays_zorder,
-    refresh_desktop_overlays_for_app, show_desktop_icons, snap_desktop_overlays_if_drifted,
+    refresh_desktop_overlays_for_app, restore_desktop_icons, snap_desktop_overlays_if_drifted,
     start_desktop_overlay_watcher, stop_desktop_overlay_watcher, DesktopModeState,
 };
 
-use crate::monitor_windows::{launcher_windows, ordered_monitors, sync_monitor_windows_impl};
-use crate::system::apply_autostart;
+use crate::monitor_windows::{launcher_windows, sync_monitor_windows_impl, MAIN_WINDOW_LABEL};
+
+static DESKTOP_TRANSITION: tauri::async_runtime::Mutex<()> =
+    tauri::async_runtime::Mutex::const_new(());
 
 pub fn is_desktop_mode_active(state: &DesktopModeState) -> bool {
     state.active.lock().map(|value| *value).unwrap_or(false)
@@ -33,25 +35,21 @@ pub fn pin_all_desktop_overlays(app: &AppHandle) -> Result<(), String> {
     pin_desktop_overlays_zorder(app)
 }
 
-async fn prepare_monitor_windows(app: &AppHandle) -> Result<(), String> {
-    sync_monitor_windows_impl(app.clone()).await
-}
-
 pub async fn enable_desktop_mode_impl(
     app: &AppHandle,
     state: &DesktopModeState,
 ) -> Result<(), String> {
+    let _transition = DESKTOP_TRANSITION.lock().await;
     if is_desktop_mode_active(state) {
-        let _ = refresh_all_desktop_overlays(app);
         return Ok(());
     }
 
-    apply_autostart(app, true)?;
-    prepare_monitor_windows(app).await?;
+    if !cfg!(windows) || app.tray_by_id("main-tray").is_none() {
+        return Err("El modo escritorio requiere Windows y la bandeja del sistema.".into());
+    }
 
-    let windows = launcher_windows(app);
     let result: Result<(), String> = (|| {
-        for window in &windows {
+        for window in &launcher_windows(app) {
             window
                 .set_resizable(false)
                 .map_err(|e| format!("No se pudo bloquear el redimensionado: {e}"))?;
@@ -65,29 +63,28 @@ pub async fn enable_desktop_mode_impl(
             window
                 .set_fullscreen(false)
                 .map_err(|e| format!("No se pudo preparar la ventana: {e}"))?;
+            window.unmaximize().map_err(|e| e.to_string())?;
+            window.unminimize().map_err(|e| e.to_string())?;
             window
                 .show()
                 .map_err(|e| format!("No se pudo mostrar la ventana: {e}"))?;
             embed_as_desktop(window, state)?;
         }
 
-        hide_desktop_icons()?;
+        hide_desktop_icons(state)?;
         refresh_all_desktop_overlays(app)
     })();
 
     if let Err(error) = result {
-        for window in &windows {
-            let _ = detach_from_desktop(window, state);
-            let _ = window.set_skip_taskbar(false);
-            let _ = window.set_resizable(true);
-            let _ = window.set_minimizable(true);
-        }
-        let _ = show_desktop_icons();
-        return Err(error);
+        return Err(restore_after_failure(app, state, error).await);
     }
 
     if let Ok(mut active) = state.active.lock() {
         *active = true;
+    }
+
+    if let Err(error) = sync_monitor_windows_impl(app.clone()).await {
+        return Err(restore_after_failure(app, state, error).await);
     }
 
     // Start z-order keeper before focus so the shell stays behind other apps.
@@ -104,44 +101,60 @@ pub async fn disable_desktop_mode_impl(
     app: &AppHandle,
     state: &DesktopModeState,
 ) -> Result<(), String> {
+    let _transition = DESKTOP_TRANSITION.lock().await;
     if !is_desktop_mode_active(state) {
         return Ok(());
     }
 
+    restore_windowed_mode(app, state).await
+}
+
+async fn restore_after_failure(
+    app: &AppHandle,
+    state: &DesktopModeState,
+    error: String,
+) -> String {
+    match restore_windowed_mode(app, state).await {
+        Ok(()) => error,
+        Err(restore_error) => format!("{error}\n{restore_error}"),
+    }
+}
+
+async fn restore_windowed_mode(app: &AppHandle, state: &DesktopModeState) -> Result<(), String> {
     stop_desktop_overlay_watcher();
 
     if let Ok(mut active) = state.active.lock() {
         *active = false;
     }
 
+    let mut errors = Vec::new();
     for window in launcher_windows(app) {
-        detach_from_desktop(&window, state)?;
-    }
-
-    show_desktop_icons()?;
-
-    let monitors = ordered_monitors(app)?;
-    for (index, window) in launcher_windows(app).into_iter().enumerate() {
-        window
-            .set_fullscreen(false)
-            .map_err(|e| format!("No se pudo desactivar pantalla completa: {e}"))?;
-
-        let skip_taskbar = window.label() != crate::monitor_windows::MAIN_WINDOW_LABEL;
-        window
-            .set_skip_taskbar(skip_taskbar)
-            .map_err(|e| format!("No se pudo restaurar la barra de tareas: {e}"))?;
-
-        let monitor = monitors.get(index).unwrap_or(&monitors[0]);
-        // Satellites stay full-monitor; main geometry is restored by frontend windowMode.
-        if window.label() != crate::monitor_windows::MAIN_WINDOW_LABEL {
-            crate::monitor_windows::place_window_on_monitor(&window, monitor)?;
+        errors.extend(detach_from_desktop(&window, state).err());
+        if window.label() == MAIN_WINDOW_LABEL {
+            errors.extend(
+                [
+                    window.set_fullscreen(false),
+                    window.set_skip_taskbar(false),
+                    window.set_decorations(true),
+                    window.set_resizable(true),
+                    window.set_minimizable(true),
+                    window.show(),
+                    window.set_focus(),
+                ]
+                .into_iter()
+                .filter_map(Result::err)
+                .map(|error| error.to_string()),
+            );
+        } else {
+            errors.extend(window.destroy().err().map(|error| error.to_string()));
         }
-        window
-            .show()
-            .map_err(|e| format!("No se pudo mostrar la ventana: {e}"))?;
     }
-
-    Ok(())
+    errors.extend(restore_desktop_icons(state).err());
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(errors.join("\n"))
+    }
 }
 
 #[tauri::command]
@@ -193,6 +206,6 @@ pub fn detach_before_exit(app: &AppHandle, state: &DesktopModeState) {
         for window in launcher_windows(app) {
             let _ = detach_from_desktop(&window, state);
         }
-        let _ = show_desktop_icons();
     }
+    let _ = restore_desktop_icons(state);
 }

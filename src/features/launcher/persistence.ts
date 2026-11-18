@@ -13,7 +13,7 @@ import type {
   WindowBounds,
   WindowMode,
 } from "../../types/desktop";
-import { forcesDesktopMode, defaultWindowMode, withPlatformShellSettings } from "../system/platform";
+import { defaultWindowMode, withPlatformDesktopMode } from "../system/platform";
 const STORAGE_KEY = "persona5-explorer-launcher-state";
 const VALID_TYPES: LauncherItemType[] = ["application", "game", "folder", "url"];
 const VALID_CATEGORIES = ["apps", "games", "system"] as const;
@@ -24,13 +24,12 @@ const VALID_CLOSE = ["hide", "exit"] as const;
 export function createDefaultSettings(): DesktopSettings {
   return {
     globalShortcut: "Ctrl+Space",
-    launchOnStartup: true,
+    launchOnStartup: false,
     soundEnabled: true,
     animationIntensity: "normal",
-    closeBehavior: "hide",
+    closeBehavior: "exit",
     windowMode: defaultWindowMode(),
-    // Windows: desktop overlay shell. Linux/macOS: normal window.
-    desktopMode: forcesDesktopMode(),
+    desktopMode: false,
     wallpaperPassthrough: false,
     language: detectSystemLanguage(),
   };
@@ -73,7 +72,7 @@ function validateWindowBounds(raw: unknown): WindowBounds | undefined {
   const y = asNumber(raw.y, NaN);
   const width = asNumber(raw.width, NaN);
   const height = asNumber(raw.height, NaN);
-  if ([x, y, width, height].some((n) => Number.isNaN(n))) return undefined;
+  if ([x, y, width, height].some((n) => Number.isNaN(n)) || width <= 0 || height <= 0) return undefined;
   return { x, y, width, height };
 }
 
@@ -140,8 +139,10 @@ export function validateSettings(raw: unknown): DesktopSettings {
   const animationIntensity = raw.animationIntensity;
   const closeBehavior = raw.closeBehavior;
   const windowMode = raw.windowMode;
+  const legacyDesktopMode = raw.desktopMode === true && raw.desktopModeOptIn !== true;
+  const desktopMode = raw.desktopMode === true && raw.desktopModeOptIn === true;
 
-  return withPlatformShellSettings({
+  return withPlatformDesktopMode({
     globalShortcut: asString(raw.globalShortcut, defaults.globalShortcut),
     launchOnStartup: asBoolean(raw.launchOnStartup, defaults.launchOnStartup),
     soundEnabled: asBoolean(raw.soundEnabled, defaults.soundEnabled),
@@ -153,11 +154,12 @@ export function validateSettings(raw: unknown): DesktopSettings {
     closeBehavior: VALID_CLOSE.includes(closeBehavior as (typeof VALID_CLOSE)[number])
       ? (closeBehavior as DesktopSettings["closeBehavior"])
       : defaults.closeBehavior,
-    windowMode: VALID_WINDOW_MODES.includes(windowMode as WindowMode)
+    windowMode: !(legacyDesktopMode && windowMode === "maximized") &&
+      VALID_WINDOW_MODES.includes(windowMode as WindowMode)
       ? (windowMode as WindowMode)
       : defaults.windowMode,
-    // Windows: always on. Elsewhere: always off (embed is Windows-only).
-    desktopMode: forcesDesktopMode(),
+    desktopMode,
+    desktopModeOptIn: desktopMode ? true : undefined,
     wallpaperPassthrough: asBoolean(raw.wallpaperPassthrough, defaults.wallpaperPassthrough),
     language: resolveLanguage(raw.language),
     selectedGpuId:
@@ -258,20 +260,25 @@ async function notifyPersistedStateChanged(): Promise<void> {
   }
 }
 
-export async function mergeAndSaveState(
-  patch: Partial<Pick<PersistedDesktopState, "items" | "settings">>,
-): Promise<PersistedDesktopState> {
-  const current = (await loadFullState()) ?? createInitialState();
-  const next: PersistedDesktopState = {
-    schemaVersion: 1,
-    items: patch.items ?? current.items,
-    settings: patch.settings
-      ? validateSettings({ ...current.settings, ...patch.settings })
-      : current.settings,
-  };
+let pendingStateMerge: Promise<unknown> = Promise.resolve();
 
-  await saveFullState(next);
-  return next;
+export function mergeAndSaveState(
+  patch: { items?: LauncherItem[]; settings?: Partial<DesktopSettings> },
+): Promise<PersistedDesktopState> {
+  const operation = pendingStateMerge.then(async () => {
+    const current = (await loadFullState()) ?? createInitialState();
+    const next: PersistedDesktopState = {
+      schemaVersion: 1,
+      items: patch.items ?? current.items,
+      settings: patch.settings
+        ? validateSettings({ ...current.settings, ...patch.settings })
+        : current.settings,
+    };
+    await saveFullState(next);
+    return next;
+  });
+  pendingStateMerge = operation.catch(() => undefined);
+  return operation;
 }
 
 /** @deprecated Use loadFullState */

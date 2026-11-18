@@ -6,13 +6,16 @@ function isTauriRuntime(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 
-export async function applyNativeSettings(settings: DesktopSettings): Promise<void> {
+export async function applyNativeSettings(settings: DesktopSettings): Promise<boolean | undefined> {
   if (!isTauriRuntime()) return;
 
   try {
-    await invoke("sync_native_settings", { settings });
+    const result = await invoke<{ desktopMode: boolean; errors: string[] }>("sync_native_settings", { settings });
+    if (result.errors.length) showLaunchError(new Error(result.errors.join("\n")));
+    return result.desktopMode;
   } catch (error) {
     showLaunchError(typeof error === "string" ? new Error(error) : error);
+    return settings.desktopMode ? false : undefined;
   }
 }
 
