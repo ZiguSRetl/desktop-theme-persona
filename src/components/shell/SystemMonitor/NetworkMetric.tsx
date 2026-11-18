@@ -55,7 +55,7 @@ export function NetworkMetric({
 
       <div className={styles.networkBody}>
         {loading ? (
-          <span className={styles.metricPrimary}>…</span>
+          <span className={styles.metricPrimary}>—</span>
         ) : pair ? (
           <>
             <span className={styles.networkRate}>
@@ -72,7 +72,7 @@ export function NetworkMetric({
             </span>
           </>
         ) : (
-          <span className={styles.metricPrimary}>--</span>
+          <span className={styles.metricPrimary}>—</span>
         )}
       </div>
     </div>

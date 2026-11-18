@@ -27,7 +27,7 @@ export function SystemMetric({
   const t = useT();
   const loading = status === "loading";
   const unavailable = status === "unavailable" || status === "error";
-  const displayPrimary = loading ? "…" : unavailable ? "--" : primary;
+  const displayPrimary = loading || unavailable ? "—" : primary;
   const showSecondary = Boolean(secondary) && status === "ready";
   const metricError = error ?? t("system.aria.metricError");
 
@@ -35,7 +35,7 @@ export function SystemMetric({
     <div
       className={styles.metric}
       data-tone={tone}
-      aria-label={`${label}: ${unavailable ? t("system.aria.unavailable") : displayPrimary}${showSecondary ? ` · ${secondary}` : ""}`}
+      aria-label={`${label}: ${loading ? t("system.aria.noData") : unavailable ? t("system.aria.unavailable") : displayPrimary}${showSecondary ? ` · ${secondary}` : ""}`}
     >
       <div className={styles.metricHead}>
         <span className={styles.metricLabel}>{label}</span>

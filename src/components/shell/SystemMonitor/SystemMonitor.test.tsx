@@ -32,7 +32,7 @@ describe("SystemMonitor", () => {
 
   it("shows placeholders when unavailable", () => {
     render(<SystemMonitor metrics={null} status="unavailable" error={null} />);
-    expect(screen.getAllByText("--").length).toBeGreaterThanOrEqual(3);
+    expect(screen.getAllByText("—").length).toBeGreaterThanOrEqual(3);
   });
 
   it("handles missing disk, network and gpu", () => {

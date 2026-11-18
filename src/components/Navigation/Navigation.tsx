@@ -6,6 +6,7 @@ import { ApplicationsWidget } from "../../features/launcher/ApplicationsWidget";
 import { useSettingsMenuStore } from "../../features/settings/settingsMenuStore";
 import { useAnimationProfile } from "../../features/settings/useAnimationProfile";
 import { useT } from "../../i18n";
+import { SYSTEM_WIDGET_ID } from "../shell/ShellFooter/ShellFooter";
 import styles from "./Navigation.module.css";
 
 const navItems = [
@@ -24,27 +25,29 @@ export function Navigation() {
   const goBackToRoot = useSettingsMenuStore((state) => state.goBackToRoot);
   const activeCategory = useSettingsMenuStore((state) => state.activeCategory);
   const applicationsButton = useRef<HTMLButtonElement>(null);
+  const systemButton = useRef<HTMLButtonElement>(null);
   const widgetId = useId();
   const applicationsOpen = useMatch("/apps") !== null;
+  const systemOpen = useMatch("/system") !== null;
 
-  const closeApplications = useCallback(() => {
+  const closeWidget = useCallback((trigger: HTMLButtonElement | null) => {
     void navigate("/", { replace: true });
-    applicationsButton.current?.focus();
+    trigger?.focus();
   }, [navigate]);
 
   useEffect(() => {
-    if (!applicationsOpen) return;
+    if (!applicationsOpen && !systemOpen) return;
 
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape" || event.defaultPrevented || event.isComposing) return;
       event.preventDefault();
       event.stopPropagation();
-      closeApplications();
+      closeWidget(systemOpen ? systemButton.current : applicationsButton.current);
     };
 
     window.addEventListener("keydown", closeOnEscape, true);
     return () => window.removeEventListener("keydown", closeOnEscape, true);
-  }, [applicationsOpen, closeApplications]);
+  }, [applicationsOpen, systemOpen, closeWidget]);
 
   const itemClass = (active: boolean) => `${styles.link}${active ? ` ${styles.active}` : ""}`;
 
@@ -69,7 +72,7 @@ export function Navigation() {
                   title={t(label)}
                   onMouseEnter={handleHover}
                   onClick={() => {
-                    if (applicationsOpen) closeApplications();
+                    if (applicationsOpen) closeWidget(applicationsButton.current);
                     else void navigate("/apps");
                   }}
                 >
@@ -80,10 +83,27 @@ export function Navigation() {
                   <ApplicationsWidget
                     id={widgetId}
                     reducedMotion={animationProfile === "reduced"}
-                    onLaunch={closeApplications}
+                    onLaunch={() => closeWidget(applicationsButton.current)}
                   />
                 ) : null}
               </>
+            ) : to === "/system" ? (
+              <button
+                ref={systemButton}
+                type="button"
+                className={itemClass(pathname.startsWith("/system"))}
+                aria-expanded={systemOpen}
+                aria-controls={SYSTEM_WIDGET_ID}
+                title={t(label)}
+                onMouseEnter={handleHover}
+                onClick={() => {
+                  if (systemOpen) closeWidget(systemButton.current);
+                  else void navigate("/system");
+                }}
+              >
+                <Icon size={18} aria-hidden="true" />
+                <span>{t(label)}</span>
+              </button>
             ) : (
               <NavLink
                 to={to}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSetting } from "../settings/settingsStore";
 import { useT } from "../../i18n";
 import { fetchSystemMetrics } from "./systemService";
@@ -17,89 +17,60 @@ export type SystemStatsStatus = SystemMonitorStatus | "idle";
 export function useSystemStats(): UseSystemStatsResult {
   const t = useT();
   const selectedGpuId = useSetting("selectedGpuId");
-  const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
-  const [status, setStatus] = useState<SystemMonitorStatus>("loading");
-  const [error, setError] = useState<string | null>(null);
-  const [isVisible, setIsVisible] = useState(
-    () => typeof document !== "undefined" && document.visibilityState === "visible",
-  );
-  const intervalRef = useRef<number | null>(null);
+  const [reading, setReading] = useState<UseSystemStatsResult>({
+    metrics: null,
+    status: "loading",
+    error: null,
+  });
   const requestInProgress = useRef(false);
-  const cpuWarmupDone = useRef(false);
 
-  const refresh = useCallback(async () => {
-    if (requestInProgress.current) return;
-    if (typeof document !== "undefined" && document.hidden) return;
+  useEffect(() => {
+    let disposed = false;
+    let intervalId: number | undefined;
 
-    requestInProgress.current = true;
-    try {
-      setStatus((current) => (current === "ready" ? "ready" : "loading"));
-      const next = await fetchSystemMetrics(selectedGpuId);
+    const refresh = async () => {
+      if (requestInProgress.current || document.hidden) return;
+      requestInProgress.current = true;
 
-      if (!next) {
-        setMetrics(null);
-        setStatus("unavailable");
-        setError(null);
-        cpuWarmupDone.current = false;
-        return;
+      try {
+        const metrics = await fetchSystemMetrics(selectedGpuId);
+        if (disposed) return;
+        setReading((previous) => ({
+          metrics: metrics ?? previous.metrics,
+          status: metrics ? "ready" : "unavailable",
+          error: null,
+        }));
+      } catch (error) {
+        if (disposed) return;
+        const message = typeof error === "string"
+          ? error
+          : error instanceof Error ? error.message : t("system.errors.readStats");
+        setReading((previous) => ({ ...previous, status: "error", error: message }));
+      } finally {
+        requestInProgress.current = false;
       }
+    };
 
-      // First CPU sample from sysinfo is often inaccurate — keep loading until sample 2.
-      if (!cpuWarmupDone.current) {
-        cpuWarmupDone.current = true;
-        setMetrics(next);
-        setStatus("loading");
-        setError(null);
-        return;
+    const syncPolling = () => {
+      if (intervalId !== undefined) {
+        window.clearInterval(intervalId);
+        intervalId = undefined;
       }
+      if (document.hidden) return;
+      void refresh();
+      intervalId = window.setInterval(() => void refresh(), POLL_INTERVAL_MS);
+    };
 
-      setMetrics(next);
-      setStatus("ready");
-      setError(null);
-    } catch (err) {
-      setStatus("error");
-      setError(err instanceof Error ? err.message : t("system.errors.readStats"));
-    } finally {
-      requestInProgress.current = false;
-    }
+    queueMicrotask(() => {
+      if (!disposed) syncPolling();
+    });
+    document.addEventListener("visibilitychange", syncPolling);
+    return () => {
+      disposed = true;
+      document.removeEventListener("visibilitychange", syncPolling);
+      if (intervalId !== undefined) window.clearInterval(intervalId);
+    };
   }, [selectedGpuId, t]);
 
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      setIsVisible(document.visibilityState === "visible");
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, []);
-
-  useEffect(() => {
-    cpuWarmupDone.current = false;
-  }, [selectedGpuId]);
-
-  useEffect(() => {
-    if (!isVisible) {
-      if (intervalRef.current !== null) {
-        window.clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      return;
-    }
-
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- kick off async polling when visible
-    void refresh();
-
-    intervalRef.current = window.setInterval(() => {
-      void refresh();
-    }, POLL_INTERVAL_MS);
-
-    return () => {
-      if (intervalRef.current !== null) {
-        window.clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [isVisible, refresh]);
-
-  return { metrics, status, error };
+  return reading;
 }

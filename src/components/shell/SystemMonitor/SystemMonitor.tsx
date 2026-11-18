@@ -24,6 +24,8 @@ export interface SystemMonitorProps {
   metrics: SystemMetrics | null;
   status: SystemMonitorStatus;
   error?: string | null;
+  widget?: boolean;
+  compact?: boolean;
 }
 
 const CPU_HIGH_AT = 90;
@@ -33,10 +35,8 @@ function metricStatus(
   overall: SystemMonitorStatus,
   hasData: boolean,
 ): SystemMonitorStatus {
-  if (overall === "loading" || overall === "error" || overall === "unavailable") {
-    return overall;
-  }
-  return hasData ? "ready" : "unavailable";
+  if (hasData) return "ready";
+  return overall === "ready" ? "unavailable" : overall;
 }
 
 function formatCpuPrimary(
@@ -49,11 +49,17 @@ function formatCpuPrimary(
   return `${usage} · ${formatTemperature(temperatureCelsius, locale)}`;
 }
 
-export function SystemMonitor({ metrics, status, error = null }: SystemMonitorProps) {
+export function SystemMonitor({
+  metrics,
+  status,
+  error = null,
+  widget = false,
+  compact = false,
+}: SystemMonitorProps) {
   const t = useT();
   const language = useSettingsStore((state) => state.settings.language);
   const locale = getLocaleTag(language);
-  const sampleTs = status === "ready" && metrics ? metrics.timestamp : null;
+  const sampleTs = metrics?.timestamp ?? null;
   const [cpuAlert, setCpuAlert] = useState<{
     timestamp: number | null;
     streak: number;
@@ -83,19 +89,19 @@ export function SystemMonitor({ metrics, status, error = null }: SystemMonitorPr
   const memoryPercent = metrics ? normalizePercent(metrics.memory.usagePercent) : null;
   const diskPercent = metrics?.disk ? normalizePercent(metrics.disk.usagePercent) : null;
   const gpu = metrics?.gpu ?? null;
+  const sensorStatus = metrics ? "ready" : status;
 
   return (
     <section
-      className={styles.monitor}
+      className={widget ? `${styles.monitor} ${styles.widget}` : styles.monitor}
       aria-label={t("system.monitor.aria")}
-      aria-live="polite"
     >
       <SystemMetric
         label={t("system.metrics.cpu")}
         status={metricStatus(status, cpuPercent !== null)}
         percent={cpuPercent}
         primary={
-          cpuPercent !== null ? formatCpuPrimary(cpuPercent, cpuTemp, locale) : "--"
+          cpuPercent !== null ? formatCpuPrimary(cpuPercent, compact ? null : cpuTemp, locale) : "—"
         }
         tone={cpuTone}
         error={error}
@@ -104,43 +110,52 @@ export function SystemMonitor({ metrics, status, error = null }: SystemMonitorPr
         label={t("system.metrics.ram")}
         status={metricStatus(status, memoryPercent !== null)}
         percent={memoryPercent}
-        primary={memoryPercent !== null ? formatPercent(memoryPercent, locale) : "--"}
+        primary={memoryPercent !== null ? formatPercent(memoryPercent, locale) : "—"}
         secondary={
-          metrics
+          metrics && !compact
             ? formatMemorySecondary(metrics.memory.usedBytes, metrics.memory.totalBytes, locale)
             : null
         }
         tone={memoryPercent !== null ? capacityTone(memoryPercent) : "normal"}
         error={error}
       />
-      <SystemMetric
-        label={t("system.metrics.disk")}
-        status={metricStatus(status, Boolean(metrics?.disk))}
-        percent={diskPercent}
-        primary={diskPercent !== null ? formatPercent(diskPercent, locale) : "--"}
-        secondary={
-          metrics?.disk
-            ? formatDiskSecondary(metrics.disk.usedBytes, metrics.disk.totalBytes, locale)
-            : null
-        }
-        tone={diskPercent !== null ? capacityTone(diskPercent) : "normal"}
-        error={error}
-      />
-      <GpuMetric
-        status={metricStatus(status, Boolean(gpu))}
-        name={gpu?.name ?? null}
-        usagePercentValue={gpu?.usagePercent ?? null}
-        vramUsedBytes={gpu?.vramUsedBytes ?? null}
-        vramTotalBytes={gpu?.vramTotalBytes ?? null}
-        temperatureCelsius={gpu?.temperatureCelsius ?? null}
-        error={error}
-      />
-      <NetworkMetric
-        status={metricStatus(status, Boolean(metrics?.network))}
-        downloadBytesPerSecond={metrics?.network?.downloadBytesPerSecond ?? null}
-        uploadBytesPerSecond={metrics?.network?.uploadBytesPerSecond ?? null}
-        error={error}
-      />
+      {compact ? null : (
+        <>
+          <SystemMetric
+            label={t("system.metrics.disk")}
+            status={metricStatus(sensorStatus, Boolean(metrics?.disk))}
+            percent={diskPercent}
+            primary={diskPercent !== null ? formatPercent(diskPercent, locale) : "—"}
+            secondary={
+              metrics?.disk
+                ? formatDiskSecondary(metrics.disk.usedBytes, metrics.disk.totalBytes, locale)
+                : null
+            }
+            tone={diskPercent !== null ? capacityTone(diskPercent) : "normal"}
+            error={error}
+          />
+          <GpuMetric
+            status={metricStatus(sensorStatus, Boolean(gpu))}
+            name={gpu?.name ?? null}
+            usagePercentValue={gpu?.usagePercent ?? null}
+            vramUsedBytes={gpu?.vramUsedBytes ?? null}
+            vramTotalBytes={gpu?.vramTotalBytes ?? null}
+            temperatureCelsius={gpu?.temperatureCelsius ?? null}
+            error={error}
+          />
+          <NetworkMetric
+            status={metricStatus(sensorStatus, Boolean(metrics?.network))}
+            downloadBytesPerSecond={metrics?.network?.downloadBytesPerSecond ?? null}
+            uploadBytesPerSecond={metrics?.network?.uploadBytesPerSecond ?? null}
+            error={error}
+          />
+        </>
+      )}
+      {metrics && error ? (
+        <span className={styles.refreshError} title={error} role="status">
+          {t("system.errors.readStats")}
+        </span>
+      ) : null}
     </section>
   );
 }

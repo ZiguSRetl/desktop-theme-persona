@@ -103,27 +103,27 @@ export function GpuMetric({
 
       <div className={styles.gpuBody}>
         {loading ? (
-          <span className={styles.metricPrimary}>…</span>
+          <span className={styles.metricPrimary}>—</span>
         ) : hasAnyMetric ? (
           <>
             <span className={styles.gpuStat}>
               <span className={styles.gpuStatLabel}>{t("system.gpu.usage")}</span>
               <span className={styles.gpuStatValue}>
-                {usage !== null ? formatPercent(usage, locale) : "--"}
+                {usage !== null ? formatPercent(usage, locale) : "—"}
               </span>
             </span>
             <span className={styles.gpuStat}>
               <span className={styles.gpuStatLabel}>{t("system.gpu.vram")}</span>
-              <span className={styles.gpuStatValue}>{vramLabel ?? "--"}</span>
+              <span className={styles.gpuStatValue}>{vramLabel ?? "—"}</span>
             </span>
             <span className={styles.gpuStat}>
               <span className={styles.gpuStatLabel}>{t("system.gpu.temp")}</span>
-              <span className={styles.gpuStatValue}>{tempLabel ?? "--"}</span>
+              <span className={styles.gpuStatValue}>{tempLabel ?? "—"}</span>
             </span>
           </>
         ) : (
           <span className={styles.metricPrimary} title={name ?? undefined}>
-            {name ? t("system.gpu.noSensors") : "--"}
+            {name ? t("system.gpu.noSensors") : "—"}
           </span>
         )}
       </div>

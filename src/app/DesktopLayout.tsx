@@ -15,7 +15,8 @@ import { HomePage } from "../pages/HomePage";
 export function DesktopLayout() {
   const location = useLocation();
   const applicationsOpen = useMatch("/apps") !== null;
-  const isDesktop = location.pathname === "/" || applicationsOpen;
+  const systemOpen = useMatch("/system") !== null;
+  const isDesktop = location.pathname === "/" || applicationsOpen || systemOpen;
   const section = isDesktop ? "home" : pathnameToSection(location.pathname);
   const animationProfile = useAnimationProfile();
   useDesktopInit();
@@ -37,7 +38,7 @@ export function DesktopLayout() {
         <div className="desktop-shell__content">
           <SectionTransition desktopContent={isDesktop ? <HomePage /> : undefined} />
         </div>
-        {isDesktop ? null : <ShellFooter />}
+        <ShellFooter desktop={isDesktop} expanded={systemOpen} />
       </main>
     </div>
   );

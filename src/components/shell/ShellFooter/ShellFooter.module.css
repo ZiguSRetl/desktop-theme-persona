@@ -4,3 +4,32 @@
   width: 100%;
   margin-top: clamp(0.35rem, 0.8vh, 0.65rem);
 }
+
+.widget {
+  position: absolute;
+  inset-inline-start: var(--content-padding);
+  bottom: 0.5rem;
+  z-index: 1;
+  width: min(13rem, calc(100% - var(--content-padding) * 2));
+  max-height: calc(100% - 1rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: #151316;
+  border: 2px solid var(--color-white);
+  border-top: 3px solid var(--color-red);
+  box-shadow: 3px 3px 0 var(--color-black);
+}
+
+.widget[data-expanded="true"] {
+  width: min(24rem, calc(100% - var(--content-padding) * 2));
+}
+
+.shortcuts {
+  display: block;
+  margin-inline: 0.6rem;
+  padding: 0.4rem 0.15rem;
+  border-top: 1px solid #555;
+  font-size: 0.8rem;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
