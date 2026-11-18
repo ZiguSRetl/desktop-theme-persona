@@ -1,26 +1,23 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { DesktopLayout } from "./DesktopLayout";
 import { AppsPage } from "../pages/AppsPage";
-import { GamesPage } from "../pages/GamesPage";
-import { HomePage } from "../pages/HomePage";
+import { ShortcutsPage } from "../pages/ShortcutsPage";
 import { SettingsPage } from "../pages/SettingsPage";
 import { ScriptsPage } from "../pages/ScriptsPage";
 import { SystemPage } from "../pages/SystemPage";
-import { isLinuxHost } from "../features/system/platform";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <DesktopLayout />,
     children: [
-      { index: true, element: <HomePage /> },
-      { path: "apps", element: <AppsPage /> },
-      { path: "games", element: <GamesPage /> },
+      { index: true, element: null },
+      { path: "apps", element: null },
+      { path: "apps/catalog", element: <AppsPage /> },
+      { path: "apps/shortcuts", element: <ShortcutsPage /> },
+      { path: "games", element: <Navigate to="/apps?filter=games" replace /> },
       { path: "system", element: <SystemPage /> },
-      {
-        path: "scripts",
-        element: isLinuxHost() ? <Navigate to="/" replace /> : <ScriptsPage />,
-      },
+      { path: "scripts", element: <ScriptsPage /> },
       { path: "settings", element: <SettingsPage /> },
     ],
   },

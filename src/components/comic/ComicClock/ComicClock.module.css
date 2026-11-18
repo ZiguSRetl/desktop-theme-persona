@@ -75,7 +75,7 @@
 }
 
 @media (max-width: 960px), (max-height: 720px) {
-  .dateBand {
+  .clock:not([data-desktop]) .dateBand {
     display: none;
   }
 }

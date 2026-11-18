@@ -32,6 +32,7 @@ import { wallpaperCropToBackgroundStyle } from "../features/settings/wallpaperUt
 import { useGpuDevices } from "../features/system/useGpuDevices";
 import { isWindowsHost } from "../features/system/platform";
 import { useUpdateStore } from "../features/updater/updateStore";
+import { getBrandVersionParts } from "../features/updater/brandVersion";
 import { APP_LANGUAGES, useT, type TranslationKey } from "../i18n";
 import { comicEnter, reducedMotionTransition } from "../lib/motionPresets";
 import settingStyles from "../components/comic/ComicSettingRow/ComicSettingRow.module.css";
@@ -80,9 +81,13 @@ export function SettingsPage() {
   const checkingUpdate = useUpdateStore((state) => state.checking);
   const installingUpdate = useUpdateStore((state) => state.installing);
   const checkForUpdates = useUpdateStore((state) => state.checkForUpdates);
+  const currentVersion = useUpdateStore((state) => state.currentVersion);
+  const availableVersion = useUpdateStore((state) => state.available?.version);
+  const loadCurrentVersion = useUpdateStore((state) => state.loadCurrentVersion);
   const reduceMotion = useEffectiveReducedMotion();
   const durationMultiplier = useMotionDurationMultiplier();
   const activeCategory = useSettingsMenuStore((state) => state.activeCategory);
+  const version = getBrandVersionParts(currentVersion, availableVersion);
   const { devices: gpuDevices, status: gpuListStatus } = useGpuDevices(activeCategory === "system");
   const openCategory = useSettingsMenuStore((state) => state.openCategory);
   const goBackToRoot = useSettingsMenuStore((state) => state.goBackToRoot);
@@ -98,6 +103,10 @@ export function SettingsPage() {
   const previewWallpaper = activeCategory === "display" && !settings.wallpaperPassthrough
     ? settings.wallpaper
     : undefined;
+
+  useEffect(() => {
+    if (activeCategory === "system") void loadCurrentVersion();
+  }, [activeCategory, loadCurrentVersion]);
 
   useEffect(() => {
     if (!isWallpaperConfigured(previewWallpaper)) return;
@@ -539,6 +548,11 @@ export function SettingsPage() {
                     ? t("settings.updates.checking")
                     : t("settings.updates.check")}
                 </CutoutButton>
+                {version ? (
+                  <span className={settingStyles.hint}>
+                    v{version.current}{version.next ? ` → v${version.next}` : ""}
+                  </span>
+                ) : null}
               </div>
             </ComicSettingRow>
           </>

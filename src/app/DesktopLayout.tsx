@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useMatch } from "react-router-dom";
 import { Navigation } from "../components/Navigation";
 import { ComicToast, HalftoneBackground, pathnameToSection, SectionTransition } from "../components/comic";
 import { ShellFooter, ShellHeader } from "../components/shell";
@@ -10,10 +10,13 @@ import { useCrossWindowStateSync } from "../hooks/useCrossWindowStateSync";
 import { useEscapeToHide } from "../hooks/useEscapeToHide";
 import { useWindowPlacement } from "../hooks/useWindowPlacement";
 import { useTrayNavigation } from "../hooks/useTrayNavigation";
+import { HomePage } from "../pages/HomePage";
 
 export function DesktopLayout() {
   const location = useLocation();
-  const section = pathnameToSection(location.pathname);
+  const applicationsOpen = useMatch("/apps") !== null;
+  const isDesktop = location.pathname === "/" || applicationsOpen;
+  const section = isDesktop ? "home" : pathnameToSection(location.pathname);
   const animationProfile = useAnimationProfile();
   useDesktopInit();
   useUpdateCheckOnStartup();
@@ -30,11 +33,11 @@ export function DesktopLayout() {
       <UpdateAvailableDialog />
 
       <main className="desktop-shell__main">
-        <ShellHeader />
+        {isDesktop ? null : <ShellHeader />}
         <div className="desktop-shell__content">
-          <SectionTransition />
+          <SectionTransition desktopContent={isDesktop ? <HomePage /> : undefined} />
         </div>
-        <ShellFooter />
+        {isDesktop ? null : <ShellFooter />}
       </main>
     </div>
   );

@@ -30,7 +30,7 @@ function formatDateShort(date: Date, locale: string): string {
   });
 }
 
-export function ComicClock() {
+export function ComicClock({ desktop = false }: { desktop?: boolean }) {
   const [now, setNow] = useState(() => new Date());
   const reduceMotion = useEffectiveReducedMotion();
   const t = useT();
@@ -38,13 +38,26 @@ export function ComicClock() {
   const locale = getLocaleTag(language);
 
   useEffect(() => {
+    if (desktop) {
+      let timer: number;
+      const scheduleMinute = () => {
+        timer = window.setTimeout(() => {
+          setNow(new Date());
+          scheduleMinute();
+        }, 60_000 - Date.now() % 60_000);
+      };
+      scheduleMinute();
+      return () => window.clearTimeout(timer);
+    }
+
     const intervalId = window.setInterval(() => setNow(new Date()), 1000);
     return () => window.clearInterval(intervalId);
-  }, []);
+  }, [desktop]);
 
   return (
     <motion.section
       className={styles.clock}
+      data-desktop={desktop ? "" : undefined}
       aria-label={t("clock.ariaLabel")}
       initial={reduceMotion ? false : { opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -70,15 +83,17 @@ export function ComicClock() {
         >
           {formatHoursMinutes(now, locale)}
         </motion.span>
-        <motion.span
-          className={styles.timeSeconds}
-          key={formatSeconds(now, locale)}
-          initial={reduceMotion ? false : { y: -4, opacity: 0.5 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.12 }}
-        >
-          {formatSeconds(now, locale)}
-        </motion.span>
+        {desktop ? null : (
+          <motion.span
+            className={styles.timeSeconds}
+            key={formatSeconds(now, locale)}
+            initial={reduceMotion ? false : { y: -4, opacity: 0.5 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.12 }}
+          >
+            {formatSeconds(now, locale)}
+          </motion.span>
+        )}
       </div>
 
       <div className={styles.dateBand}>

@@ -43,3 +43,17 @@ export function catalogAppCategory(app: InstalledAppResult): LauncherItem["categ
   }
   return "apps";
 }
+
+export function installedAppToLauncherItem(app: InstalledAppResult, icon?: string): LauncherItem {
+  return {
+    id: app.path,
+    name: app.name,
+    type: "application",
+    target: app.path,
+    category: catalogAppCategory(app),
+    favorite: false,
+    order: 0,
+    favoriteOrder: 0,
+    icon,
+  };
+}

@@ -43,6 +43,8 @@ export const ja = {
   "search.appPicker.empty": "結果がありません。",
   "search.appPicker.loading": "検索中…",
 
+  "installedApps.manageShortcuts": "ショートカットを管理",
+  "installedApps.openCatalog": "カタログを開く",
   "installedApps.loading": "アプリケーションを読み込み中…",
   "installedApps.error": "アプリケーションカタログを読み込めませんでした。",
   "installedApps.empty": "一致するアプリケーションがありません。",
@@ -275,6 +277,7 @@ export const ja = {
   "scripts.clean.steps.purgeStandby": "スタンバイRAMをパージ",
   "scripts.clean.steps.clearCache": "一時キャッシュとシェーダーキャッシュを削除",
   "scripts.clean.steps.gpuReset": "NVIDIA GPUをリセット (利用可能な場合)",
+  "scripts.view.windowsOnly": "利用可能なスクリプトには Windows が必要です。",
   "scripts.view.detailAsideAria": "スクリプトの詳細パネル",
   "scripts.view.detailSummary": "スクリプトの詳細",
   "scripts.detail.empty": "スクリプトを選択すると、詳細を確認して実行できます。",

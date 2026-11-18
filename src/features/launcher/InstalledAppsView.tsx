@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Search } from "lucide-react";
 import { useT } from "../../i18n";
-import type { LauncherItem } from "../../types/desktop";
 import { isFilesystemAppPath, type InstalledAppResult } from "./appSearchService";
 import { CatalogLayoutMenu } from "./CatalogLayoutMenu";
 import {
   catalogAppCategory,
   filterInstalledApps,
   findLauncherItemByTarget,
+  installedAppToLauncherItem,
 } from "./installedAppsSelectors";
 import { useInstalledAppsStore } from "./installedAppsStore";
 import { useLauncherStore } from "./launcherStore";
@@ -23,20 +23,6 @@ import catalogStyles from "./InstalledAppsView.module.css";
 
 const INITIAL_VISIBLE = 36;
 const LOAD_MORE_STEP = 24;
-
-function toLaunchItem(app: InstalledAppResult, icon?: string): LauncherItem {
-  return {
-    id: app.path,
-    name: app.name,
-    type: "application",
-    target: app.path,
-    category: catalogAppCategory(app),
-    favorite: false,
-    order: 0,
-    favoriteOrder: 0,
-    icon,
-  };
-}
 
 interface InstalledAppsViewProps {
   sectionBadge: string;
@@ -154,7 +140,7 @@ export function InstalledAppsView({ sectionBadge }: InstalledAppsViewProps) {
 
   const handleLaunch = async (app: InstalledAppResult) => {
     try {
-      await launchItem(toLaunchItem(app, iconsByPath[app.path]));
+      await launchItem(installedAppToLauncherItem(app, iconsByPath[app.path]));
     } catch (launchError) {
       showLaunchError(launchError);
     }

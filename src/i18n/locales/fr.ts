@@ -43,6 +43,8 @@ export const fr = {
   "search.appPicker.empty": "Aucun résultat.",
   "search.appPicker.loading": "Recherche en cours…",
 
+  "installedApps.manageShortcuts": "Gérer les raccourcis",
+  "installedApps.openCatalog": "Ouvrir le catalogue",
   "installedApps.loading": "Chargement des applications…",
   "installedApps.error": "Impossible de charger le catalogue d'applications.",
   "installedApps.empty": "Aucune application correspondante.",
@@ -285,6 +287,7 @@ export const fr = {
   "scripts.clean.steps.purgeStandby": "Purger la RAM en veille",
   "scripts.clean.steps.clearCache": "Nettoyer les caches temporaires et de shaders",
   "scripts.clean.steps.gpuReset": "Réinitialiser le GPU NVIDIA (si disponible)",
+  "scripts.view.windowsOnly": "Les scripts disponibles nécessitent Windows.",
   "scripts.view.detailAsideAria": "Panneau de détail du script",
   "scripts.view.detailSummary": "Détail du script",
   "scripts.detail.empty": "Sélectionnez un script pour voir les détails et l'exécuter.",
